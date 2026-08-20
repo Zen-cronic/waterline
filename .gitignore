@@ -1,0 +1,17 @@
+# Internal strategy — never published to the submission repo
+/docs/
+# Python / Node / env
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.next/
+.env
+.env.local
+*.log
+# Frozen live-data captures used for the demo (regenerated on demand)
+.playwright-mcp/
+# generated data — ignored wherever it appears
+data/outbox/
+data/captures/
+outbox/

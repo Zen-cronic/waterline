@@ -1,0 +1,371 @@
+id,ident,type,name,latitude_deg,longitude_deg,elevation_ft,continent,iso_country,iso_region,municipality,scheduled_service,icao_code,iata_code,gps_code,local_code,home_link,wikipedia_link,keywords
+46596,CYAB,small_airport,Arctic Bay Airport,73.006101,-85.04616,72,NA,CA,CA-NU,Arctic Bay,yes,CYAB,YAB,CYAB,,,https://en.wikipedia.org/wiki/Arctic_Bay_Airport,CJX7
+1652,CYAC,small_airport,Cat Lake Airport,51.7272,-91.824402,1344,NA,CA,CA-ON,Cat Lake,yes,CYAC,YAC,CYAC,,,https://en.wikipedia.org/wiki/Cat_Lake_Airport,
+1653,CYAD,small_airport,La Grande-3 Airport,53.5717010498,-76.19640350339999,775,NA,CA,CA-QC,La Grande-3,no,CYAD,YAR,CYAD,YAD,,https://en.wikipedia.org/wiki/La_Grande-3_Airport,YAD
+1654,CYAG,medium_airport,Fort Frances Municipal Airport,48.655749,-93.44349,1125,NA,CA,CA-ON,Fort Frances,yes,CYAG,YAG,CYAG,,,https://en.wikipedia.org/wiki/Fort_Frances_Municipal_Airport,
+1655,CYAH,medium_airport,La Grande-4 Airport,53.754699707,-73.6753005981,1005,NA,CA,CA-QC,La Grande-4,no,CYAH,YAH,CYAH,,,https://en.wikipedia.org/wiki/La_Grande-4_Airport,YAH
+1656,CYAL,small_airport,Alert Bay Airport,50.582199,-126.916,240,NA,CA,CA-BC,Alert Bay,yes,CYAL,YAL,CYAL,,,https://en.wikipedia.org/wiki/Alert_Bay_Airport,
+1657,CYAM,medium_airport,Sault Ste Marie Airport,46.483216,-84.508467,630,NA,CA,CA-ON,Sault Ste Marie,yes,CYAM,YAM,CYAM,,http://www.saultairport.com/,https://en.wikipedia.org/wiki/Sault_Ste._Marie_Airport,
+1658,CYAQ,medium_airport,Kasabonika Airport,53.52470016479492,-88.6427993774414,672,NA,CA,CA-ON,Kasabonika,yes,CYAQ,XKS,CYAQ,,,https://en.wikipedia.org/wiki/Kasabonika_Airport,YAQ
+1659,CYAS,small_airport,Kangirsuk Airport,60.027199,-69.999199,403,NA,CA,CA-QC,Kangirsuk,yes,CYAS,YKG,CYAS,,,https://en.wikipedia.org/wiki/Kangirsuk_Airport,YAS
+1660,CYAT,small_airport,Attawapiskat Airport,52.927502,-82.4319,31,NA,CA,CA-ON,Attawapiskat,yes,CYAT,YAT,CYAT,,,https://en.wikipedia.org/wiki/Attawapiskat_Airport,
+1661,CYAU,small_airport,Liverpool South Shore Regional Airport,44.230301,-64.856102,321,NA,CA,CA-NS,Greenfield,no,CYAU,,CYAU,,https://southshoreflyingclub.weebly.com/,https://en.wikipedia.org/wiki/Liverpool/South_Shore_Regional_Airport,"YAU, Greenfield Dragway"
+1662,CYAV,medium_airport,Winnipeg / St. Andrews Airport,50.0564,-97.032501,760,NA,CA,CA-MB,Winnipeg/Saint Andrews,yes,CYAV,,CYAV,,,https://en.wikipedia.org/wiki/Winnipeg/St._Andrews_Airport,YAV
+1663,CYAW,heliport,CFB Shearwater Heliport,44.636782,-63.502107,144,NA,CA,CA-NS,Halifax,no,CYAW,,CYAW,YAW,,https://en.wikipedia.org/wiki/CFB_Shearwater,
+1664,CYAX,medium_airport,Lac du Bonnet Airport,50.294399,-96.010002,850,NA,CA,CA-MB,Lac du Bonnet,yes,CYAX,,CYAX,,,https://en.wikipedia.org/wiki/Lac_du_Bonnet_Airport,YAX
+1665,CYAY,medium_airport,St. Anthony Airport,51.391909,-56.08321,108,NA,CA,CA-NL,St. Anthony,yes,CYAY,YAY,CYAY,,,https://en.wikipedia.org/wiki/St._Anthony_Airport,
+1666,CYAZ,medium_airport,Tofino / Long Beach Airport,49.079833,-125.775583,80,NA,CA,CA-BC,Tofino,yes,CYAZ,YAZ,CYAZ,,http://www.acrd.bc.ca/long-beach-airport,https://en.wikipedia.org/wiki/Tofino_Airport,
+321788,CYB3,heliport,Nelson/Baylock Estate Heliport,49.54472222,-117.2605555,1830,NA,CA,CA-BC,,no,,,CYB3,CYB3,,,
+1667,CYBA,small_airport,Banff Airport,51.208222,-115.540624,4583,NA,CA,CA-AB,Banff,no,CYBA,YBA,CYBA,,,https://en.wikipedia.org/wiki/Banff_Airport,YBA
+1668,CYBB,small_airport,Kugaaruk Airport,68.535711,-89.805508,56,NA,CA,CA-NU,Kugaaruk,yes,CYBB,YBB,CYBB,,,https://en.wikipedia.org/wiki/Kugaaruk_Airport,"YBB, Pelly Bay Townsite Airport"
+1669,CYBC,medium_airport,Baie-Comeau Airport,49.1325,-68.204399,71,NA,CA,CA-QC,Baie-Comeau,yes,CYBC,YBC,CYBC,YBC,,https://en.wikipedia.org/wiki/Baie-Comeau_Airport,
+1670,CYBD,medium_airport,Bella Coola Airport,52.387501,-126.596001,117,NA,CA,CA-BC,Bella Coola,yes,CYBD,QBC,CYBD,,,https://en.wikipedia.org/wiki/Bella_Coola_Airport,YBD
+1671,CYBE,small_airport,Uranium City Airport,59.561401,-108.481003,1044,NA,CA,CA-SK,Uranium City,yes,CYBE,YBE,CYBE,,,https://en.wikipedia.org/wiki/Uranium_City_Airport,
+1672,CYBF,medium_airport,Bonnyville Airport,54.304199,-110.744003,1836,NA,CA,CA-AB,Bonnyville,yes,CYBF,YBY,CYBF,,http://town.bonnyville.ab.ca/livingin/airport/index.html,https://en.wikipedia.org/wiki/Bonnyville_Airport,YBF
+1673,CYBG,medium_airport,Saguenay-Bagotville Airport,48.330123,-70.992012,522,NA,CA,CA-QC,Saguenay,yes,CYBG,YBG,CYBG,,,https://en.wikipedia.org/wiki/CFB_Bagotville,Bagotville Airport
+1674,CYBK,medium_airport,Baker Lake Airport,64.29889678960001,-96.077796936,59,NA,CA,CA-NU,Baker Lake,yes,CYBK,YBK,CYBK,,,https://en.wikipedia.org/wiki/Baker_Lake_Airport,
+1675,CYBL,medium_airport,Campbell River Airport,49.950802,-125.271004,346,NA,CA,CA-BC,Campbell River,yes,CYBL,YBL,CYBL,YBL,,https://en.wikipedia.org/wiki/Campbell_River_Airport,
+1676,CYBN,heliport,CFB Borden Heliport,44.271702,-79.912498,729,NA,CA,CA-ON,Borden,no,,,CYBN,,,https://en.wikipedia.org/wiki/CFB_Borden,"YBN, Camp Borden"
+1629,CYBP,small_airport,Brooks Regional Airport,50.633598,-111.926003,2490,NA,CA,CA-AB,Brooks,no,,,CYBP,CYBP,,https://en.wikipedia.org/wiki/Brooks_Regional_Aerodrome,YBP
+1677,CYBQ,small_airport,Tadoule Lake Airport,58.706308,-98.511057,923,NA,CA,CA-MB,Tadoule Lake,yes,CYBQ,XTL,CYBQ,,,https://en.wikipedia.org/wiki/Tadoule_Lake_Airport,YBQ
+1678,CYBR,medium_airport,Brandon Municipal Airport,49.91,-99.951897,1343,NA,CA,CA-MB,Brandon,yes,CYBR,YBR,CYBR,,,https://en.wikipedia.org/wiki/Brandon_Airport,
+1679,CYBT,small_airport,Brochet Airport,57.8894,-101.679001,1136,NA,CA,CA-MB,Brochet,yes,CYBT,YBT,CYBT,,,https://en.wikipedia.org/wiki/Brochet_Airport,
+1680,CYBU,medium_airport,Nipawin Airport,53.33250045776367,-104.00800323486328,1220,NA,CA,CA-SK,Nipawin,no,,,CYBU,,,https://en.wikipedia.org/wiki/Nipawin_Airport,YBU
+1681,CYBV,small_airport,Berens River Airport,52.358898,-97.018303,728,NA,CA,CA-MB,Berens River,yes,CYBV,YBV,CYBV,,,https://en.wikipedia.org/wiki/Berens_River_Airport,
+1682,CYBW,medium_airport,Calgary / Springbank Airport,51.103982,-114.369378,3940,NA,CA,CA-AB,Calgary,no,,,CYBW,,http://www.ybw.ca/,https://en.wikipedia.org/wiki/Calgary/Springbank_Airport,YBW
+1683,CYBX,medium_airport,Lourdes-de-Blanc-Sablon Airport,51.4436,-57.185299,121,NA,CA,CA-QC,Blanc-Sablon,yes,CYBX,YBX,CYBX,,,https://en.wikipedia.org/wiki/Lourdes-de-Blanc-Sablon_Airport,
+1684,CYCA,small_airport,Cartwright Airport,53.682501,-57.042303,40,NA,CA,CA-NL,Cartwright,yes,CYCA,YRF,CYCA,,,https://en.wikipedia.org/wiki/Cartwright_Airport,YCA
+1685,CYCB,medium_airport,Cambridge Bay Airport,69.1081008911,-105.138000488,90,NA,CA,CA-NU,Cambridge Bay,yes,CYCB,YCB,CYCB,,,https://en.wikipedia.org/wiki/Cambridge_Bay_Airport,
+1686,CYCC,medium_airport,Cornwall Regional Airport,45.092637,-74.567724,175,NA,CA,CA-ON,Cornwall,no,CYCC,YCC,CYCC,,,https://en.wikipedia.org/wiki/Cornwall_Regional_Airport,
+1687,CYCD,medium_airport,Nanaimo Airport,49.05497,-123.869863,92,NA,CA,CA-BC,Nanaimo,yes,CYCD,YCD,CYCD,,https://www.ycd.ca/,https://en.wikipedia.org/wiki/Nanaimo_Airport,
+1688,CYCE,medium_airport,Centralia / James T. Field Memorial Aerodrome,43.285599,-81.508301,824,NA,CA,CA-ON,Huron Park,no,CYCE,YCE,CYCE,CYCE,,https://en.wikipedia.org/wiki/Centralia/Huron_Airpark,"RCAF Station Centralia, Huron Airpark"
+1689,CYCG,medium_airport,Castlegar/West Kootenay Regional Airport,49.296398,-117.632004,1624,NA,CA,CA-BC,Castlegar,yes,CYCG,YCG,CYCG,,https://www.wkrairport.ca/,https://en.wikipedia.org/wiki/Castlegar_Airport,
+1690,CYCH,medium_airport,Miramichi Airport,47.007801,-65.449203,108,NA,CA,CA-NB,Miramichi,no,CYCH,YCH,CYCH,,,https://en.wikipedia.org/wiki/Miramichi_Airport,"CFB Chatham, RCAF Station Chatham"
+1364,CYCK,small_airport,Chatham Kent Airport,42.3064002991,-82.0819015503,650,NA,CA,CA-ON,Chatham-Kent,no,CYCK,XCM,CYCK,NZ3,,https://en.wikipedia.org/wiki/Chatham-Kent_Airport,CNZ3
+1691,CYCL,medium_airport,Charlo Airport,47.990799,-66.330299,132,NA,CA,CA-NB,Charlo,yes,CYCL,YCL,CYCL,,,https://en.wikipedia.org/wiki/Charlo_Airport,
+1692,CYCN,medium_airport,Cochrane Airport,49.10559844970703,-81.01360321044922,861,NA,CA,CA-ON,Cochrane,no,CYCN,YCN,CYCN,,,https://en.wikipedia.org/wiki/Cochrane_Airport,
+1693,CYCO,small_airport,Kugluktuk Airport,67.816408,-115.14307,74,NA,CA,CA-NU,Kugluktuk,yes,CYCO,YCO,CYCO,,,https://en.wikipedia.org/wiki/Kugluktuk_Airport,Copper Mine Airport
+1694,CYCP,medium_airport,Blue River Airport,52.11669921875,-119.28299713134766,2240,NA,CA,CA-BC,Blue River,no,,,CYCP,,,https://en.wikipedia.org/wiki/Blue_River_Airport,YCP
+1695,CYCQ,medium_airport,Chetwynd Airport,55.687198638916016,-121.62699890136719,2000,NA,CA,CA-BC,Chetwynd,no,CYCQ,YCQ,CYCQ,,,https://en.wikipedia.org/wiki/Chetwynd_Airport,
+1696,CYCR,small_airport,Cross Lake (Charlie Sinclair Memorial) Airport,54.609758,-97.762442,709,NA,CA,CA-MB,Cross Lake,yes,CYCR,YCR,CYCR,,,https://en.wikipedia.org/wiki/Cross_Lake_(Charlie_Sinclair_Memorial)_Airport,
+1697,CYCS,small_airport,Chesterfield Inlet Airport,63.346901,-90.731102,32,NA,CA,CA-NU,Chesterfield Inlet,yes,CYCS,YCS,CYCS,,,https://en.wikipedia.org/wiki/Chesterfield_Inlet_Airport,
+1698,CYCT,small_airport,Coronation Airport,52.0750007629,-111.444999695,2595,NA,CA,CA-AB,Coronation,no,CYCT,YCT,CYCT,,,https://en.wikipedia.org/wiki/Coronation_Airport,YCT
+1699,CYCW,small_airport,Chilliwack Airport,49.153157,-121.939309,32,NA,CA,CA-BC,Chilliwack,no,CYCW,YCW,CYCW,,,https://en.wikipedia.org/wiki/Chilliwack_Airport,YCW
+1700,CYCX,heliport,CFB Gagetown Heliport,45.837766,-66.436729,166,NA,CA,CA-NB,Oromocto,no,,,CYCX,,,https://en.wikipedia.org/wiki/CFB_Gagetown,YCX
+1701,CYCY,small_airport,Clyde River Airport,70.486099,-68.516701,87,NA,CA,CA-NU,Clyde River,yes,CYCY,YCY,CYCY,,,https://en.wikipedia.org/wiki/Clyde_River_Airport,
+1702,CYCZ,small_airport,Fairmont Hot Springs Airport,50.331052,-115.873739,2661,NA,CA,CA-BC,Fairmont Hot Springs,no,CYCZ,YCZ,CYCZ,,,https://en.wikipedia.org/wiki/Fairmont_Hot_Springs_Airport,YCZ
+353838,CYD2,seaplane_base,Yellow Dog Lodge Seaplane Base,62.890556,-113.867778,725,NA,CA,CA-NT,Graham Lake,no,,,CYD2,CYD2,https://yellowdoglodge.ca/,https://en.wikipedia.org/wiki/Graham_Lake_(Yellow_Dog_Lodge)_Water_Aerodrome,
+1703,CYDA,medium_airport,Dawson City Airport,64.04309844970703,-139.1280059814453,1215,NA,CA,CA-YT,Dawson City,yes,CYDA,YDA,CYDA,,,https://en.wikipedia.org/wiki/Dawson_City_Airport,
+1704,CYDB,medium_airport,Burwash Airport,61.371101,-139.041,2647,NA,CA,CA-YT,Burwash Landing,no,CYDB,YDB,CYDB,,,https://en.wikipedia.org/wiki/Burwash_Airport,
+1705,CYDC,small_airport,Princeton Airport,49.468102,-120.511002,2298,NA,CA,CA-BC,Town of Princeton,no,,,CYDC,,http://princetonairport.ca,https://en.wikipedia.org/wiki/Princeton_Airport_(British_Columbia),YDC
+1706,CYDF,medium_airport,Deer Lake Airport,49.208159,-57.396147,72,NA,CA,CA-NL,Deer Lake,yes,CYDF,YDF,CYDF,,https://deerlakeairport.com/,https://en.wikipedia.org/wiki/Deer_Lake_Airport_(Newfoundland),
+1707,CYDH,heliport,Ottawa / Dwyer Hill Heliport,45.1305999756,-75.9483032227,325,NA,CA,CA-ON,Ottawa,no,,,CYDH,CYDH,,,YDH
+1708,CYDL,small_airport,Dease Lake Airport,58.422199,-130.031998,2600,NA,CA,CA-BC,Dease Lake,yes,CYDL,YDL,CYDL,,,https://en.wikipedia.org/wiki/Dease_Lake_Airport,YDL
+1709,CYDM,medium_airport,Ross River Airport,61.9706001282,-132.42300415,2314,NA,CA,CA-YT,Ross River,no,CYDM,XRR,CYDM,YDM,,https://en.wikipedia.org/wiki/Ross_River_Airport,
+1710,CYDN,medium_airport,Dauphin Barker Airport,51.1008,-100.052002,999,NA,CA,CA-MB,Dauphin,yes,CYDN,YDN,CYDN,,,https://en.wikipedia.org/wiki/Dauphin_(Lt._Col_W.G._(Billy)_Barker_VC_Airport),
+1711,CYDO,medium_airport,Dolbeau-Saint-Felicien Airport,48.7785,-72.375,372,NA,CA,CA-QC,Dolbeau-Saint-Felicien,no,CYDO,YDO,CYDO,,,https://en.wikipedia.org/wiki/Dolbeau-St-F%C3%A9licien_Airport,Dolbeau St Methode
+1712,CYDP,small_airport,Nain Airport,56.550778,-61.682224,22,NA,CA,CA-NL,Nain,yes,CYDP,YDP,CYDP,,,https://en.wikipedia.org/wiki/Nain_Airport,
+1713,CYDQ,medium_airport,Dawson Creek Airport,55.741245,-120.183263,2148,NA,CA,CA-BC,Dawson Creek,no,CYDQ,YDQ,CYDQ,,,https://en.wikipedia.org/wiki/Dawson_Creek_Airport,
+1714,CYEA,small_airport,Empress Airport,50.93330001831055,-110.01300048828125,2211,NA,CA,CA-AB,Empress,no,,,CYEA,,,https://en.wikipedia.org/wiki/Empress_Airport,YEA
+1715,CYED,heliport,Edmonton (CFB Namao) Heliport,53.667934,-113.472548,2257,NA,CA,CA-AB,Edmonton,no,,,CYED,CYED,,https://en.wikipedia.org/wiki/CFB_Edmonton,"YED, CFB Edmonton, Namao Airport"
+1716,CYEE,medium_airport,Huronia Airport,44.6833000183,-79.9282989502,770,NA,CA,CA-ON,Midland,no,,,CYEE,YEE,,https://en.wikipedia.org/wiki/Midland/Huronia_Airport,
+1717,CYEG,large_airport,Edmonton International Airport,53.3097,-113.580002,2373,NA,CA,CA-AB,Edmonton,yes,CYEG,YEG,CYEG,CYEG,http://www.edmontonairports.com/,https://en.wikipedia.org/wiki/Edmonton_International_Airport,
+1718,CYEK,small_airport,Arviat Airport,61.0942,-94.070801,32,NA,CA,CA-NU,Arviat,yes,CYEK,YEK,CYEK,,,https://en.wikipedia.org/wiki/Arviat_Airport,
+1719,CYEL,medium_airport,Elliot Lake Municipal Airport,46.351398468,-82.5614013672,1087,NA,CA,CA-ON,Elliot Lake,no,CYEL,YEL,CYEL,,http://cyelont.tripod.com/cyel/,https://en.wikipedia.org/wiki/Elliot_Lake_Municipal_Airport,
+1720,CYEM,medium_airport,Manitoulin East Municipal Airport,45.842435,-81.857595,869,NA,CA,CA-ON,Sheguiandah,no,CYEM,YEM,CYEM,,,https://en.wikipedia.org/wiki/Manitowaning/Manitoulin_East_Municipal_Airport,
+1721,CYEN,medium_airport,Estevan Airport,49.2103004456,-102.966003418,1905,NA,CA,CA-SK,Estevan,no,CYEN,YEN,CYEN,,,https://en.wikipedia.org/wiki/Estevan_Regional_Aerodrome,YEN
+1722,CYER,small_airport,Fort Severn Airport,56.018902,-87.676102,48,NA,CA,CA-ON,Fort Severn,yes,CYER,YER,CYER,,,https://en.wikipedia.org/wiki/Fort_Severn_Airport,
+1723,CYES,small_airport,Edmundston Airport,47.487208,-68.477732,490,NA,CA,CA-NB,Edmundston,no,,,CYES,,,https://en.wikipedia.org/wiki/Edmundston_Airport,YES
+1724,CYET,medium_airport,Edson Airport,53.578899383499994,-116.464996338,3043,NA,CA,CA-AB,Edson,no,CYET,YET,CYET,,,https://en.wikipedia.org/wiki/Edson_Airport,
+1725,CYEU,small_airport,Eureka Airport,79.9946975708,-85.814201355,256,NA,CA,CA-NU,Eureka,no,CYEU,YEU,CYEU,,,https://en.wikipedia.org/wiki/Eureka_Aerodrome,YEU
+1726,CYEV,medium_airport,Inuvik Mike Zubko Airport,68.30419921880001,-133.483001709,224,NA,CA,CA-NT,Inuvik,yes,CYEV,YEV,CYEV,,,https://en.wikipedia.org/wiki/Inuvik_(Mike_Zubko)_Airport,
+1727,CYEY,medium_airport,Amos/Magny Airport,48.563903,-78.249702,1068,NA,CA,CA-QC,Amos,no,CYEY,YEY,CYEY,,,https://en.wikipedia.org/wiki/Amos/Magny_Airport,
+1728,CYFA,small_airport,Fort Albany Airport,52.203451,-81.695194,48,NA,CA,CA-ON,Fort Albany,yes,CYFA,YFA,CYFA,,,https://en.wikipedia.org/wiki/Fort_Albany_Airport,
+1729,CYFB,medium_airport,Iqaluit Airport,63.756402,-68.555801,110,NA,CA,CA-NU,Iqaluit,yes,CYFB,YFB,CYFB,,,https://en.wikipedia.org/wiki/Iqaluit_Airport,Frobisher Bay Air Base
+1730,CYFC,medium_airport,Fredericton International Airport,45.868697,-66.529891,68,NA,CA,CA-NB,Fredericton,yes,CYFC,YFC,CYFC,,,https://en.wikipedia.org/wiki/Greater_Fredericton_Airport,
+1731,CYFD,medium_airport,Brantford Municipal Airport,43.131401,-80.342499,815,NA,CA,CA-ON,Brantford,no,,,CYFD,,http://www.brantfordairport.ca,https://en.wikipedia.org/wiki/Brantford_Airport,YFD
+1732,CYFE,medium_airport,Forestville Airport,48.74610137939453,-69.09719848632812,293,NA,CA,CA-QC,Forestville,no,CYFE,YFE,CYFE,,,https://en.wikipedia.org/wiki/Forestville_Airport,
+1733,CYFH,small_airport,Fort Hope Airport,51.561901,-87.907799,899,NA,CA,CA-ON,Fort Hope,yes,CYFH,YFH,CYFH,,,https://en.wikipedia.org/wiki/Fort_Hope_Airport,
+1734,CYFJ,medium_airport,Mont-Tremblant International Airport,46.409401,-74.779999,827,NA,CA,CA-QC,La Macaza,no,CYFJ,YTM,CYFJ,,http://www.mtia.ca/,https://en.wikipedia.org/wiki/Rivi%C3%A8re_Rouge/Mont-Tremblant_International_Inc_Airport,YFJ
+1735,CYFO,small_airport,Flin Flon Airport,54.678101,-101.681999,997,NA,CA,CA-MB,Flin Flon,yes,CYFO,YFO,CYFO,,,https://en.wikipedia.org/wiki/Flin_Flon_Airport,
+1736,CYFR,medium_airport,Fort Resolution Airport,61.1808013916,-113.690002441,526,NA,CA,CA-NT,Fort Resolution,no,CYFR,YFR,CYFR,,,https://en.wikipedia.org/wiki/Fort_Resolution_Airport,YFR
+1737,CYFS,medium_airport,Fort Simpson Airport,61.76020050048828,-121.23699951171875,555,NA,CA,CA-NT,Fort Simpson,yes,CYFS,YFS,CYFS,,,https://en.wikipedia.org/wiki/Fort_Simpson_Airport,
+1738,CYFT,small_airport,Makkovik Airport,55.077335,-59.187942,234,NA,CA,CA-NL,Makkovik,yes,CYFT,YMN,CYFT,,,https://en.wikipedia.org/wiki/Makkovik_Airport,YFT
+353841,CYG2,small_airport,Yellow Gold Airport,43.159989,-81.703091,642,NA,CA,CA-ON,Parkhill,no,,,CYG2,CYG2,,https://en.wikipedia.org/wiki/Parkhill_(Yellow_Gold)_Aerodrome,
+1739,CYGB,small_airport,Texada Gillies Bay Airport,49.694341,-124.518099,326,NA,CA,CA-BC,Texada,no,CYGB,YGB,CYGB,,,https://en.wikipedia.org/wiki/Texada/Gillies_Bay_Airport,
+1740,CYGD,medium_airport,Goderich Airport,43.7668991089,-81.7106018066,712,NA,CA,CA-ON,Goderich,no,,,CYGD,YGD,http://www.goderich.ca/en/townhall/airport.asp,https://en.wikipedia.org/wiki/Goderich_Airport,
+1741,CYGE,medium_airport,Golden Airport,51.299196,-116.982002,2575,NA,CA,CA-BC,Golden,no,,,CYGE,,,https://en.wikipedia.org/wiki/Golden_Airport,AL4
+1742,CYGH,small_airport,Fort Good Hope Airport,66.240658,-128.647757,268,NA,CA,CA-NT,Fort Good Hope,yes,CYGH,YGH,CYGH,,,https://en.wikipedia.org/wiki/Fort_Good_Hope_Airport,
+1743,CYGK,medium_airport,Kingston Norman Rogers Airport,44.2253,-76.596901,305,NA,CA,CA-ON,Kingston,no,CYGK,YGK,CYGK,,http://www.ygkairport.com,https://en.wikipedia.org/wiki/Kingston/Norman_Rogers_Airport,
+1744,CYGL,medium_airport,La Grande Rivière Airport,53.625301361083984,-77.7042007446289,639,NA,CA,CA-QC,La Grande Rivière,yes,CYGL,YGL,CYGL,,,https://en.wikipedia.org/wiki/La_Grande_Rivi%C3%A8re_Airport,
+1745,CYGM,medium_airport,Gimli Industrial Park Airport,50.62810134887695,-97.04329681396484,753,NA,CA,CA-MB,Gimli,no,CYGM,YGM,CYGM,,,https://en.wikipedia.org/wiki/Gimli_Industrial_Park_Airport,
+1746,CYGO,small_airport,Gods Lake Narrows Airport,54.55768,-94.490061,617,NA,CA,CA-MB,Gods Lake Narrows,yes,CYGO,YGO,CYGO,,,https://en.wikipedia.org/wiki/Gods_Lake_Narrows_Airport,
+1747,CYGP,medium_airport,Michel-Pouliot Gaspé Airport,48.774915,-64.481893,112,NA,CA,CA-QC,Gaspé,yes,CYGP,YGP,CYGP,,,https://en.wikipedia.org/wiki/Gasp%C3%A9_Airport,
+1748,CYGQ,medium_airport,Geraldton Greenstone Regional Airport,49.77830123901367,-86.93939971923828,1144,NA,CA,CA-ON,Geraldton,no,CYGQ,YGQ,CYGQ,,,https://en.wikipedia.org/wiki/Geraldton_(Greenstone_Regional)_Airport,
+1749,CYGR,medium_airport,Îles-de-la-Madeleine Airport,47.425242,-61.778612,35,NA,CA,CA-QC,Les Îles-de-la-Madeleine,yes,CYGR,YGR,CYGR,,,https://en.wikipedia.org/wiki/%C3%8Eles-de-la-Madeleine_Airport,
+1750,CYGT,small_airport,Igloolik Airport,69.3647,-81.816101,174,NA,CA,CA-NU,Igloolik,yes,CYGT,YGT,CYGT,,,https://en.wikipedia.org/wiki/Igloolik_Airport,
+1751,CYGV,medium_airport,Havre-Saint-Pierre Airport,50.281898,-63.611401,124,NA,CA,CA-QC,Havre-Saint-Pierre,yes,CYGV,YGV,CYGV,,,https://en.wikipedia.org/wiki/Havre_St-Pierre_Airport,
+1752,CYGW,medium_airport,Kuujjuarapik Airport,55.281898498535156,-77.76529693603516,34,NA,CA,CA-QC,Kuujjuarapik,yes,CYGW,YGW,CYGW,,,https://en.wikipedia.org/wiki/Kuujjuarapik_Airport,
+1753,CYGX,small_airport,Gillam Airport,56.35712,-94.711504,476,NA,CA,CA-MB,Gillam,yes,CYGX,YGX,CYGX,,,https://en.wikipedia.org/wiki/Gillam_Airport,
+1754,CYGZ,small_airport,Grise Fiord Airport,76.425823,-82.908583,146,NA,CA,CA-NU,Grise Fiord,yes,CYGZ,YGZ,CYGZ,,,https://en.wikipedia.org/wiki/Grise_Fiord_Airport,
+1755,CYHA,small_airport,Quaqtaq Airport,61.046398,-69.617798,103,NA,CA,CA-QC,Quaqtaq,yes,CYHA,YQC,CYHA,,,https://en.wikipedia.org/wiki/Quaqtaq_Airport,YHA
+1756,CYHB,small_airport,Hudson Bay Airport,52.8166999817,-102.310997009,1175,NA,CA,CA-SK,Hudson Bay,no,CYHB,YHB,CYHB,,,https://en.wikipedia.org/wiki/Hudson_Bay_Airport,YHB
+28453,CYHC,seaplane_base,Vancouver Harbour Water Aerodrome,49.290739,-123.118541,,NA,CA,CA-BC,Vancouver,yes,CYHC,CXH,CYHC,,https://harbourair.com/locations/vancouver-harbour/,https://en.wikipedia.org/wiki/Vancouver_Harbour_Water_Aerodrome,"YHC, Vancouver Coal Harbour Seaplane Base"
+1757,CYHD,medium_airport,Dryden Regional Airport,49.831699,-92.744202,1354,NA,CA,CA-ON,Dryden,no,CYHD,YHD,CYHD,,,https://en.wikipedia.org/wiki/Dryden_Regional_Airport,
+1758,CYHE,small_airport,Hope Airport / FVRD Regional Airpark,49.368865,-121.49495,128,NA,CA,CA-BC,Hope,no,CYHE,YHE,CYHE,,,https://en.wikipedia.org/wiki/Hope_Aerodrome,YHE
+1759,CYHF,medium_airport,Hearst René Fontaine Municipal Airport,49.71419906616211,-83.68609619140625,827,NA,CA,CA-ON,Hearst,no,CYHF,YHF,CYHF,,,https://en.wikipedia.org/wiki/Hearst_(Ren%C3%A9_Fontaine)_Municipal_Airport,
+1760,CYHH,small_airport,Nemiscau Airport,51.691101,-76.135597,802,NA,CA,CA-QC,Nemiscau,yes,CYHH,YNS,CYHH,,,https://en.wikipedia.org/wiki/Nemiscau_Airport,YHH
+1761,CYHI,small_airport,Ulukhaktok Holman Airport,70.762802,-117.806,117,NA,CA,CA-NT,Ulukhaktok,yes,CYHI,YHI,CYHI,,,https://en.wikipedia.org/wiki/Ulukhaktok/Holman_Airport,
+1762,CYHK,small_airport,Gjoa Haven Airport,68.635597,-95.849701,152,NA,CA,CA-NU,Gjoa Haven,yes,CYHK,YHK,CYHK,,,https://en.wikipedia.org/wiki/Gjoa_Haven_Airport,
+1763,CYHM,medium_airport,John C. Munro Hamilton International Airport,43.17348,-79.931185,780,NA,CA,CA-ON,Hamilton,yes,CYHM,YHM,CYHM,,http://www.flyhi.ca/,https://en.wikipedia.org/wiki/Hamilton/John_C._Munro_International_Airport,Mount Hope Airport
+1764,CYHN,medium_airport,Hornepayne Municipal Airport,49.19309997558594,-84.75890350341797,1099,NA,CA,CA-ON,Hornepayne,no,CYHN,YHN,CYHN,,,https://en.wikipedia.org/wiki/Hornepayne_Municipal_Airport,
+1765,CYHO,small_airport,Hopedale Airport,55.448757,-60.228124,39,NA,CA,CA-NL,Hopedale,yes,CYHO,YHO,CYHO,,,https://en.wikipedia.org/wiki/Hopedale_Airport,CC5
+1465,CYHP,small_airport,Poplar Hill Airport,52.1133,-94.2556,1095,NA,CA,CA-ON,Poplar Hill,yes,CYHP,YHP,CYHP,CPV7,,https://en.wikipedia.org/wiki/Poplar_Hill_Airport,
+1766,CYHR,small_airport,Chevery Airport,50.468322,-59.637823,39,NA,CA,CA-QC,Chevery,yes,CYHR,YHR,CYHR,,,https://en.wikipedia.org/wiki/Chevery_Airport,
+1436,CYHS,small_airport,Hanover / Saugeen Municipal Airport,44.158298,-81.062798,939,NA,CA,CA-ON,Hanover,no,,,CYHS,CYHS,http://www.saugeenmunicipalairport.com/,https://en.wikipedia.org/wiki/Hanover/Saugeen_Municipal_Airport,"CPN4, YHS, PN4"
+1767,CYHT,medium_airport,Haines Junction Airport,60.7892,-137.546005,2150,NA,CA,CA-YT,Haines Junction,no,CYHT,YHT,CYHT,,,https://en.wikipedia.org/wiki/Haines_Junction_Airport,
+1768,CYHU,medium_airport,Montréal / Saint-Hubert Metropolitan Airport,45.517502,-73.416901,90,NA,CA,CA-QC,Montréal,yes,CYHU,YHU,CYHU,,http://www.dashl.ca/,https://en.wikipedia.org/wiki/Montr%C3%A9al/St-Hubert_Airport,
+1769,CYHY,medium_airport,Hay River / Merlyn Carter Airport,60.8396987915,-115.782997131,541,NA,CA,CA-NT,Hay River,yes,CYHY,YHY,CYHY,,,https://en.wikipedia.org/wiki/Hay_River_Airport,
+1770,CYHZ,large_airport,Halifax / Stanfield International Airport,44.8807983398,-63.5085983276,477,NA,CA,CA-NS,Halifax,yes,CYHZ,YHZ,CYHZ,,http://www.hiaa.ca/,https://en.wikipedia.org/wiki/Halifax_International_Airport,Robert L. Stanfield International Airport
+1771,CYIB,medium_airport,Atikokan Municipal Airport,48.773899,-91.638603,1408,NA,CA,CA-ON,Atikokan,no,CYIB,YIB,CYIB,,http://www.atikokaninfo.com/community/transportation/airport/,https://en.wikipedia.org/wiki/Atikokan_Municipal_Airport,
+1772,CYID,medium_airport,Digby / Annapolis Regional Airport,44.5458450365,-65.7854247093,499,NA,CA,CA-NS,Digby,no,CYID,YDG,CYID,,,https://en.wikipedia.org/wiki/Digby_Airport,YID
+1773,CYIF,medium_airport,St Augustin Airport,51.2117,-58.658298,20,NA,CA,CA-QC,St-Augustin,yes,CYIF,YIF,CYIF,,,https://en.wikipedia.org/wiki/St-Augustin_Airport,Pakuashipi Airport
+1774,CYIK,small_airport,Ivujivik Airport,62.417301,-77.925301,126,NA,CA,CA-QC,Ivujivik,yes,CYIK,YIK,CYIK,,,https://en.wikipedia.org/wiki/Ivujivik_Airport,
+1775,CYIO,small_airport,Pond Inlet Airport,72.689494,-77.968941,181,NA,CA,CA-NU,Pond Inlet,yes,CYIO,YIO,CYIO,,,https://en.wikipedia.org/wiki/Pond_Inlet_Airport,
+1776,CYIV,medium_airport,Island Lake Airport,53.857200622558594,-94.65360260009766,770,NA,CA,CA-MB,Island Lake,yes,CYIV,YIV,CYIV,,,https://en.wikipedia.org/wiki/Island_Lake_Airport,
+1777,CYJA,small_airport,Jasper Airport,52.996418,-118.060233,3350,NA,CA,CA-AB,Jasper,no,CYJA,YJA,CYJA,,,https://en.wikipedia.org/wiki/Jasper_Airport,
+1778,CYJF,medium_airport,Fort Liard Airport,60.235801696799996,-123.46900177,708,NA,CA,CA-NT,Fort Liard,no,CYJF,YJF,CYJF,,,https://en.wikipedia.org/wiki/Fort_Liard_Airport,YJF
+1779,CYJM,small_airport,Fort St James Airport,54.39720153808594,-124.26300048828125,2364,NA,CA,CA-BC,Fort St. James,no,,,CYJM,,,https://en.wikipedia.org/wiki/Fort_St._James_(Perison)_Airport,YJM
+1780,CYJN,medium_airport,St Jean Airport,45.29439926147461,-73.28109741210938,136,NA,CA,CA-QC,St Jean,no,CYJN,YJN,CYJN,,,https://en.wikipedia.org/wiki/St-Jean_Airport,
+1781,CYJP,small_airport,Fort Providence Airport,61.319400787353516,-117.60600280761719,524,NA,CA,CA-NT,Fort Providence,no,,,CYJP,,,https://en.wikipedia.org/wiki/Fort_Providence_Airport,YJP
+1782,CYJQ,small_airport,Denny Island Airport,52.136474,-128.056182,162,NA,CA,CA-BC,Denny Island,no,,,CYJQ,,,https://en.wikipedia.org/wiki/Bella_Bella_(Denny_Island)_Airport,YJQ
+1783,CYJT,medium_airport,Stephenville Dymond International Airport,48.54339,-58.552892,84,NA,CA,CA-NL,Stephenville,yes,CYJT,YJT,CYJT,,https://cyjt.com/,https://en.wikipedia.org/wiki/Stephenville_Airport,Ernest Harmon AFB
+1784,CYKA,medium_airport,Kamloops John Moose Fulton Field Regional Airport,50.703038,-120.448641,1133,NA,CA,CA-BC,Kamloops,yes,CYKA,YKA,CYKA,,,https://en.wikipedia.org/wiki/Kamloops_Airport,Fulton
+1785,CYKC,small_airport,Collins Bay Airport,58.236099243199995,-103.678001404,1341,NA,CA,CA-SK,Collins Bay,no,CYKC,YKC,CYKC,,,https://en.wikipedia.org/wiki/Collins_Bay_Airport,YKC
+1786,CYKD,small_airport,Aklavik/Freddie Carmichael Airport,68.223297,-135.00599,23,NA,CA,CA-NT,Aklavik,yes,CYKD,LAK,CYKD,,,https://en.wikipedia.org/wiki/Aklavik_Airport,YKD
+1787,CYKF,medium_airport,Region of Waterloo International Airport,43.4608,-80.378601,1054,NA,CA,CA-ON,Breslau,yes,CYKF,YKF,CYKF,,http://www.waterlooairport.ca/,https://en.wikipedia.org/wiki/Region_of_Waterloo_International_Airport,"Breslau, Kitchener, Waterloo, Cambridge, YKF"
+1788,CYKG,small_airport,Kangiqsujuaq (Wakeham Bay) Airport,61.5886,-71.929398,501,NA,CA,CA-QC,Kangiqsujuaq,yes,CYKG,YWB,CYKG,,,https://en.wikipedia.org/wiki/Kangiqsujuaq_(Wakeham_Bay)_Airport,
+1789,CYKJ,medium_airport,Key Lake Airport,57.256099700927734,-105.61799621582031,1679,NA,CA,CA-SK,Key Lake,no,CYKJ,YKJ,CYKJ,,,https://en.wikipedia.org/wiki/Key_Lake_Airport,
+1790,CYKL,medium_airport,Schefferville Airport,54.805301666259766,-66.8052978515625,1709,NA,CA,CA-QC,Schefferville,yes,CYKL,YKL,CYKL,,,https://en.wikipedia.org/wiki/Schefferville_Airport,
+1340,CYKM,medium_airport,Kincardine Municipal Airport,44.201401,-81.606697,772,NA,CA,CA-ON,Kincardine,no,CYKM,YKD,CYKM,CYKM,http://www.kincardineairport.com/,https://en.wikipedia.org/wiki/Kincardine_Airport,"NS7, CNS7"
+1791,CYKO,small_airport,Akulivik Airport,60.8186,-78.148598,75,NA,CA,CA-QC,Akulivik,yes,CYKO,AKV,CYKO,,,https://en.wikipedia.org/wiki/Akulivik_Airport,YKO
+1343,CYKP,small_airport,Ogoki Post Airport,51.6585998535,-85.9017028809,594,NA,CA,CA-ON,Ogoki Post,yes,CYKP,YOG,CYKP,CYKP,,https://en.wikipedia.org/wiki/Ogoki_Post_Airport,NT3
+1792,CYKQ,small_airport,Waskaganish Airport,51.473301,-78.758301,80,NA,CA,CA-QC,Waskaganish,yes,CYKQ,YKQ,CYKQ,,,https://en.wikipedia.org/wiki/Waskaganish_Airport,
+430648,CYKT,small_airport,Tranquille Valley Airfield,50.859547,-120.671132,,NA,CA,CA-BC,Tranquille,no,,,CYKT,,,,
+1793,CYKX,medium_airport,Kirkland Lake Airport,48.21030044555664,-79.98139953613281,1157,NA,CA,CA-ON,Kirkland Lake,no,CYKX,YKX,CYKX,,,https://en.wikipedia.org/wiki/Kirkland_Lake_Airport,
+1794,CYKY,medium_airport,Kindersley Airport,51.5175018311,-109.180999756,2277,NA,CA,CA-SK,Kindersley,no,CYKY,YKY,CYKY,YKY,,https://en.wikipedia.org/wiki/Kindersley_Airport,YKY
+1796,CYLA,small_airport,Aupaluk Airport,59.2967,-69.599701,119,NA,CA,CA-QC,Aupaluk,yes,CYLA,YPJ,CYLA,,,https://en.wikipedia.org/wiki/Aupaluk_Airport,YLA
+1797,CYLB,small_airport,Lac La Biche Airport,54.7703018188,-112.031997681,1884,NA,CA,CA-AB,Lac La Biche,no,CYLB,YLB,CYLB,,,https://en.wikipedia.org/wiki/Lac_La_Biche_Airport,YLB
+1798,CYLC,small_airport,Kimmirut Airport,62.848253,-69.877853,175,NA,CA,CA-NU,Kimmirut,yes,CYLC,YLC,CYLC,,,https://en.wikipedia.org/wiki/Kimmirut_Airport,Lake Harbour
+1799,CYLD,medium_airport,Chapleau Airport,47.81999969482422,-83.3467025756836,1470,NA,CA,CA-ON,Chapleau,no,CYLD,YLD,CYLD,,,https://en.wikipedia.org/wiki/Chapleau_Airport,
+1800,CYLH,small_airport,Lansdowne House Airport,52.195599,-87.934196,834,NA,CA,CA-ON,Lansdowne House,yes,CYLH,YLH,CYLH,,,https://en.wikipedia.org/wiki/Lansdowne_House_Airport,
+639,CYLI,small_airport,Lillooet Airport,50.674702,-121.893997,1320,NA,CA,CA-BC,Lillooet,no,,,CYLI,,,https://en.wikipedia.org/wiki/Lillooet_Airport,"AR3, CAR3"
+1801,CYLJ,medium_airport,Meadow Lake Airport,54.125301361083984,-108.52300262451172,1576,NA,CA,CA-SK,Meadow Lake,no,CYLJ,YLJ,CYLJ,,,https://en.wikipedia.org/wiki/Meadow_Lake_Airport,
+1802,CYLK,small_airport,Lutselk'e Airport,62.417823,-110.682793,596,NA,CA,CA-NT,Lutselk'e,yes,CYLK,YSG,CYLK,,,https://en.wikipedia.org/wiki/Lutselk'e_Airport,"YLK, EL3, Snowdrift Airport"
+1803,CYLL,medium_airport,Lloydminster Airport,53.3092,-110.072998,2193,NA,CA,CA-AB,Lloydminster,yes,CYLL,YLL,CYLL,,,https://en.wikipedia.org/wiki/Lloydminster_Airport,
+1804,CYLQ,small_airport,La Tuque Airport,47.4096984863,-72.7889022827,548,NA,CA,CA-QC,La Tuque,no,CYLQ,YLQ,CYLQ,,,https://en.wikipedia.org/wiki/La_Tuque_Airport,YLQ
+1805,CYLR,medium_airport,Leaf Rapids Airport,56.513301849365234,-99.98529815673828,959,NA,CA,CA-MB,Leaf Rapids,no,CYLR,YLR,CYLR,,,https://en.wikipedia.org/wiki/Leaf_Rapids_Airport,
+1293,CYLS,medium_airport,Barrie-Lake Simcoe Regional Airport,44.485056,-79.554663,972,NA,CA,CA-ON,Barrie,yes,CYLS,YLK,CYLS,CYLS,http://www.lakesimcoeairport.com/,https://en.wikipedia.org/wiki/Barrie-Orillia_(Lake_Simcoe_Regional)_Airport,"NB9, CNB9, Oro Station"
+1806,CYLT,medium_airport,Alert Airport,82.517263,-62.283037,100,NA,CA,CA-NU,Alert,no,CYLT,YLT,CYLT,,,https://en.wikipedia.org/wiki/Alert_Airport,YLT
+1807,CYLU,small_airport,Kangiqsualujjuaq (Georges River) Airport,58.711399,-65.992798,215,NA,CA,CA-QC,Kangiqsualujjuaq,yes,CYLU,XGR,CYLU,,,https://en.wikipedia.org/wiki/Kangiqsualujjuaq_(Georges_River)_Airport,YLU
+1808,CYLW,large_airport,Kelowna International Airport,49.9561,-119.377998,1421,NA,CA,CA-BC,Kelowna,yes,CYLW,YLW,CYLW,,http://www.kelowna.ca/CM/Page68.aspx,https://en.wikipedia.org/wiki/Kelowna_International_Airport,"Kelowna, Okanagan"
+1809,CYMA,medium_airport,Mayo Airport,63.61640167236328,-135.8679962158203,1653,NA,CA,CA-YT,Mayo,no,CYMA,YMA,CYMA,,,https://en.wikipedia.org/wiki/Mayo_Airport,
+1810,CYME,medium_airport,Matane Airport,48.85689926147461,-67.45330047607422,102,NA,CA,CA-QC,Matane,no,CYME,YME,CYME,,,https://en.wikipedia.org/wiki/Matane_Airport,
+1811,CYMG,medium_airport,Manitouwadge Airport,49.083900451660156,-85.86060333251953,1198,NA,CA,CA-ON,Manitouwadge,no,CYMG,YMG,CYMG,,,https://en.wikipedia.org/wiki/Manitouwadge_Airport,
+1812,CYMH,small_airport,Mary's Harbour Airport,52.302837,-55.847433,38,NA,CA,CA-NL,Mary's Harbour,yes,CYMH,YMH,CYMH,,,https://en.wikipedia.org/wiki/Mary's_Harbour_Airport,
+1813,CYMJ,medium_airport,Moose Jaw Air Vice Marshal C. M. McEwen Airport,50.330299377441406,-105.55899810791016,1892,NA,CA,CA-SK,Moose Jaw,no,CYMJ,YMJ,CYMJ,,,https://en.wikipedia.org/wiki/Moose_Jaw/Air_Vice_Marshal_C.M._McEwen_Airport,CFB Moose Jaw
+1814,CYML,medium_airport,Charlevoix Airport,47.59749984741211,-70.2238998413086,977,NA,CA,CA-QC,Charlevoix,no,CYML,YML,CYML,,,https://en.wikipedia.org/wiki/Charlevoix_Airport,
+1815,CYMM,medium_airport,Fort McMurray International Airport,56.653301,-111.222,1211,NA,CA,CA-AB,Fort McMurray,yes,CYMM,YMM,CYMM,,,https://en.wikipedia.org/wiki/Fort_McMurray_Airport,
+1816,CYMO,medium_airport,Moosonee Airport,51.291099548339844,-80.60780334472656,30,NA,CA,CA-ON,Moosonee,yes,CYMO,YMO,CYMO,,,https://en.wikipedia.org/wiki/Moosonee_Airport,
+1817,CYMT,medium_airport,Chapais Airport,49.77190017700195,-74.5280990600586,1270,NA,CA,CA-QC,Chibougamau,yes,CYMT,YMT,CYMT,,,https://en.wikipedia.org/wiki/Chibougamau/Chapais_Airport,
+1818,CYMU,small_airport,Umiujaq Airport,56.536098,-76.518303,250,NA,CA,CA-QC,Umiujaq,yes,CYMU,YUD,CYMU,,,https://en.wikipedia.org/wiki/Umiujaq_Airport,YMU
+1819,CYMW,small_airport,Maniwaki Airport,46.2728,-75.990601,656,NA,CA,CA-QC,Messines,no,CYMW,YMW,CYMW,YMW,,https://en.wikipedia.org/wiki/Maniwaki_Airport,YMW
+1820,CYMX,medium_airport,Montreal Mirabel International Airport,45.679501,-74.038696,270,NA,CA,CA-QC,Montréal,yes,CYMX,YMX,CYMX,,,https://en.wikipedia.org/wiki/Montr%C3%A9al-Mirabel_International_Airport,YMQ
+1821,CYMY,small_airport,Ear Falls Airport,50.717231,-93.384501,1269,NA,CA,CA-ON,Ear Falls,no,,,CDP2,CDP2,,https://en.wikipedia.org/wiki/Ear_Falls_Airport,"CYMY, YMY"
+320826,CYN6,seaplane_base,Gravenhurst/Muskoka Bay Seaplane Base,44.9438,-79.4045,742,NA,CA,CA-ON,Gravenhurst,no,,,CYN6,CYN6,,https://en.wikipedia.org/wiki/Gravenhurst/Muskoka_Bay_Water_Aerodrome,
+1822,CYNA,medium_airport,Natashquan Airport,50.190114,-61.78898,39,NA,CA,CA-QC,Natashquan,yes,CYNA,YNA,CYNA,,,https://en.wikipedia.org/wiki/Natashquan_Airport,
+1823,CYNC,small_airport,Wemindji Airport,53.010601,-78.8311,66,NA,CA,CA-QC,Wemindji,yes,CYNC,YNC,CYNC,,,https://en.wikipedia.org/wiki/Wemindji_Airport,
+1824,CYND,medium_airport,Ottawa / Gatineau Airport,45.521702,-75.563599,211,NA,CA,CA-QC,Gatineau,yes,CYND,YND,CYND,CYND,http://www.ego-airport.ca/english/propos_ego/,https://en.wikipedia.org/wiki/Ottawa-Gatineau_Airport,YND
+1825,CYNE,small_airport,Norway House Airport,53.958302,-97.8442,734,NA,CA,CA-MB,Norway House,yes,CYNE,YNE,CYNE,,,https://en.wikipedia.org/wiki/Norway_House_Airport,
+1826,CYNH,small_airport,Hudson's Hope Airport,56.035142,-121.978326,2220,NA,CA,CA-BC,Hudson's Hope,no,CYNH,YNH,CYNH,,,https://en.wikipedia.org/wiki/Hudson's_Hope_Airport,YNH
+1827,CYNJ,medium_airport,Langley Airport,49.1008,-122.630997,34,NA,CA,CA-BC,Langley,no,CYNJ,YLY,CYNJ,,,https://en.wikipedia.org/wiki/Langley_Regional_Airport,YNJ
+1828,CYNL,medium_airport,Points North Landing Airport,58.27669906616211,-104.08200073242188,1605,NA,CA,CA-SK,Points North Landing,yes,CYNL,YNL,CYNL,,,https://en.wikipedia.org/wiki/Points_North_Landing_Airport,
+1829,CYNM,medium_airport,Matagami Airport,49.76169967651367,-77.80280303955078,918,NA,CA,CA-QC,Matagami,no,CYNM,YNM,CYNM,,,https://en.wikipedia.org/wiki/Matagami_Airport,
+1830,CYNN,medium_airport,Nejanilini Lake Airport,59.4874992371,-97.78029632570001,1000,NA,CA,CA-MB,Nejanilini Lake,no,,,CYNN,,,https://en.wikipedia.org/wiki/Nejanilini_Lake_Airport,
+1831,CYNR,small_airport,Fort Mackay / Horizon Airport,57.381699,-111.700996,916,NA,CA,CA-AB,Fort Mackay,no,CYNR,HZP,CYNR,CYNR,,https://en.wikipedia.org/wiki/Fort_MacKay/Horizon_Airport,YNR
+1832,CYOA,medium_airport,Ekati Airport,64.6988983154,-110.614997864,1536,NA,CA,CA-NT,Ekati,no,CYOA,YOA,CYOA,,,https://en.wikipedia.org/wiki/Ekati_Airport,YOA
+1833,CYOC,small_airport,Old Crow Airport,67.570602,-139.839005,824,NA,CA,CA-YT,Old Crow,yes,CYOC,YOC,CYOC,,,https://en.wikipedia.org/wiki/Old_Crow_Airport,
+1834,CYOD,medium_airport,CFB Cold Lake,54.404998779296875,-110.27899932861328,1775,NA,CA,CA-AB,Cold Lake,no,CYOD,YOD,CYOD,,,https://en.wikipedia.org/wiki/CFB_Cold_Lake,
+1835,CYOH,small_airport,Oxford House Airport,54.9333,-95.2789,663,NA,CA,CA-MB,Oxford House,yes,CYOH,YOH,CYOH,,,https://en.wikipedia.org/wiki/Oxford_House_Airport,
+1836,CYOJ,medium_airport,High Level Airport,58.62139892578125,-117.16500091552734,1110,NA,CA,CA-AB,High Level,yes,CYOJ,YOJ,CYOJ,,,https://en.wikipedia.org/wiki/High_Level_Airport,
+1837,CYOO,medium_airport,Oshawa Executive Airport,43.922798,-78.894997,460,NA,CA,CA-ON,Oshawa,no,CYOO,YOO,CYOO,CYOO,https://www.oshawa.ca/business-development/oshawa-executive-airport/,https://en.wikipedia.org/wiki/Oshawa_Airport,
+1838,CYOP,medium_airport,Rainbow Lake Airport,58.491402,-119.407997,1759,NA,CA,CA-AB,Rainbow Lake,no,CYOP,YOP,CYOP,,,https://en.wikipedia.org/wiki/Rainbow_Lake_Airport,
+1839,CYOS,medium_airport,Owen Sound / Billy Bishop Regional Airport,44.5903015137,-80.8375015259,1007,NA,CA,CA-ON,Owen Sound,no,CYOS,YOS,CYOS,,,https://en.wikipedia.org/wiki/Owen_Sound/Billy_Bishop_Regional_Airport,YOS
+1840,CYOW,large_airport,Ottawa Macdonald-Cartier International Airport,45.322498,-75.669197,374,NA,CA,CA-ON,Ottawa,yes,CYOW,YOW,CYOW,YOW,https://yow.ca/,https://en.wikipedia.org/wiki/Ottawa_Macdonald%E2%80%93Cartier_International_Airport,"Uplands, UUP, CUUP"
+1841,CYOY,heliport,C J.H.L.(Joe) Lecomte) Heliport,46.902885,-71.503658,550,NA,CA,CA-QC,Valcartier,no,,,CYOY,,,https://en.wikipedia.org/wiki/CFB_Valcartier,
+1630,CYP2,heliport,Halifax (Windsor Park) Heliport,44.657422,-63.611795,125,NA,CA,CA-NS,Halifax,no,,,CYP2,CYP2,,,
+1842,CYPA,medium_airport,Prince Albert Glass Field,53.214199066199996,-105.672996521,1405,NA,CA,CA-SK,Prince Albert,yes,CYPA,YPA,CYPA,,,https://en.wikipedia.org/wiki/Prince_Albert_(Glass_Field)_Airport,
+1843,CYPC,small_airport,Paulatuk (Nora Aliqatchialuk Ruben) Airport,69.360838,-124.07547,15,NA,CA,CA-NT,Paulatuk,yes,CYPC,YPC,CYPC,,,https://en.wikipedia.org/wiki/Paulatuk_Airport,
+1844,CYPD,medium_airport,Port Hawkesbury Airport,45.6567001343,-61.3680992126,377,NA,CA,CA-NS,Port Hawkesbury,no,CYPD,YPS,CYPD,,http://www.porthawkesburyairport.com/,https://en.wikipedia.org/wiki/Port_Hawkesbury_Airport,YPD
+1845,CYPE,medium_airport,Peace River Airport,56.226898,-117.446999,1873,NA,CA,CA-AB,Peace River,yes,CYPE,YPE,CYPE,,,https://en.wikipedia.org/wiki/Peace_River_Airport,
+1846,CYPG,medium_airport,Portage-la-Prairie / Southport Airport,49.903099,-98.273817,885,NA,CA,CA-MB,Portage la Prairie,no,CYPG,YPG,CYPG,,http://southport.ca/,https://en.wikipedia.org/wiki/Portage_La_Prairie/Southport_Airport,
+1847,CYPH,small_airport,Inukjuak Airport,58.471901,-78.076897,83,NA,CA,CA-QC,Inukjuak,yes,CYPH,YPH,CYPH,,,https://en.wikipedia.org/wiki/Inukjuak_Airport,
+1848,CYPK,medium_airport,Pitt Meadows Regional Airport,49.21488,-122.709294,11,NA,CA,CA-BC,Pitt Meadows,yes,CYPK,,CYPK,,,https://en.wikipedia.org/wiki/Pitt_Meadows_Airport,YPK
+1849,CYPL,medium_airport,Pickle Lake Airport,51.4463996887207,-90.21420288085938,1267,NA,CA,CA-ON,Pickle Lake,yes,CYPL,YPL,CYPL,,,https://en.wikipedia.org/wiki/Pickle_Lake_Airport,
+1850,CYPM,small_airport,Pikangikum Airport,51.819698,-93.973297,1114,NA,CA,CA-ON,Pikangikum,yes,CYPM,YPM,CYPM,,,https://en.wikipedia.org/wiki/Pikangikum_Airport,
+1851,CYPN,medium_airport,Port-Menier Airport,49.836399,-64.288597,167,NA,CA,CA-QC,Port-Menier,yes,CYPN,YPN,CYPN,,,https://en.wikipedia.org/wiki/Port-Menier_Airport,Anticosti
+1852,CYPO,small_airport,Peawanuck Airport,54.987932,-85.442648,173,NA,CA,CA-ON,Peawanuck,yes,CYPO,YPO,CYPO,,,https://en.wikipedia.org/wiki/Peawanuck_Airport,
+1853,CYPP,small_airport,Parent Airport,47.931901,-74.608103,1400,NA,CA,CA-QC,Parent,no,,,CYPP,,,https://en.wikipedia.org/wiki/Parent_Airport,SW4
+1854,CYPQ,medium_airport,Peterborough Regional Airport,44.232251,-78.362053,628,NA,CA,CA-ON,Peterborough,yes,CYPQ,YPQ,CYPQ,,https://www.peterborough.ca/business-building-development/airport/,https://en.wikipedia.org/wiki/Peterborough_Airport,
+1855,CYPR,medium_airport,Prince Rupert Airport,54.286098480199996,-130.445007324,116,NA,CA,CA-BC,Prince Rupert,yes,CYPR,YPR,CYPR,,http://www.ypr.ca/,https://en.wikipedia.org/wiki/Prince_Rupert_Airport,
+1856,CYPS,small_airport,Pemberton Regional Airport,50.302502,-122.737999,670,NA,CA,CA-BC,Pemberton,no,,,CYPS,,,https://en.wikipedia.org/wiki/Pemberton_Regional_Airport,AR5
+1857,CYPT,small_airport,Pelee Island Airport,41.778033,-82.674222,572,NA,CA,CA-ON,Pelee Island,yes,CYPT,,CYPT,,,https://en.wikipedia.org/wiki/Pelee_Island_Airport,YPT
+1858,CYPU,small_airport,Puntzi Mountain Airport,52.11280059814453,-124.1449966430664,2985,NA,CA,CA-BC,Puntzi Mountain,no,,,CYPU,,,https://en.wikipedia.org/wiki/Puntzi_Mountain_Airport,YPU
+1859,CYPW,medium_airport,Powell River Airport,49.83420181274414,-124.5,425,NA,CA,CA-BC,Powell River,yes,CYPW,YPW,CYPW,,,https://en.wikipedia.org/wiki/Powell_River_Airport,
+1860,CYPX,medium_airport,Puvirnituq Airport,60.050598,-77.286903,74,NA,CA,CA-QC,Puvirnituq,yes,CYPX,YPX,CYPX,,,https://en.wikipedia.org/wiki/Puvirnituq_Airport,
+1861,CYPY,medium_airport,Fort Chipewyan Airport,58.7672004699707,-111.11699676513672,761,NA,CA,CA-AB,Fort Chipewyan,yes,CYPY,YPY,CYPY,,,https://en.wikipedia.org/wiki/Fort_Chipewyan_Airport,
+1862,CYPZ,medium_airport,Burns Lake Airport,54.3764,-125.950996,2343,NA,CA,CA-BC,Burns Lake,yes,CYPZ,YPZ,CYPZ,YPZ,,https://en.wikipedia.org/wiki/Burns_Lake_Airport,YPZ
+1863,CYQA,medium_airport,Muskoka Airport,44.975376,-79.306546,925,NA,CA,CA-ON,Gravenhurst,yes,CYQA,YQA,CYQA,,,https://en.wikipedia.org/wiki/Muskoka_Airport,
+1864,CYQB,large_airport,Quebec Jean Lesage International Airport,46.7911,-71.393303,244,NA,CA,CA-QC,Quebec,yes,CYQB,YQB,CYQB,YQB,http://www.aeroportdequebec.com/,https://en.wikipedia.org/wiki/Qu%C3%A9bec/Jean_Lesage_International_Airport,Quebec City
+1865,CYQD,medium_airport,The Pas Airport,53.97140121459961,-101.09100341796875,887,NA,CA,CA-MB,The Pas,yes,CYQD,YQD,CYQD,,,https://en.wikipedia.org/wiki/The_Pas_Airport,
+1866,CYQF,medium_airport,Red Deer Regional Airport,52.182201,-113.893997,2968,NA,CA,CA-AB,Springbrook,no,CYQF,YQF,CYQF,,,https://en.wikipedia.org/wiki/Red_Deer_Regional_Airport,
+1867,CYQG,medium_airport,Windsor International Airport,42.2756,-82.955597,622,NA,CA,CA-ON,Windsor,yes,CYQG,YQG,CYQG,,,https://en.wikipedia.org/wiki/Windsor_Airport,
+1868,CYQH,medium_airport,Watson Lake Airport,60.116839,-128.821993,2255,NA,CA,CA-YT,Watson Lake,yes,CYQH,YQH,CYQH,,,https://en.wikipedia.org/wiki/Watson_Lake_Airport,
+1869,CYQI,medium_airport,Yarmouth Airport,43.826900482177734,-66.08809661865234,141,NA,CA,CA-NS,Yarmouth,no,CYQI,YQI,CYQI,,,https://en.wikipedia.org/wiki/Yarmouth_Airport,
+1870,CYQK,medium_airport,Kenora Airport,49.788299560546875,-94.36309814453125,1332,NA,CA,CA-ON,Kenora,yes,CYQK,YQK,CYQK,,,https://en.wikipedia.org/wiki/Kenora_Airport,
+1871,CYQL,medium_airport,Lethbridge County Airport,49.6302986145,-112.800003052,3048,NA,CA,CA-AB,Lethbridge,yes,CYQL,YQL,CYQL,,,https://en.wikipedia.org/wiki/Lethbridge_County_Airport,Kenyon Field
+1872,CYQM,medium_airport,Greater Moncton Roméo LeBlanc International Airport,46.113189,-64.67719,232,NA,CA,CA-NB,Moncton,yes,CYQM,YQM,CYQM,,https://cyqm.ca/,https://en.wikipedia.org/wiki/Greater_Moncton_International_Airport,"CYQM, YQM, Moncton"
+1873,CYQN,medium_airport,Nakina Airport,50.18280029296875,-86.69640350341797,1057,NA,CA,CA-ON,Nakina,yes,CYQN,YQN,CYQN,,,https://en.wikipedia.org/wiki/Nakina_Airport,
+1874,CYQQ,medium_airport,Comox Valley International Airport / CFB Comox,49.7108,-124.887001,84,NA,CA,CA-BC,Comox,yes,CYQQ,YQQ,CYQQ,,https://comoxairport.com,https://en.wikipedia.org/wiki/CFB_Comox,CFB Comox
+1875,CYQR,medium_airport,Regina International Airport,50.431938,-104.660906,1894,NA,CA,CA-SK,Regina,yes,CYQR,YQR,CYQR,,,https://en.wikipedia.org/wiki/Regina_International_Airport,"YQR, Roland J. Groome International"
+1876,CYQS,medium_airport,St Thomas Municipal Airport,42.77000045776367,-81.11080169677734,778,NA,CA,CA-ON,St Thomas,no,CYQS,YQS,CYQS,,,https://en.wikipedia.org/wiki/St._Thomas_Airport,
+1877,CYQT,medium_airport,Thunder Bay International Airport,48.371899,-89.323898,653,NA,CA,CA-ON,Thunder Bay,yes,CYQT,YQT,CYQT,,,https://en.wikipedia.org/wiki/Thunder_Bay_International_Airport,
+1878,CYQU,medium_airport,Grande Prairie Airport,55.1796989441,-118.885002136,2195,NA,CA,CA-AB,Grande Prairie,yes,CYQU,YQU,CYQU,,http://www.grandeprairieairport.com/,https://en.wikipedia.org/wiki/Grande_Prairie_Airport,
+1879,CYQV,medium_airport,Yorkton Municipal Airport,51.264702,-102.461998,1635,NA,CA,CA-SK,Yorkton,no,CYQV,YQV,CYQV,,,https://en.wikipedia.org/wiki/Yorkton_Municipal_Airport,RCAF Station Yorkton
+1880,CYQW,medium_airport,North Battleford Airport,52.769409,-108.243742,1799,NA,CA,CA-SK,North Battleford,no,CYQW,YQW,CYQW,,,https://en.wikipedia.org/wiki/North_Battleford_(Cameron_McIntosh)_Airport,
+1881,CYQX,medium_airport,Gander International Airport,48.936258,-54.567719,496,NA,CA,CA-NL,Gander,yes,CYQX,YQX,CYQX,,,https://en.wikipedia.org/wiki/Gander_International_Airport,CFB Gander
+1882,CYQY,medium_airport,Sydney / J.A. Douglas McCurdy Airport,46.161072,-60.049759,203,NA,CA,CA-NS,Sydney,yes,CYQY,YQY,CYQY,,https://www.sydneyairport.ca/,https://en.wikipedia.org/wiki/Sydney/J.A._Douglas_McCurdy_Airport,
+1883,CYQZ,medium_airport,Quesnel Airport,53.026100158691406,-122.51000213623047,1789,NA,CA,CA-BC,Quesnel,yes,CYQZ,YQZ,CYQZ,,,https://en.wikipedia.org/wiki/Quesnel_Airport,
+1884,CYRA,small_airport,Rae Lakes Airport,64.116096,-117.309998,723,NA,CA,CA-NT,Gamètì,yes,CYRA,YRA,CYRA,,,https://en.wikipedia.org/wiki/Gam%C3%A8t%C3%AC/Rae_Lakes_Airport,
+1885,CYRB,medium_airport,Resolute Bay Airport,74.7169036865,-94.9693984985,215,NA,CA,CA-NU,Resolute Bay,yes,CYRB,YRB,CYRB,,,https://en.wikipedia.org/wiki/Resolute_Bay_Airport,
+1886,CYRC,small_airport,Chicoutimi/Saint-Honoré Aerodrome,48.520963,-71.05256,543,NA,CA,CA-QC,Saint-Honoré,no,,,CYRC,,,https://en.wikipedia.org/wiki/Chicoutimi/Saint-Honor%C3%A9_Aerodrome,"YRC, RCAF Saint-Honoré"
+1887,CYRI,medium_airport,Rivière-du-Loup Airport,47.764400482177734,-69.58470153808594,427,NA,CA,CA-QC,Rivière-du-Loup,no,CYRI,YRI,CYRI,,http://www.ville.riviere-du-loup.qc.ca/anglais/aeroport.php,https://en.wikipedia.org/wiki/Rivi%C3%A8re-du-Loup_Airport,
+1888,CYRJ,medium_airport,Roberval Airport,48.519665,-72.265735,586,NA,CA,CA-QC,Roberval,yes,CYRJ,YRJ,CYRJ,,,https://en.wikipedia.org/wiki/Roberval_Airport,
+1889,CYRL,medium_airport,Red Lake Airport,51.066898345947266,-93.79309844970703,1265,NA,CA,CA-ON,Red Lake,yes,CYRL,YRL,CYRL,,,https://en.wikipedia.org/wiki/Red_Lake_Airport,
+1890,CYRM,small_airport,Rocky Mountain House Airport,52.4296989441,-114.903999329,3244,NA,CA,CA-AB,Rocky Mountain House,no,CYRM,YRM,CYRM,,,https://en.wikipedia.org/wiki/Rocky_Mountain_House_Airport,YRM
+1891,CYRO,medium_airport,Ottawa / Rockcliffe Airport,45.460496,-75.644001,188,NA,CA,CA-ON,Ottawa,yes,CYRO,YRO,CYRO,CYRO,http://www.rfc.ca/,https://en.wikipedia.org/wiki/Ottawa/Rockcliffe_Airport,YRO
+1892,CYRP,medium_airport,Ottawa / Carp Airport,45.3191986084,-76.0222015381,382,NA,CA,CA-ON,Ottawa,no,,,CYRP,YRP,http://www.cyrp.ca/,https://en.wikipedia.org/wiki/Ottawa/Carp_Airport,YRP
+1893,CYRQ,medium_airport,Trois-Rivières Airport,46.35279846191406,-72.67939758300781,199,NA,CA,CA-QC,Trois-Rivières,no,CYRQ,YRQ,CYRQ,,,https://en.wikipedia.org/wiki/Trois-Rivi%C3%A8res_Airport,
+1894,CYRS,small_airport,Red Sucker Lake Airport,54.167198,-93.557198,729,NA,CA,CA-MB,Red Sucker Lake,yes,CYRS,YRS,CYRS,,,https://en.wikipedia.org/wiki/Red_Sucker_Lake_Airport,
+1895,CYRT,medium_airport,Rankin Inlet Airport,62.8114013672,-92.1157989502,94,NA,CA,CA-NU,Rankin Inlet,yes,CYRT,YRT,CYRT,,,https://en.wikipedia.org/wiki/Rankin_Inlet_Airport,
+1896,CYRV,medium_airport,Revelstoke Airport,50.962245,-118.184258,1459,NA,CA,CA-BC,Revelstoke,no,CYRV,YRV,CYRV,,,https://en.wikipedia.org/wiki/Revelstoke_Airport,YRV
+320574,CYS7,heliport,Wallaceburg/Chatham-Kent Health Alliance Heliport,42.5992,-82.3668,584,NA,CA,CA-ON,Wallaceburg,no,,,CSY7,CSY7,,,Sydenham District Hospital
+1323,CYSA,small_airport,Stratford Municipal Airport,43.415599823,-80.93440246579999,1215,NA,CA,CA-ON,Stratford,no,,,CYSA,CYSA,http://www.city.stratford.on.ca/site_ourcitylife/know_your_city_airport.asp,https://en.wikipedia.org/wiki/Stratford_Municipal_Airport,"NM4, CNM4"
+1897,CYSB,medium_airport,Sudbury Airport,46.625,-80.79889678955078,1141,NA,CA,CA-ON,Sudbury,yes,CYSB,YSB,CYSB,,,https://en.wikipedia.org/wiki/Sudbury_Airport,
+1898,CYSC,medium_airport,Sherbrooke Airport,45.438599,-71.691399,792,NA,CA,CA-QC,Sherbrooke,no,CYSC,YSC,CYSC,,,https://en.wikipedia.org/wiki/Sherbrooke_Airport,
+1899,CYSD,heliport,Canadian Forces Base Suffield Heliport,50.276359,-111.180189,2525,NA,CA,CA-AB,Ralston,no,CYSD,YSD,CYSD,,,https://en.wikipedia.org/wiki/CFB_Suffield,
+1900,CYSE,small_airport,Squamish Airport,49.7817001343,-123.162002563,171,NA,CA,CA-BC,Squamish,no,CYSE,YSE,CYSE,YSE,,https://en.wikipedia.org/wiki/Squamish_Airport,YSE
+1901,CYSF,medium_airport,Stony Rapids Airport,59.250301361083984,-105.84100341796875,805,NA,CA,CA-SK,Stony Rapids,yes,CYSF,YSF,CYSF,,,https://en.wikipedia.org/wiki/Stony_Rapids_Airport,
+1902,CYSG,medium_airport,Saint-Georges Airport,46.096401,-70.714699,893,NA,CA,CA-QC,Saint-Georges,no,,,CYSG,,,https://en.wikipedia.org/wiki/St-Georges_Airport,"YSG, SW3, St Georges"
+1903,CYSH,medium_airport,Smiths Falls-Montague (Russ Beach) Airport,44.945801,-75.940598,416,NA,CA,CA-ON,Smiths Falls,no,CYSH,YSH,CYSH,,http://www.smithsfallsflyingclub.com/,https://en.wikipedia.org/wiki/Smiths_Falls-Montague_Airport,Smith Falls
+1904,CYSJ,medium_airport,Saint John Airport,45.31610107421875,-65.89029693603516,357,NA,CA,CA-NB,Saint John,yes,CYSJ,YSJ,CYSJ,,,https://en.wikipedia.org/wiki/Saint_John_Airport,
+1905,CYSK,small_airport,Sanikiluaq Airport,56.536891,-79.250221,104,NA,CA,CA-NU,Sanikiluaq,yes,CYSK,YSK,CYSK,,,https://en.wikipedia.org/wiki/Sanikiluaq_Airport,
+1906,CYSL,medium_airport,Saint-Léonard Airport,47.157097,-67.836242,793,NA,CA,CA-NB,Saint-Léonard,yes,CYSL,YSL,CYSL,,,https://en.wikipedia.org/wiki/St._Leonard_Airport,"St. Leonard, St Leonard"
+1907,CYSM,medium_airport,Fort Smith Airport,60.020302,-111.961998,671,NA,CA,CA-NT,Fort Smith,yes,CYSM,YSM,CYSM,,,https://en.wikipedia.org/wiki/Fort_Smith_Airport,
+1908,CYSN,medium_airport,Niagara District Airport,43.191598,-79.171686,321,NA,CA,CA-ON,Niagara-on-the-Lake,yes,CYSN,YCM,CYSN,,,https://en.wikipedia.org/wiki/St._Catharines/Niagara_District_Airport,"YSN, Saint Catharines"
+1909,CYSP,medium_airport,Marathon Airport,48.75529861450195,-86.34439849853516,1035,NA,CA,CA-ON,Marathon,no,CYSP,YSP,CYSP,,,https://en.wikipedia.org/wiki/Marathon_Airport_(Canada),
+1910,CYSQ,small_airport,Atlin Airport,59.57833,-133.668938,2348,NA,CA,CA-BC,Atlin,yes,CYSQ,,CYSQ,,,https://en.wikipedia.org/wiki/Atlin_Airport,"YSQ, EY5"
+1912,CYST,small_airport,St. Theresa Point Airport,53.845261,-94.851966,773,NA,CA,CA-MB,St. Theresa Point,yes,CYST,YST,CYST,,,https://en.wikipedia.org/wiki/St._Theresa_Point_Airport,
+1913,CYSU,medium_airport,Summerside Airport,46.440601,-63.833599,56,NA,CA,CA-PE,Slemon Park,no,CYSU,YSU,CYSU,,,https://en.wikipedia.org/wiki/Summerside_Airport,PEI
+1914,CYSW,small_airport,Sparwood Elk Valley Airport,49.834273,-114.878653,3800,NA,CA,CA-BC,Sparwood,no,,,CYSW,,,https://en.wikipedia.org/wiki/Sparwood/Elk_Valley_Airport,YSW
+1915,CYSY,small_airport,Sachs Harbour (David Nasogaluak Jr. Saaryuaq) Airport,71.993896,-125.242996,282,NA,CA,CA-NT,Sachs Harbour,yes,CYSY,YSY,CYSY,,,https://en.wikipedia.org/wiki/Sachs_Harbour_Airport,
+1916,CYSZ,small_airport,Sainte-Anne-des-Monts Aerodrome,49.1203,-66.529198,71,NA,CA,CA-QC,Sainte-Anne-des-Monts,no,,,CYSZ,,,https://en.wikipedia.org/wiki/Sainte-Anne-des-Monts_Aerodrome,YSZ
+1917,CYTA,medium_airport,Pembroke Airport,45.86439895629883,-77.25170135498047,529,NA,CA,CA-ON,Pembroke,no,CYTA,YTA,CYTA,,http://www.flycyta.ca/,https://en.wikipedia.org/wiki/Pembroke_Airport,
+1918,CYTE,small_airport,Cape Dorset Airport,64.230003,-76.526703,164,NA,CA,CA-NU,Kinngait,yes,CYTE,YTE,CYTE,,,https://en.wikipedia.org/wiki/Cape_Dorset_Airport,
+1919,CYTF,medium_airport,Alma Airport,48.5089,-71.641899,445,NA,CA,CA-QC,Alma,no,CYTF,YTF,CYTF,,,https://en.wikipedia.org/wiki/Alma_Airport,
+1920,CYTH,medium_airport,Thompson Airport,55.80110168457031,-97.86419677734375,729,NA,CA,CA-MB,Thompson,yes,CYTH,YTH,CYTH,,,https://en.wikipedia.org/wiki/Thompson_Airport,
+1921,CYTL,small_airport,Big Trout Lake Airport,53.817799,-89.896896,729,NA,CA,CA-ON,Big Trout Lake,yes,CYTL,YTL,CYTL,,,https://en.wikipedia.org/wiki/Big_Trout_Lake_Airport,
+1922,CYTN,small_airport,Trenton Airport,45.611904,-62.621102,319,NA,CA,CA-NS,Trenton,no,,,CYTN,,,https://en.wikipedia.org/wiki/Trenton_Airport_(Nova_Scotia),"YTN, CU3"
+1923,CYTQ,small_airport,Tasiujaq Airport,58.667801,-69.955803,122,NA,CA,CA-QC,Tasiujaq,yes,CYTQ,YTQ,CYTQ,,,https://en.wikipedia.org/wiki/Tasiujaq_Airport,
+1924,CYTR,medium_airport,CFB Trenton,44.118900299072266,-77.5280990600586,283,NA,CA,CA-ON,Trenton,no,CYTR,YTR,CYTR,,,https://en.wikipedia.org/wiki/CFB_Trenton,
+1925,CYTS,medium_airport,Timmins/Victor M. Power,48.569698333699996,-81.376701355,967,NA,CA,CA-ON,Timmins,yes,CYTS,YTS,CYTS,,http://portal.timmins.ca/portal/en/timmins/residents/airport,https://en.wikipedia.org/wiki/Timmins_Airport,Timmins Victor M. Power Airport
+1926,CYTZ,medium_airport,Billy Bishop Toronto City Airport,43.627852,-79.39553,252,NA,CA,CA-ON,Toronto,yes,CYTZ,YTZ,CYTZ,,https://www.billybishopairport.com/,https://en.wikipedia.org/wiki/Billy_Bishop_Toronto_City_Airport,"YTO, Toronto Island Airport"
+1927,CYUB,small_airport,Tuktoyaktuk / James Gruben Airport,69.433296,-133.026001,15,NA,CA,CA-NT,Tuktoyaktuk,no,CYUB,YUB,CYUB,,,https://en.wikipedia.org/wiki/Tuktoyaktuk/James_Gruben_Airport,
+1928,CYUL,large_airport,Montreal / Pierre Elliott Trudeau International Airport,45.467837,-73.742294,118,NA,CA,CA-QC,Montréal,yes,CYUL,YUL,CYUL,YUL,http://www.admtl.com/passager/Home.aspx,https://en.wikipedia.org/wiki/Montréal–Trudeau_International_Airport,"YMQ, Dorval Airport"
+1929,CYUT,small_airport,Naujaat Airport,66.521024,-86.225166,80,NA,CA,CA-NU,Repulse Bay,yes,CYUT,YUT,CYUT,,,https://en.wikipedia.org/wiki/Repulse_Bay_Airport,Repulse Bay Airport
+1930,CYUX,medium_airport,Hall Beach Airport,68.7761,-81.2425,30,NA,CA,CA-NU,Sanirajak,yes,CYUX,YUX,CYUX,,,https://en.wikipedia.org/wiki/Hall_Beach_Airport,
+1931,CYUY,medium_airport,Rouyn Noranda Airport,48.20610046386719,-78.83560180664062,988,NA,CA,CA-QC,Rouyn-Noranda,yes,CYUY,YUY,CYUY,,,https://en.wikipedia.org/wiki/Rouyn-Noranda_Airport,
+1932,CYVB,medium_airport,Bonaventure Airport,48.071098,-65.460297,123,NA,CA,CA-QC,Bonaventure,yes,CYVB,YVB,CYVB,,,https://en.wikipedia.org/wiki/Bonaventure_Airport,
+1933,CYVC,medium_airport,La Ronge Airport,55.151401519800004,-105.262001038,1242,NA,CA,CA-SK,La Ronge,yes,CYVC,YVC,CYVC,,,https://en.wikipedia.org/wiki/La_Ronge_(Barber_Field)_Airport,
+1934,CYVD,medium_airport,Virden / RJ (Bob) Andrew Field Regional Aerodrome,49.8783,-100.917999,1454,NA,CA,CA-MB,Virden,no,,,CYVD,YVD,,https://en.wikipedia.org/wiki/Virden_Airport,
+1935,CYVG,small_airport,Vermilion Airport,53.357714,-110.827388,2025,NA,CA,CA-AB,Vermilion,no,CYVG,YVG,CYVG,YVG,,https://en.wikipedia.org/wiki/Vermilion_Airport,YVG
+1936,CYVK,medium_airport,Vernon Regional Airport,50.246163,-119.330963,1140,NA,CA,CA-BC,Vernon,no,CYVK,YVE,CYVK,,,https://en.wikipedia.org/wiki/Vernon_Regional_Airport,YVK
+314953,CYVL,small_airport,Tommy Kochon Airport,67.02015,-126.128364,870,NA,CA,CA-NT,Colville Lake,yes,CYVL,YCK,CYVL,,,https://en.wikipedia.org/wiki/Colville_Lake/Tommy_Kochon_Aerodrome,
+1937,CYVM,small_airport,Qikiqtarjuaq Airport,67.54656,-64.03141,21,NA,CA,CA-NU,Qikiqtarjuaq,yes,CYVM,YVM,CYVM,,,https://en.wikipedia.org/wiki/Qikiqtarjuaq_Airport,Broughton Island
+1938,CYVO,medium_airport,Val-d'Or Airport,48.0532989502,-77.7827987671,1107,NA,CA,CA-QC,Val-d'Or,yes,CYVO,YVO,CYVO,,http://www.arvo.qc.ca/,https://en.wikipedia.org/wiki/Val-d'Or_Airport,
+1939,CYVP,medium_airport,Kuujjuaq Airport,58.096099853515625,-68.4269027709961,129,NA,CA,CA-QC,Kuujjuaq,yes,CYVP,YVP,CYVP,,,https://en.wikipedia.org/wiki/Kuujjuaq_Airport,
+1940,CYVQ,medium_airport,Norman Wells Airport,65.28160095214844,-126.7979965209961,238,NA,CA,CA-NT,Norman Wells,yes,CYVQ,YVQ,CYVQ,,,https://en.wikipedia.org/wiki/Norman_Wells_Airport,
+1941,CYVR,large_airport,Vancouver International Airport,49.193901,-123.183998,14,NA,CA,CA-BC,Vancouver,yes,CYVR,YVR,CYVR,,http://www.yvr.ca/,https://en.wikipedia.org/wiki/Vancouver_International_Airport,
+1942,CYVT,small_airport,Buffalo Narrows Airport,55.8418998718,-108.417999268,1423,NA,CA,CA-SK,Buffalo Narrows,no,CYVT,YVT,CYVT,,,https://en.wikipedia.org/wiki/Buffalo_Narrows_Airport,YVT
+1943,CYVV,medium_airport,Wiarton Airport,44.7458,-81.107201,729,NA,CA,CA-ON,Wiarton,yes,CYVV,YVV,CYVV,,http://wiartonairport.ca/,https://en.wikipedia.org/wiki/Wiarton_Airport,
+1944,CYVZ,small_airport,Deer Lake Airport,52.655613,-94.061208,1092,NA,CA,CA-ON,Deer Lake,yes,CYVZ,YVZ,CYVZ,,,https://en.wikipedia.org/wiki/Deer_Lake_Airport_(Ontario),
+1945,CYWA,heliport,Petawawa Heliport,45.952202,-77.319199,427,NA,CA,CA-ON,Petawawa,no,CYWA,YWA,CYWA,,,https://en.wikipedia.org/wiki/Petawawa_Airport,
+954,CYWE,small_airport,Wekweètì Airport,64.190804,-114.077002,1208,NA,CA,CA-NT,Wekweètì,yes,CYWE,YFJ,CYWE,CFJ7,,https://en.wikipedia.org/wiki/Wekwe%C3%A8t%C3%AC_Airport,"Wekweti, Snare Lake"
+1946,CYWG,large_airport,Winnipeg / James Armstrong Richardson International Airport,49.909999847399995,-97.2398986816,783,NA,CA,CA-MB,Winnipeg,yes,CYWG,YWG,CYWG,YWG,http://www.waa.ca/,https://en.wikipedia.org/wiki/Winnipeg_James_Armstrong_Richardson_International_Airport,CFB Winnipeg
+1947,CYWH,seaplane_base,Victoria Harbour Seaplane Base,48.423782,-123.37198,,NA,CA,CA-BC,Victoria,yes,CYWH,YWH,CYWH,,,https://en.wikipedia.org/wiki/Victoria_Inner_Harbour_Airport,
+1948,CYWJ,small_airport,Déline Airport,65.211098,-123.435997,703,NA,CA,CA-NT,Déline,yes,CYWJ,YWJ,CYWJ,,,https://en.wikipedia.org/wiki/Deline_Airport,"Délı̨nę, Fort Franklin"
+1949,CYWK,medium_airport,Wabush Airport,52.92190170288086,-66.8644027709961,1808,NA,CA,CA-NL,Wabush,yes,CYWK,YWK,CYWK,,,https://en.wikipedia.org/wiki/Wabush_Airport,
+1950,CYWL,medium_airport,Williams Lake Airport,52.1831016541,-122.054000854,3085,NA,CA,CA-BC,Williams Lake,yes,CYWL,YWL,CYWL,,,https://en.wikipedia.org/wiki/Williams_Lake_Airport,
+1951,CYWM,small_airport,Athabasca Airport,54.743099212646484,-113.20500183105469,1971,NA,CA,CA-AB,Athabasca,no,,,CYWM,,http://www.athabascacounty.com/Safety%20and%20Utilities/AthabascaAirport.asp,https://en.wikipedia.org/wiki/Athabasca_Airport,YWM
+1952,CYWP,small_airport,Webequie Airport,52.959393,-87.374868,685,NA,CA,CA-ON,Webequie,yes,CYWP,YWP,CYWP,,,https://en.wikipedia.org/wiki/Webequie_Airport,
+1953,CYWV,small_airport,Wainwright Airport,52.796404,-110.858445,2230,NA,CA,CA-AB,Wainwright,no,,,CYWV,,,https://en.wikipedia.org/wiki/Wainwright_Airport_(Alberta),YWV
+1954,CYWY,medium_airport,Wrigley Airport,63.20940017700195,-123.43699645996094,489,NA,CA,CA-NT,Wrigley,no,CYWY,YWY,CYWY,,,https://en.wikipedia.org/wiki/Wrigley_Airport,
+1955,CYXC,medium_airport,Cranbrook/Canadian Rockies International Airport,49.610802,-115.781998,3082,NA,CA,CA-BC,Cranbrook,yes,CYXC,YXC,CYXC,,https://flycanadianrockies.com/,https://en.wikipedia.org/wiki/Cranbrook/Canadian_Rockies_International_Airport,
+1957,CYXE,large_airport,Saskatoon John G. Diefenbaker International Airport,52.170723,-106.700793,1653,NA,CA,CA-SK,Saskatoon,yes,CYXE,YXE,CYXE,,,https://en.wikipedia.org/wiki/Saskatoon/John_G._Diefenbaker_International_Airport,
+1958,CYXH,medium_airport,Medicine Hat Regional Airport,50.018902,-110.721001,2352,NA,CA,CA-AB,Medicine Hat,yes,CYXH,YXH,CYXH,,,https://en.wikipedia.org/wiki/Medicine_Hat_Airport,
+1959,CYXJ,medium_airport,Fort St John / North Peace Regional Airport,56.238098,-120.739998,2280,NA,CA,CA-BC,Fort Saint John,yes,CYXJ,YXJ,CYXJ,,,https://en.wikipedia.org/wiki/Fort_St._John_Airport,BZ3
+1960,CYXK,medium_airport,Rimouski Airport,48.477644,-68.496323,82,NA,CA,CA-QC,Rimouski,yes,CYXK,YXK,CYXK,,,https://en.wikipedia.org/wiki/Rimouski_Airport,
+1961,CYXL,medium_airport,Sioux Lookout Airport,50.11389923095703,-91.9052963256836,1258,NA,CA,CA-ON,Sioux Lookout,yes,CYXL,YXL,CYXL,,,https://en.wikipedia.org/wiki/Sioux_Lookout_Airport,
+1962,CYXN,small_airport,Whale Cove Airport,62.240002,-92.598099,40,NA,CA,CA-NU,Whale Cove,yes,CYXN,YXN,CYXN,,,https://en.wikipedia.org/wiki/Whale_Cove_Airport,
+1963,CYXP,small_airport,Pangnirtung Airport,66.144878,-65.713606,75,NA,CA,CA-NU,Pangnirtung,yes,CYXP,YXP,CYXP,,,https://en.wikipedia.org/wiki/Pangnirtung_Airport,
+1964,CYXQ,medium_airport,Beaver Creek Airport,62.410301208496094,-140.86700439453125,2131,NA,CA,CA-YT,Beaver Creek,no,CYXQ,YXQ,CYXQ,,,https://en.wikipedia.org/wiki/Beaver_Creek_Airport,
+1965,CYXR,medium_airport,Earlton (Timiskaming Regional) Airport,47.697400654599996,-79.8473453522,800,NA,CA,CA-ON,Earlton,no,CYXR,YXR,CYXR,,,https://en.wikipedia.org/wiki/Earlton_(Timiskaming_Regional)_Airport,yxr
+1966,CYXS,medium_airport,Prince George (International) Airport,53.884311,-122.666554,2267,NA,CA,CA-BC,Prince George,yes,CYXS,YXS,CYXS,,https://www.pgairport.ca/,https://en.wikipedia.org/wiki/Prince_George_Airport,Prince George International
+1967,CYXT,medium_airport,Northwest Regional Airport Terrace-Kitimat,54.468498,-128.576009,713,NA,CA,CA-BC,Terrace,yes,CYXT,YXT,CYXT,,,https://en.wikipedia.org/wiki/Terrace_Airport,
+1968,CYXU,medium_airport,London International Airport,43.032845,-81.149003,912,NA,CA,CA-ON,London,yes,CYXU,YXU,CYXU,,http://www.londonairport.on.ca/,https://en.wikipedia.org/wiki/London_International_Airport,
+1969,CYXX,medium_airport,Abbotsford International Airport,49.025299,-122.361,195,NA,CA,CA-BC,Abbotsford,yes,CYXX,YXX,CYXX,,http://www.abbotsfordairport.ca/,https://en.wikipedia.org/wiki/Abbotsford_International_Airport,
+1970,CYXY,medium_airport,Whitehorse / Erik Nielsen International Airport,60.708533,-135.065705,2317,NA,CA,CA-YT,Whitehorse,yes,CYXY,YXY,CYXY,,https://yukonairports.ca/about-yxy,https://en.wikipedia.org/wiki/Whitehorse_International_Airport,
+1971,CYXZ,medium_airport,Wawa Airport,47.96670150756836,-84.78669738769531,942,NA,CA,CA-ON,Wawa,no,CYXZ,YXZ,CYXZ,,,https://en.wikipedia.org/wiki/Wawa_Airport,
+1972,CYYB,medium_airport,North Bay Jack Garland Airport,46.363602,-79.422798,1215,NA,CA,CA-ON,North Bay,yes,CYYB,YYB,CYYB,,https://yyb.ca/,https://en.wikipedia.org/wiki/North_Bay/Jack_Garland_Airport,"Jack Garland Airport, CFB North Bay"
+1973,CYYC,large_airport,Calgary International Airport,51.118822,-114.009933,3557,NA,CA,CA-AB,Calgary,yes,CYYC,YYC,CYYC,,http://www.calgaryairport.com/,https://en.wikipedia.org/wiki/Calgary_International_Airport,McCall Field
+1974,CYYD,medium_airport,Smithers Airport,54.82469940185547,-127.18299865722656,1712,NA,CA,CA-BC,Smithers,yes,CYYD,YYD,CYYD,,,https://en.wikipedia.org/wiki/Smithers_Airport,
+1975,CYYE,medium_airport,Fort Nelson Airport,58.8363990784,-122.597000122,1253,NA,CA,CA-BC,Fort Nelson,yes,CYYE,YYE,CYYE,,,https://en.wikipedia.org/wiki/Fort_Nelson_Airport,
+1976,CYYF,medium_airport,Penticton Airport,49.46310043334961,-119.60199737548828,1129,NA,CA,CA-BC,Penticton,yes,CYYF,YYF,CYYF,,,https://en.wikipedia.org/wiki/Penticton_Regional_Airport,
+1977,CYYG,medium_airport,Charlottetown Airport,46.288911,-63.125174,160,NA,CA,CA-PE,Charlottetown,yes,CYYG,YYG,CYYG,,,https://en.wikipedia.org/wiki/Charlottetown_Airport,PEI
+1978,CYYH,small_airport,Taloyoak Airport,69.5467,-93.576698,92,NA,CA,CA-NU,Taloyoak,yes,CYYH,YYH,CYYH,,,https://en.wikipedia.org/wiki/Taloyoak_Airport,Spence Bay
+1979,CYYJ,large_airport,Victoria International Airport,48.647201,-123.427792,63,NA,CA,CA-BC,Victoria,yes,CYYJ,YYJ,CYYJ,,http://www.victoriaairport.com/,https://en.wikipedia.org/wiki/Victoria_International_Airport,
+1980,CYYL,medium_airport,Lynn Lake Airport,56.86389923095703,-101.07599639892578,1170,NA,CA,CA-MB,Lynn Lake,yes,CYYL,YYL,CYYL,,,https://en.wikipedia.org/wiki/Lynn_Lake_Airport,
+1981,CYYM,small_airport,Cowley Airport,49.636398315399994,-114.09400177,3876,NA,CA,CA-AB,Cowley,no,CYYM,YYM,CYYM,YYM,,https://en.wikipedia.org/wiki/Cowley_Airport,YYM
+1982,CYYN,medium_airport,Swift Current Airport,50.291900634799994,-107.691001892,2680,NA,CA,CA-SK,Swift Current,no,CYYN,YYN,CYYN,,http://www.swiftcurrentairport.com/,https://en.wikipedia.org/wiki/Swift_Current_Airport,YYN
+1983,CYYO,small_airport,Wynyard / W.B. Needham Field,51.8098883726,-104.169788361,1740,NA,CA,CA-SK,Wynyard,no,,,CYYO,,,https://en.wikipedia.org/wiki/Wynyard_Airport%2C_Canada,YYO
+1984,CYYQ,medium_airport,Churchill Airport,58.739200592041016,-94.06500244140625,94,NA,CA,CA-MB,Churchill,yes,CYYQ,YYQ,CYYQ,,,https://en.wikipedia.org/wiki/Churchill_Airport,
+1985,CYYR,medium_airport,Goose Bay Airport,53.3191986084,-60.4258003235,160,NA,CA,CA-NL,Goose Bay,yes,CYYR,YYR,CYYR,,,https://en.wikipedia.org/wiki/CFB_Goose_Bay,CFB Goose Bay
+1986,CYYT,large_airport,St. John's International Airport,47.618599,-52.7519,461,NA,CA,CA-NL,St. John's,yes,CYYT,YYT,CYYT,,https://www.stjohnsairport.com/,https://en.wikipedia.org/wiki/St._John's_International_Airport,
+1987,CYYU,medium_airport,Kapuskasing Airport,49.411587,-82.469645,743,NA,CA,CA-ON,Kapuskasing,no,CYYU,YYU,CYYU,,,https://en.wikipedia.org/wiki/Kapuskasing_Airport,
+1988,CYYW,medium_airport,Armstrong Airport,50.29029846191406,-88.90969848632812,1058,NA,CA,CA-ON,Armstrong,no,CYYW,YYW,CYYW,,,https://en.wikipedia.org/wiki/Armstrong_Airport,
+1989,CYYY,medium_airport,Mont Joli Airport,48.60860061645508,-68.20809936523438,172,NA,CA,CA-QC,Mont-Joli,yes,CYYY,YYY,CYYY,,,https://en.wikipedia.org/wiki/Mont-Joli_Airport,
+1990,CYYZ,large_airport,Toronto Pearson International Airport,43.675935,-79.629421,569,NA,CA,CA-ON,Toronto,yes,CYYZ,YYZ,CYYZ,YYZ,http://www.torontopearson.com/,https://en.wikipedia.org/wiki/Toronto_Pearson_International_Airport,"YTO, Toronto International Airport, Malton"
+1991,CYZD,closed,Downsview Airport,43.742522,-79.465399,652,NA,CA,CA-ON,North York,no,,,,,,https://en.wikipedia.org/wiki/Toronto/Downsview_Airport,"YZD, CYZD"
+1992,CYZE,medium_airport,Gore Bay Manitoulin Airport,45.8853,-82.567802,623,NA,CA,CA-ON,Gore Bay,no,CYZE,YZE,CYZE,,,https://en.wikipedia.org/wiki/Gore_Bay-Manitoulin_Airport,
+1993,CYZF,medium_airport,Yellowknife International Airport,62.462799,-114.440002,675,NA,CA,CA-NT,Yellowknife,yes,CYZF,YZF,CYZF,,https://www.inf.gov.nt.ca/en/services/airports/yellowknife-airport,https://en.wikipedia.org/wiki/Yellowknife_Airport,
+1994,CYZG,small_airport,Salluit Airport,62.179401,-75.667198,743,NA,CA,CA-QC,Salluit,yes,CYZG,YZG,CYZG,,,https://en.wikipedia.org/wiki/Salluit_Airport,
+1995,CYZH,medium_airport,Slave Lake Airport,55.292945,-114.777276,1912,NA,CA,CA-AB,Slave Lake,no,CYZH,YZH,CYZH,,http://slavelakeairport.com,https://en.wikipedia.org/wiki/Slave_Lake_Airport,YZH
+1996,CYZP,medium_airport,Sandspit Airport,53.25429916379999,-131.813995361,21,NA,CA,CA-BC,Sandspit,yes,CYZP,YZP,CYZP,,,https://en.wikipedia.org/wiki/Sandspit_Airport,"Queen Charlotte Islands, Haida Gwaii"
+1997,CYZR,medium_airport,Chris Hadfield Airport,42.999401,-82.308899,594,NA,CA,CA-ON,Sarnia,no,CYZR,YZR,CYZR,,,https://en.wikipedia.org/wiki/Sarnia_(Chris_Hadfield)_Airport,
+1998,CYZS,medium_airport,Coral Harbour Airport,64.1932983398,-83.3593978882,210,NA,CA,CA-NU,Coral Harbour,yes,CYZS,YZS,CYZS,,,https://en.wikipedia.org/wiki/Coral_Harbour_Airport,
+1999,CYZT,medium_airport,Port Hardy Airport,50.680599212646484,-127.36699676513672,71,NA,CA,CA-BC,Port Hardy,yes,CYZT,YZT,CYZT,,,https://en.wikipedia.org/wiki/Port_Hardy_Airport,
+2000,CYZU,medium_airport,Whitecourt Airport,54.143902,-115.787003,2567,NA,CA,CA-AB,Whitecourt,yes,CYZU,YZU,CYZU,,,https://en.wikipedia.org/wiki/Whitecourt_Airport,
+2001,CYZV,medium_airport,Sept-Îles Airport,50.22330093383789,-66.2656021118164,180,NA,CA,CA-QC,Sept-Îles,yes,CYZV,YZV,CYZV,,,https://en.wikipedia.org/wiki/Sept-%C3%8Eles_Airport,
+2002,CYZW,medium_airport,Teslin Airport,60.17279815673828,-132.7429962158203,2313,NA,CA,CA-YT,Teslin,no,CYZW,YZW,CYZW,,,https://en.wikipedia.org/wiki/Teslin_Airport,
+2003,CYZX,medium_airport,CFB Greenwood,44.98440170288086,-64.91690063476562,92,NA,CA,CA-NS,Greenwood,no,CYZX,YZX,CYZX,,,https://en.wikipedia.org/wiki/CFB_Greenwood,Greenwood Airport
+2004,CYZY,medium_airport,Mackenzie Airport,55.297786,-123.133907,2264,NA,CA,CA-BC,Mackenzie,yes,CYZY,,CYZY,,,https://en.wikipedia.org/wiki/Mackenzie_Airport,YZY
