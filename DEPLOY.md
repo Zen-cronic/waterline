@@ -21,7 +21,7 @@ PostGIS ships with Cloud SQL for PostgreSQL — no build needed. Apply `db/schem
 
 ## 2. Agent on Cloud Run
 ```bash
-# from placeholder-1/ (build context = project root; Dockerfile at root)
+# from waterline/ (build context = project root; Dockerfile at root)
 gcloud run deploy waterline-agent \
   --source . \
   --region us-central1 \
