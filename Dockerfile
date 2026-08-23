@@ -1,10 +1,36 @@
 # Waterline agent service — Cloud Run target. Build from the project root:
 #   docker build -t waterline-agent -f Dockerfile .
-FROM python:3.12-slim
-WORKDIR /app
-ENV PYTHONUNBUFFERED=1 PORT=8080
-RUN pip install --no-cache-dir "google-adk[db]==2.7.1" "google-genai>=2.19" \
-    "psycopg[binary]>=3.2" shapely httpx fastapi uvicorn python-dotenv sqlalchemy pg8000
-COPY agent/waterline ./waterline
-COPY data/captures ./data/captures
-CMD ["sh", "-c", "uvicorn waterline.service:app --host 0.0.0.0 --port ${PORT}"]
+FROM python:3.12-slim AS builder
+
+ARG POETRY_VERSION=2.2.1
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /build/agent
+
+# pip installs only the pinned build tool. Application dependencies come
+# exclusively from pyproject.toml + poetry.lock below.
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
+COPY agent/pyproject.toml agent/poetry.lock ./
+RUN poetry install --only main --no-root --no-ansi
+
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/opt/venv/bin:${PATH}" \
+    PORT=8080
+WORKDIR /app/agent
+
+RUN groupadd --system waterline && useradd --system --gid waterline --home /app/agent waterline
+COPY --from=builder /build/agent/.venv /opt/venv
+COPY --chown=waterline:waterline agent/waterline ./waterline
+# Preserve the repository layout expected by route_tools.py/navcanada.py.
+# data/reference is tracked; private data/captures is included by .gcloudignore
+# when present and remains untracked.
+COPY --chown=waterline:waterline data /app/data
+RUN mkdir -p /app/agent/data/outbox && chown -R waterline:waterline /app/agent/data
+
+USER waterline
+EXPOSE 8080
+CMD ["sh", "-c", "python -m uvicorn waterline.service:app --host 0.0.0.0 --port ${PORT}"]

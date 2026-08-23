@@ -1,0 +1,26 @@
+# Explicit Cloud Build source bundle for the agent service.
+.gcloudignore
+.git/
+.gitignore
+.python-version
+.playwright-mcp/
+**/__pycache__/
+**/*.pyc
+**/.env
+**/.env.*
+**/.venv/
+**/.pytest_cache/
+**/node_modules/
+**/.next/
+**/*.log
+docs/
+web/
+agent/data/
+data/outbox/
+
+# Only these runtime data classes cross the private build-context boundary.
+data/*
+!data/reference/
+!data/reference/**
+!data/captures/
+!data/captures/**
