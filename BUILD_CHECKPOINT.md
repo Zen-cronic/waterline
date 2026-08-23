@@ -1,8 +1,8 @@
 # Waterline — build checkpoint & engineering handoff
 
-_Last updated: 2026-08-20. Read this first if you're picking up the build._
+_Last updated: 2026-08-23. Read this first if you're picking up the build._
 
-## Status: **MVP e2e COMPLETE and verified.** Not yet deployed.
+## Status: **Cloud-deploy preflight repaired and locally verified.** Not yet deployed.
 
 Waterline is a live flight briefing for station-less seaplane bases (see `README.md` for the pitch). The full stack runs and has been verified end to end locally. What remains is deployment, the Stage Three bonus, and recording the demo — all listed under **Next steps**.
 
@@ -16,6 +16,8 @@ Waterline is a live flight briefing for station-less seaplane bases (see `README
   - `emit.py` — SSE layer/step/panel emission (the "map builds itself" mechanic; async-queue + contextvar).
   - `agents/model.py` — **FallbackGemini**: model chain `3.7→3.6→3.5 flash` with retry+backoff (see Gotchas).
   - `dispatch.py` + `tools/dispatch_tools.py` — the **real-world loop**: files a flight itinerary + sends a flight-following email (SMTP if configured, else a local outbox `.eml`). Human-gated (only fires with a responsible-person email).
+  - `verification.py` — deterministic fail-closed gate between Verifier and DispatchAgent. It requires both semantic approval and machine-checkable provenance invariants.
+  - `dispatch_receipts` — atomic Cloud SQL claim makes flight-following notices at-most-once across retry/resume; ambiguous SMTP failures require operator reconciliation rather than risking a duplicate.
   - `service.py` — FastAPI, `POST /brief` (SSE), `GET /health`.
 - **Frontend** (`web/`, Next.js 16 + React 19 + MapLibre): streams `/brief`, paints corridor/route/NOTAM/station layers as they arrive, shows the agent-roster feed, briefing, Verifier verdict, and dispatch confirmation. Flight-following email field wired.
 - **DB** (`db/schema.sql`, `docker-compose.yml`): PostGIS (`postgis/postgis:16-3.4`).
@@ -29,7 +31,8 @@ docker compose up -d                     # PostGIS on host port 5455
 cd agent
 export VIRTUAL_ENV="$HOME/.pyenv/versions/.waterline"; export PATH="$VIRTUAL_ENV/bin:$PATH"  # or: pyenv activate .waterline
 set -a; source .env; set +a              # GOOGLE_API_KEY, DATABASE_URL, WATERLINE_MODEL_CHAIN
-uvicorn waterline.service:app --host 127.0.0.1 --port 8088
+poetry install
+poetry run uvicorn waterline.service:app --host 127.0.0.1 --port 8088
 # frontend (new shell)
 cd ../web && NEXT_PUBLIC_AGENT_URL=http://127.0.0.1:8088 pnpm dev   # http://localhost:3010
 ```
@@ -43,6 +46,9 @@ First run loads data automatically via the IngestAgent (live NAV CANADA). To pre
 - Station-less inference: Lady Evelyn Lake → nearest station CYXR **27.8 NM**, confidence ~0.14 (honestly low).
 - Full 7-agent pipeline runs green over HTTP; Verifier enforces "inferred, not measured"; DispatchAgent writes a real `.eml`.
 - Frontend: `pnpm build` passes (type-check + compile); serves 200.
+- Focused safety/packaging suite: safe METAR fractions, real ADK callback halt, ToolContext session identity, retry/resume duplicate suppression, intentional SMTP-failure claim behavior, and both Cloud Run contracts.
+- Backend image: locked Poetry dependency install, non-root runtime, `0.0.0.0:$PORT`, tracked references + private frozen captures in the build context.
+- Frontend image: Next.js standalone output, non-root runtime, `0.0.0.0:$PORT`, explicit build-time agent URL through `web/cloudbuild.yaml`.
 
 ## Next steps (in priority order)
 
@@ -57,4 +63,4 @@ First run loads data automatically via the IngestAgent (live NAV CANADA). To pre
 - **Headless chromium won't launch in the sandbox** — the Playwright smoke (`web/scripts/smoke.mjs`) can't run here. Verify the frontend with `pnpm build` + a `curl` of `/` instead. It'll work on a normal machine.
 - **`docker compose` project name = folder basename.** This folder was renamed to `waterline` specifically so it stops colliding with other `placeholder-*` dirs. If you `docker compose up`, expect a fresh `waterline-*` project/volume; reload data on first up.
 - Strategy/rationale (rubric, competitor, demo script) lives in `docs/` (gitignored) and in the main project's `state.md` (in the `hackathon-agent` repo).
-- Local git only — **no remote has been created** (operator's instruction). Don't push without the operator's go-ahead.
+- The GitHub remote exists, but this repair branch is local-only. Do not push without the operator's go-ahead.
