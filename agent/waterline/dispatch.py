@@ -13,12 +13,32 @@ from __future__ import annotations
 
 import os
 import smtplib
+import hashlib
+import json
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
 _OUTBOX = Path(__file__).resolve().parents[1] / "data" / "outbox"
+
+
+def dispatch_idempotency_key(session_id: str, to: str, route: dict[str, Any],
+                             eta: str, grace_min: int) -> str:
+    """Stable identity for one itinerary send across retry and crash-resume."""
+    canonical = json.dumps(
+        {
+            "session_id": session_id,
+            "to": to.strip().lower(),
+            "dep_id": route.get("dep_id"),
+            "dst_name": route.get("dst_name"),
+            "eta": eta,
+            "grace_min": grace_min,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _smtp_configured() -> bool:

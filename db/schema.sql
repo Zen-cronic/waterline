@@ -49,3 +49,17 @@ CREATE TABLE IF NOT EXISTS ingests (
     parsed      integer NOT NULL,
     source_url  text NOT NULL
 );
+
+-- At-most-once external dispatch ledger. The INSERT claim is committed before
+-- SMTP is attempted, so retry/resume cannot send a second notice. Recipient PII
+-- is represented only as a hash; the actual address remains in session state.
+CREATE TABLE IF NOT EXISTS dispatch_receipts (
+    idempotency_key text PRIMARY KEY,
+    session_id      text NOT NULL,
+    recipient_hash  text NOT NULL,
+    status          text NOT NULL DEFAULT 'claimed'
+                    CHECK (status IN ('claimed', 'sent')),
+    channel         text,
+    claimed_at      timestamptz NOT NULL DEFAULT now(),
+    completed_at    timestamptz
+);

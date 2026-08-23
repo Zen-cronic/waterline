@@ -1,4 +1,4 @@
-"""The Waterline briefing roster — six named agents, strict separation of concerns.
+"""The Waterline briefing roster — seven named agents, strict separation of concerns.
 
     RouteAgent      resolves the request to coordinates (tool: resolve_route)
     IngestAgent     pulls live NOTAMs for the FIR      (tool: fetch_and_load_notams)
@@ -6,6 +6,7 @@
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
     Verifier        refuses any claim not traceable to a source (the failure-tolerant gate)
+    DispatchAgent   files one human-gated flight-following notice after deterministic approval
 
 The deterministic geometry lives entirely in the tools; the agents orchestrate,
 rank, compose, and — crucially — verify. The Verifier is the agent whose only job
@@ -22,6 +23,7 @@ from ..tools.geo_tools import (
     fetch_and_load_notams, filter_route_corridor, infer_destination_weather,
 )
 from ..tools.dispatch_tools import file_and_notify
+from ..verification import guard_dispatch
 
 
 def build_pipeline() -> SequentialAgent:
@@ -96,8 +98,10 @@ def build_pipeline() -> SequentialAgent:
 
     dispatch = LlmAgent(
         name="DispatchAgent", model=ranker, tools=[file_and_notify],
+        before_agent_callback=guard_dispatch,
         instruction=(
-            "You close the real-world loop. Call file_and_notify to file the flight itinerary and "
+            "The deterministic VerifierGate has authorized this step. You close the real-world loop. "
+            "Call file_and_notify to file the flight itinerary and "
             "send the flight-following notice to the responsible person. If the tool reports no "
             "responsible person was provided, say the itinerary was not filed and that the pilot can "
             "add a contact to enable flight-following. Report the outcome in one sentence."),
