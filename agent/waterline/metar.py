@@ -39,7 +39,13 @@ def decode_metar(text: str) -> dict[str, Any]:
         out["wind_kt"] = int(w.group(2))
         out["gust_kt"] = int(w.group(3)) if w.group(3) else None
     if v := _VIS_SM.search(text):
-        out["vis_sm"] = int(v.group(1)) + (eval(v.group(2)) if v.group(2) else 0)
+        whole = int(v.group(1))
+        fraction = 0.0
+        if token := v.group(2):
+            numerator, denominator = (int(part) for part in token.split("/", 1))
+            if denominator > 0:
+                fraction = numerator / denominator
+        out["vis_sm"] = whole + fraction
     ceil = None
     for cover, hh in _SKY.findall(text):
         if cover in ("BKN", "OVC"):

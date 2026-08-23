@@ -1,0 +1,7 @@
+.git/
+.gcloudignore
+node_modules/
+.next/
+.env
+.env.*
+*.log
