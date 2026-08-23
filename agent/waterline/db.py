@@ -8,6 +8,7 @@ DATABASE_URL changes.
 from __future__ import annotations
 
 import os
+import hashlib
 from typing import Any, Optional
 
 import psycopg
@@ -75,6 +76,43 @@ def load_stations(stations: list) -> int:
             )
         conn.commit()
     return len(stations)
+
+
+def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:
+    """Atomically claim one external dispatch before SMTP is attempted.
+
+    The primary-key insert is the cross-process recovery guard: retries and
+    concurrent Cloud Run requests using the same itinerary key cannot both win.
+    We intentionally prefer at-most-once delivery over a possible duplicate.
+    """
+    recipient_hash = hashlib.sha256(recipient.strip().lower().encode("utf-8")).hexdigest()
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO dispatch_receipts (idempotency_key, session_id, recipient_hash)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (idempotency_key) DO NOTHING
+            RETURNING idempotency_key
+            """,
+            (idempotency_key, session_id, recipient_hash),
+        )
+        claimed = cur.fetchone() is not None
+        conn.commit()
+    return claimed
+
+
+def complete_dispatch(idempotency_key: str, channel: str) -> None:
+    """Mark a claimed dispatch complete without exposing its recipient."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE dispatch_receipts
+            SET status = 'sent', channel = %s, completed_at = now()
+            WHERE idempotency_key = %s
+            """,
+            (channel, idempotency_key),
+        )
+        conn.commit()
 
 
 def corridor_filter(

@@ -4,6 +4,12 @@ import { MapView, type MapHandle } from "@/components/MapView";
 
 const AGENT = process.env.NEXT_PUBLIC_AGENT_URL || "http://127.0.0.1:8088";
 type Step = { agent: string; kind: string; detail: string };
+type DispatchResult = {
+  to?: string;
+  channel?: string;
+  sent?: boolean;
+  duplicate_suppressed?: boolean;
+};
 const LAKES = ["Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Smoothwater Lake"];
 
 export default function Page() {
@@ -17,7 +23,7 @@ export default function Page() {
   const [brief, setBrief] = useState("");
   const [verdict, setVerdict] = useState<{ ok: boolean; text: string } | null>(null);
   const [prov, setProv] = useState<string | null>(null);
-  const [dispatch, setDispatch] = useState<any>(null);
+  const [dispatch, setDispatch] = useState<DispatchResult | null>(null);
 
   async function run() {
     setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null); setDispatch(null);
@@ -95,7 +101,9 @@ export default function Page() {
           {verdict && <div className={`verdict ${verdict.ok ? "ok" : "no"}`}>{verdict.text}</div>}
           {dispatch && (
             <div className="verdict ok" style={{ background: "rgba(53,208,214,.12)", color: "#35d0d6", borderColor: "rgba(53,208,214,.3)" }}>
-              ✈ Itinerary filed · flight-following notice sent to {dispatch.to} via {dispatch.channel}
+              {dispatch.duplicate_suppressed
+                ? "✈ Itinerary already filed · retry sent no duplicate notice"
+                : `✈ Itinerary filed · flight-following notice sent to ${dispatch.to} via ${dispatch.channel}`}
             </div>
           )}
           {prov && <div className="prov">source: {prov}</div>}
