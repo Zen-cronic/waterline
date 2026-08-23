@@ -2,10 +2,11 @@
   "name": "waterline-web",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.30.0",
   "scripts": {
     "dev": "next dev -p 3010",
     "build": "next build",
-    "start": "next start -p 3010"
+    "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node .next/standalone/server.js"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",
