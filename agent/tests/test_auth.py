@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 import json
 import time
 from typing import Any
@@ -8,7 +9,7 @@ from google.adk.events import Event, EventActions
 import httpx
 import pytest
 
-from waterline import db, service
+from waterline import condition_card, db, service
 from waterline.auth import RelayAuthenticationError, sign_relay_request, verify_relay_request
 from waterline.state_machine import require_transition
 
@@ -151,12 +152,18 @@ def _install_store(monkeypatch: pytest.MonkeyPatch, store: _MissionStore) -> Non
 
 
 def _approved_state(initial: dict) -> dict:
+    condition_line = (
+        "\nCONDITION CARD\nPlan v1 EAST cove rejected for the log boom. "
+        "Plan v2 proposes WEST cove pending pilot REVIEW."
+        if initial.get("condition_evidence") else ""
+    )
     return {
         **initial,
         "verification": "APPROVED — sources and inference labels agree.",
         "briefing": (
             "HAZARDS\nNOTAM 0 is on route.\nWEATHER\n"
-            "INFERRED from CYXR, 27.8 NM away.\nNOT FOR OPERATIONAL USE."
+            f"INFERRED from CYXR, 27.8 NM away.{condition_line}\n"
+            "NOT FOR OPERATIONAL USE."
         ),
         "weather": {
             "available": True, "reach_nm": 27.8,
@@ -288,6 +295,11 @@ def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> N
                        initial_state, resume):
         assert not resume and session_id.startswith("session-")
         assert user_id == initial_state["mission_owner_ref"]
+        assert initial_state["condition_evidence"]["blocked_sector"] == "east"
+        assert initial_state["flight_plan"]["corrected_plan"]["landing_sector"] == "west"
+        assert initial_state["quarantine_receipt"]["dispatch_authority"] is False
+        assert "IGNORE SAFETY" not in json.dumps(initial_state)
+        assert "IGNORE SAFETY" not in _prompt
         await session_service.create_session(
             app_name="waterline", user_id=user_id, session_id=session_id,
             state=_approved_state(initial_state),
@@ -314,14 +326,24 @@ def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> N
             mission_id, mission = next(iter(store.missions.items()))
             assert mission["session_id"].startswith("session-")
             assert mission["status"] == "awaiting_attestation"
-            assert [event["to_status"] for event in store.events] == states
+            assert mission["request"]["condition_card_ref"].startswith("prepared://")
+            state_changes = [
+                event["to_status"] for event in store.events
+                if event["from_status"] != event["to_status"]
+            ]
+            assert state_changes == states
+            assert [event["event_type"] for event in store.events[1:3]] == [
+                "condition_card_evaluated", "condition_card_quarantined",
+            ]
+            assert store.events[-2]["reason_code"] == "east_cove_obstructed"
+            assert "IGNORE SAFETY" not in json.dumps(store.events)
 
             restore_path = f"/v1/missions/{mission_id}"
             restored = await client.get(
                 restore_path, headers=_headers(restore_path, b"", method="GET"),
             )
             assert restored.status_code == 200
-            assert len(restored.json()["events"]) == 3
+            assert len(restored.json()["events"]) == 5
             attacker = await client.get(
                 restore_path,
                 headers=_headers(restore_path, b"", actor="pilot:attacker", method="GET"),
@@ -344,6 +366,146 @@ def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> N
                 },
             )
             assert "access-control-allow-origin" not in preflight.headers
+
+    asyncio.run(exercise())
+
+
+def test_visual_evidence_review_fails_closed_without_agent_or_dispatch_mutation(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("WATERLINE_RELAY_SECRET", SECRET)
+    sessions = InMemorySessionService()
+    store = _MissionStore()
+    _install_store(monkeypatch, store)
+    artifact = condition_card.load_prepared_artifact()
+    image_bytes = artifact.image_path.read_bytes()
+    extraction = condition_card.ConditionCardExtraction.model_validate(
+        artifact.expected_extraction,
+    ).model_copy(update={"observed_confidence": 0.42})
+    decision = condition_card.validate_condition_card(
+        artifact=artifact,
+        image_bytes=image_bytes,
+        extraction=extraction,
+        destination="Lady Evelyn Lake",
+        trace_id="trace-replaced-by-service",
+        extractor="fixture",
+        now=datetime(2026, 8, 27, tzinfo=timezone.utc),
+    )
+    assert decision.validation_result == "review_required"
+
+    async def review_required(*, destination, trace_id, now=None):
+        receipt = dict(decision.model_receipt)
+        receipt["trace_id"] = trace_id
+        return condition_card.EvidenceDecision(
+            validation_result="review_required",
+            reason_codes=decision.reason_codes,
+            model_receipt=receipt,
+            trusted_evidence=None,
+            quarantine_receipt=decision.quarantine_receipt,
+            plan_revision=None,
+        )
+
+    async def must_not_run(*_args, **_kwargs):
+        raise AssertionError("ADK pipeline must not run on unvalidated visual evidence")
+        yield  # pragma: no cover
+
+    dispatches: list[dict] = []
+
+    async def must_not_dispatch(*args, **kwargs):
+        dispatches.append({"args": args, "kwargs": kwargs})
+        raise AssertionError("review-required evidence must not dispatch")
+
+    monkeypatch.setattr(service, "evaluate_prepared_card", review_required)
+    monkeypatch.setattr(service, "run_briefing", must_not_run)
+    monkeypatch.setattr(service, "dispatch_from_state", must_not_dispatch)
+
+    async def exercise() -> None:
+        transport = httpx.ASGITransport(app=service.create_app(sessions))
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            payload = {
+                "departure": "CYYZ", "destination": "Lady Evelyn Lake",
+                "cruise_alt_ft": 3500,
+            }
+            body = _body(payload)
+            response = await client.post(
+                "/v1/missions", content=body, headers=_headers("/v1/missions", body),
+            )
+            assert response.status_code == 200
+            assert '"validation_result": "review_required"' in response.text
+            assert '"status": "awaiting_attestation"' in response.text
+            mission_id, mission = next(iter(store.missions.items()))
+            session = await sessions.get_session(
+                app_name="waterline", user_id=mission["owner_ref"],
+                session_id=mission["session_id"],
+            )
+            assert session is not None
+            assert "condition_evidence" not in session.state
+            assert "flight_plan" not in session.state
+            assert session.state["condition_receipt"]["dispatch_authority"] is False
+            assert store.events[-2]["reason_code"] == "condition_card_review_required"
+
+            path = f"/v1/missions/{mission_id}/attest"
+            attest_payload = {
+                "confirm_dispatch": True, "responsible_email": "ops@example.com",
+                "eta": "16:00Z", "grace_min": 60,
+            }
+            attest_body = _body(attest_payload)
+            refused = await client.post(
+                path, content=attest_body, headers=_headers(path, attest_body),
+            )
+            assert refused.status_code == 409
+            assert not dispatches
+
+    asyncio.run(exercise())
+
+
+def test_malformed_visual_model_output_becomes_bounded_review_receipt(monkeypatch) -> None:
+    monkeypatch.setenv("WATERLINE_RELAY_SECRET", SECRET)
+    sessions = InMemorySessionService()
+    store = _MissionStore()
+    _install_store(monkeypatch, store)
+
+    async def malformed_output(**_kwargs):
+        raise ValueError("raw model output must not cross the boundary")
+
+    async def must_not_run(*_args, **_kwargs):
+        raise AssertionError("malformed extraction must stop before ADK")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(service, "evaluate_prepared_card", malformed_output)
+    monkeypatch.setattr(service, "run_briefing", must_not_run)
+
+    async def exercise() -> None:
+        transport = httpx.ASGITransport(app=service.create_app(sessions))
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            payload = {
+                "departure": "CYYZ", "destination": "Lady Evelyn Lake",
+                "cruise_alt_ft": 3500,
+            }
+            body = _body(payload)
+            response = await client.post(
+                "/v1/missions", content=body, headers=_headers("/v1/missions", body),
+            )
+            assert response.status_code == 200
+            assert "condition_extraction_failed" in response.text
+            assert "raw model output" not in response.text
+            mission_id, mission = next(iter(store.missions.items()))
+            assert mission["status"] == "awaiting_attestation"
+            session = await sessions.get_session(
+                app_name="waterline", user_id=mission["owner_ref"],
+                session_id=mission["session_id"],
+            )
+            assert session is not None
+            assert set(session.state) == {
+                "mission_id", "mission_owner_ref", "mission_trace_id",
+                "pilot_attestation", "condition_receipt",
+            }
+            assert session.state["condition_receipt"]["confidence"] == 0.0
+            assert "raw model output" not in json.dumps(store.events)
+            assert any(
+                event["event_type"] == "condition_card_rejected"
+                for event in store.events if event["mission_id"] == mission_id
+            )
 
     asyncio.run(exercise())
 

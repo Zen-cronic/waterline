@@ -1,4 +1,5 @@
 import json
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -54,6 +55,7 @@ def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     assert "x-waterline-signature" in relay
     assert "resolvePilotSession" in relay
     assert "WATERLINE_PILOT_ACTOR" not in relay
+    assert "COPY --from=builder --chown=node:node /app/public ./public" in dockerfile
 
 
 def test_database_packages_the_durable_mission_state_machine() -> None:
@@ -68,6 +70,21 @@ def test_database_packages_the_durable_mission_state_machine() -> None:
     assert "CREATE TABLE IF NOT EXISTS mission_events" in schema
     assert "mission_events_status_check" in schema
     assert "mission_events" in cloud_setup
+
+
+def test_prepared_condition_card_is_identical_across_private_and_public_images() -> None:
+    private = ROOT / "data" / "reference" / "evidence" / "lady-evelyn-condition-card-v1.png"
+    public = ROOT / "web" / "public" / "evidence" / "lady-evelyn-condition-card-v1.png"
+    manifest = json.loads(private.with_suffix(".json").read_text())
+    private_digest = sha256(private.read_bytes()).hexdigest()
+
+    assert private_digest == manifest["sha256"]
+    assert sha256(public.read_bytes()).hexdigest() == private_digest
+    assert private.stat().st_size < 5_000_000
+
+    service = (ROOT / "agent" / "waterline" / "service.py").read_text()
+    assert "UploadFile" not in service
+    assert "File(" not in service
 
 
 def test_product_copy_matches_the_curated_destination_scope() -> None:

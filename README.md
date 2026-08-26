@@ -11,9 +11,10 @@ A bush pilot flying a float plane to a remote lake may have no identifier-keyed 
 ## What it does, in one run
 
 1. You enter a departure identifier (e.g. `CYYZ`), a destination lake with no identifier (e.g. *Lady Evelyn Lake*), and a cruise altitude.
-2. Waterline pulls the **live NAV CANADA** NOTAM feed for the Flight Information Region — hundreds of NOTAMs — and reduces it, in PostGIS, to only the ones whose geometry intersects your route corridor and altitude band. *(Measured: 471 → 79 on a Toronto-FIR route — 83% of the FIR dropped as off-route.)*
-3. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
-4. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate prevents rejected or structurally unsafe briefings from reaching DispatchAgent, and DispatchAgent files one human-gated flight-following notice.
+2. For Lady Evelyn Lake, the authenticated service attaches one prepared synthetic condition-card photograph. Gemini proposes a typed extraction; a deterministic validator binds it to the tracked digest, accepts the east-cove obstruction, and quarantines the embedded hostile instruction without copying that text into trusted state.
+3. Waterline pulls the **live NAV CANADA** NOTAM feed for the Flight Information Region — hundreds of NOTAMs — and reduces it, in PostGIS, to only the ones whose geometry intersects your route corridor and altitude band. *(Measured: 471 → 79 on a Toronto-FIR route — 83% of the FIR dropped as off-route.)*
+4. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
+5. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate rejects east-cove plan v1 and proposes west-cove plan v2 pending pilot review, and DispatchAgent files one human-gated flight-following notice.
 
 Normal runs fetch current, reproducible government data. A local-only frozen capture may be used when developing offline, and its provenance is labelled explicitly. The exact live source request is one line and needs no key:
 
@@ -41,6 +42,9 @@ The geometry is entirely in the tools; the agents orchestrate, rank, compose, an
 flowchart LR
   UI[Next.js + MapLibre<br/>SSE, map builds itself] --> RELAY[Exact-path signed relay<br/>HttpOnly pilot session]
   RELAY -- Cloud Run IAM + HMAC --> SVC[Private FastAPI mission API]
+  SVC --> VISION[Gemini typed visual extraction<br/>digest-bound deterministic validator]
+  VISION -- safe facts --> ADK
+  VISION -- hostile text hash only --> QUAR[Quarantine receipt]
   SVC --> ADK[ADK SequentialAgent<br/>7 named agents · Gemini 3.5+ Flash<br/>fallback chain 3.7→3.6→3.5]
   ADK -- tools --> PG[(Cloud SQL · PostGIS<br/>corridor filter, station ranking)]
   ADK -- live --> NAV[NAV CANADA alpha API<br/>NOTAM / METAR]
@@ -52,6 +56,7 @@ flowchart LR
 - **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the disclaimer, and an authenticated owner-bound attestation before unlocking dispatch.
 - **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
 - **Observable deterministic state:** agents cannot write mission status. Cloud SQL atomically commits `proposed → rejected → awaiting_attestation → corrected → accepted → dispatched`, with an append-only event ID, trace ID, reason code, and bounded evidence at every edge. An interrupted worker resumes the same mission/session; refresh restores the owner-bound timeline.
+- **Multimodal trust boundary:** the browser cannot upload or select evidence. The server allowlists one prepared Lady Evelyn card by digest; Gemini returns a strict schema with zero authority, and deterministic checks decide whether safe fields enter session state. Embedded instructions become hash-only quarantine receipts. Corrupt, stale, ambiguous, malformed, or low-confidence evidence requests review and skips the agent pipeline.
 - **At-most-once notice:** Cloud SQL atomically claims an itinerary key before SMTP. Retry/resume and concurrent requests cannot send the same notice twice. An ambiguous SMTP failure intentionally remains claimed and requires operator reconciliation rather than an automatic retry that could duplicate a safety notice.
 - **The Twist is spatial:** the NAV CANADA API refuses geometry queries (`bbox=`, `radius=`, `point=` all return `alpha.geomNone`; only `site=` works), so the route-corridor filter is genuinely our code, not theirs.
 
@@ -81,7 +86,7 @@ cd ../web
 pnpm install && pnpm dev             # http://localhost:3010
 ```
 
-Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
+Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. The Lady Evelyn condition card is a Waterline-created synthetic test artifact whose manifest and SHA-256 digest are tracked with the image. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
 
 Authority boundary: briefing intake cannot include an actor, session id, recipient, or dispatch instruction. The first run stops at `awaiting_attestation`; the same authenticated mission owner must then invoke the separate attestation command to authorize one duplicate-safe notice.
 
