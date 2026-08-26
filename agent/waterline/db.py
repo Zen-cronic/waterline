@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import os
 import hashlib
+import json
 from typing import Any, Optional
+from uuid import uuid4
 
 import psycopg
 from psycopg.rows import dict_row
 
 from .notam import Notam, parse_dump
+from .state_machine import require_transition
 
 DEFAULT_URL = "postgresql://waterline:waterline@localhost:5455/waterline"
 NM_TO_M = 1852.0
@@ -103,21 +106,48 @@ def load_stations(site: str, stations: list, records: int,
     }
 
 
-def create_mission(mission_id: str, owner_ref: str, session_id: str) -> bool:
+def create_mission(mission_id: str, owner_ref: str, session_id: str,
+                   trace_id: str, request: dict[str, Any]) -> dict[str, Any] | None:
     """Persist a server-generated mission identity before any agent work starts."""
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO missions (mission_id, owner_ref, session_id)
-            VALUES (%s, %s, %s)
+            INSERT INTO missions (mission_id, owner_ref, session_id, trace_id, request)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
             ON CONFLICT (mission_id) DO NOTHING
             RETURNING mission_id
             """,
-            (mission_id, owner_ref, session_id),
+            (mission_id, owner_ref, session_id, trace_id, json.dumps(request)),
         )
         created = cur.fetchone() is not None
+        event_id = f"event-{uuid4().hex[:20]}"
+        if created:
+            cur.execute(
+                """
+                INSERT INTO mission_events (
+                    event_id, mission_id, from_status, to_status, event_type,
+                    reason_code, evidence, trace_id
+                ) VALUES (%s, %s, NULL, 'proposed', 'mission_proposed',
+                          'authenticated_intake', %s::jsonb, %s)
+                """,
+                (
+                    event_id, mission_id,
+                    json.dumps({"request": request, "dispatch_authority": False}), trace_id,
+                ),
+            )
         conn.commit()
-    return created
+    if not created:
+        return None
+    return {
+        "event_id": event_id,
+        "mission_id": mission_id,
+        "from_status": None,
+        "to_status": "proposed",
+        "event_type": "mission_proposed",
+        "reason_code": "authenticated_intake",
+        "evidence": {"request": request, "dispatch_authority": False},
+        "trace_id": trace_id,
+    }
 
 
 def owned_mission(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
@@ -125,7 +155,8 @@ def owned_mission(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT mission_id, owner_ref, session_id, status, created_at, updated_at
+            SELECT mission_id, owner_ref, session_id, trace_id, request,
+                   status, created_at, updated_at
             FROM missions
             WHERE mission_id = %s AND owner_ref = %s
             """,
@@ -135,25 +166,117 @@ def owned_mission(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-def mark_mission_awaiting_attestation(mission_id: str, owner_ref: str) -> bool:
-    """Move a successfully verified initial run to its sole human gate."""
+def transition_mission(mission_id: str, owner_ref: str, current_status: str,
+                       target_status: str, event_type: str, reason_code: str,
+                       evidence: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Atomically apply one allowed edge and append its structured proof."""
+    require_transition(current_status, target_status)
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
             UPDATE missions
-            SET status = 'awaiting_attestation', updated_at = now()
-            WHERE mission_id = %s AND owner_ref = %s AND status = 'briefing'
-            RETURNING mission_id
+            SET status = %s, updated_at = now()
+            WHERE mission_id = %s AND owner_ref = %s AND status = %s
+            RETURNING mission_id, trace_id, status, updated_at
+            """,
+            (target_status, mission_id, owner_ref, current_status),
+        )
+        row = cur.fetchone()
+        if row is None:
+            conn.rollback()
+            return None
+        event_id = f"event-{uuid4().hex[:20]}"
+        cur.execute(
+            """
+            INSERT INTO mission_events (
+                event_id, mission_id, from_status, to_status, event_type,
+                reason_code, evidence, trace_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+            """,
+            (
+                event_id, mission_id, current_status, target_status, event_type,
+                reason_code, json.dumps(evidence or {}), row["trace_id"],
+            ),
+        )
+        conn.commit()
+    return {
+        "event_id": event_id,
+        "mission_id": mission_id,
+        "from_status": current_status,
+        "to_status": target_status,
+        "event_type": event_type,
+        "reason_code": reason_code,
+        "evidence": evidence or {},
+        "trace_id": row["trace_id"],
+    }
+
+
+def record_mission_event(mission_id: str, owner_ref: str, event_type: str,
+                         reason_code: str,
+                         evidence: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Append durable failure/recovery evidence without pretending state changed."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT status, trace_id FROM missions
+            WHERE mission_id = %s AND owner_ref = %s
+            FOR UPDATE
             """,
             (mission_id, owner_ref),
         )
-        changed = cur.fetchone() is not None
+        row = cur.fetchone()
+        if row is None:
+            conn.rollback()
+            return None
+        event_id = f"event-{uuid4().hex[:20]}"
+        cur.execute(
+            """
+            INSERT INTO mission_events (
+                event_id, mission_id, from_status, to_status, event_type,
+                reason_code, evidence, trace_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+            """,
+            (
+                event_id, mission_id, row["status"], row["status"], event_type,
+                reason_code, json.dumps(evidence or {}), row["trace_id"],
+            ),
+        )
         conn.commit()
-    return changed
+    return {
+        "event_id": event_id,
+        "mission_id": mission_id,
+        "from_status": row["status"],
+        "to_status": row["status"],
+        "event_type": event_type,
+        "reason_code": reason_code,
+        "evidence": evidence or {},
+        "trace_id": row["trace_id"],
+    }
+
+
+def mission_timeline(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
+    """Return an owner-bound mission and its append-only state evidence."""
+    mission = owned_mission(mission_id, owner_ref)
+    if mission is None:
+        return None
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT event_id, from_status, to_status, event_type, reason_code,
+                   evidence, trace_id, created_at
+            FROM mission_events
+            WHERE mission_id = %s
+            ORDER BY sequence
+            """,
+            (mission_id,),
+        )
+        events = [dict(row) for row in cur.fetchall()]
+    return {"mission": mission, "events": events}
 
 
 def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str,
-                            responsible_email: str, eta: str, grace_min: int) -> bool:
+                            responsible_email: str, eta: str,
+                            grace_min: int) -> dict[str, Any] | None:
     """Atomically claim the one human attestation allowed for a mission."""
     contact_hash = hashlib.sha256(
         responsible_email.strip().lower().encode("utf-8"),
@@ -162,15 +285,24 @@ def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str
         cur.execute(
             """
             UPDATE missions
-            SET status = 'attestation_claimed', updated_at = now()
+            SET status = 'corrected', updated_at = now()
             WHERE mission_id = %s AND owner_ref = %s AND status = 'awaiting_attestation'
-            RETURNING mission_id
+            RETURNING mission_id, trace_id
             """,
             (mission_id, actor_ref),
         )
-        if cur.fetchone() is None:
+        mission = cur.fetchone()
+        if mission is None:
             conn.rollback()
-            return False
+            return None
+        event_id = f"event-{uuid4().hex[:20]}"
+        event_evidence = {
+            "attestation_id": attestation_id,
+            "contact_hash": contact_hash,
+            "eta": eta,
+            "grace_min": grace_min,
+            "dispatch_authority": False,
+        }
         cur.execute(
             """
             INSERT INTO pilot_attestations (
@@ -179,25 +311,61 @@ def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str
             """,
             (attestation_id, mission_id, actor_ref, contact_hash, eta, grace_min),
         )
+        cur.execute(
+            """
+            INSERT INTO mission_events (
+                event_id, mission_id, from_status, to_status, event_type,
+                reason_code, evidence, trace_id
+            ) VALUES (%s, %s, 'awaiting_attestation', 'corrected',
+                      'pilot_attestation_recorded', 'owner_attested', %s::jsonb, %s)
+            """,
+            (
+                event_id, mission_id, json.dumps(event_evidence),
+                mission["trace_id"],
+            ),
+        )
         conn.commit()
-    return True
+    return {
+        "event_id": event_id,
+        "mission_id": mission_id,
+        "from_status": "awaiting_attestation",
+        "to_status": "corrected",
+        "event_type": "pilot_attestation_recorded",
+        "reason_code": "owner_attested",
+        "evidence": event_evidence,
+        "trace_id": mission["trace_id"],
+    }
 
 
-def mark_mission_dispatched(mission_id: str, owner_ref: str) -> bool:
-    """Commit the post-dispatch mission state for the authenticated owner."""
+def matching_pilot_attestation(mission_id: str, actor_ref: str,
+                               responsible_email: str, eta: str,
+                               grace_min: int) -> dict[str, Any] | None:
+    """Validate a recovery attestation without storing or returning contact PII."""
+    contact_hash = hashlib.sha256(
+        responsible_email.strip().lower().encode("utf-8"),
+    ).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE missions
-            SET status = 'dispatched', updated_at = now()
-            WHERE mission_id = %s AND owner_ref = %s AND status = 'attestation_claimed'
-            RETURNING mission_id
+            SELECT pa.attestation_id, pa.mission_id, pa.actor_ref, pa.attested_at
+            FROM pilot_attestations pa
+            JOIN missions m ON m.mission_id = pa.mission_id
+            WHERE pa.mission_id = %s AND pa.actor_ref = %s
+              AND m.owner_ref = %s AND m.status = 'accepted'
+              AND pa.contact_hash = %s AND pa.eta = %s AND pa.grace_min = %s
             """,
-            (mission_id, owner_ref),
+            (mission_id, actor_ref, actor_ref, contact_hash, eta, grace_min),
         )
-        changed = cur.fetchone() is not None
-        conn.commit()
-    return changed
+        row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def mark_mission_dispatched(mission_id: str, owner_ref: str) -> bool:
+    """Compatibility wrapper for the final accepted -> dispatched edge."""
+    return transition_mission(
+        mission_id, owner_ref, "accepted", "dispatched",
+        "dispatch_completed", "verified_notice_receipt",
+    ) is not None
 
 
 def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:

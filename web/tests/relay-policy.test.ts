@@ -61,6 +61,33 @@ test("only explicit attestation command reaches the resume endpoint", () => {
   );
 });
 
+test("restore and recovery are exact owner-bound routes", () => {
+  const missionId = "mission-0123456789abcdefabcd";
+  const restore = authorizeRelayRequest({
+    method: "GET", path: ["missions", missionId], search: "", body: "",
+  });
+  assert.equal(restore.action, "mission.restore");
+  assert.equal(restore.upstreamPath, `/v1/missions/${missionId}`);
+
+  const resume = authorizeRelayRequest({
+    method: "POST",
+    path: ["missions", missionId, "resume"],
+    search: "",
+    body: JSON.stringify({ confirm_resume: true }),
+  });
+  assert.equal(resume.action, "mission.resume");
+  assert.equal(resume.upstreamPath, `/v1/missions/${missionId}/resume`);
+
+  assert.throws(
+    () => authorizeRelayRequest({
+      method: "POST", path: ["missions", missionId, "resume"], search: "",
+      body: JSON.stringify({ confirm_resume: false }),
+    }),
+    (error: unknown) => error instanceof RelayPolicyError &&
+      error.code === "RESUME_CONFIRMATION_REQUIRED",
+  );
+});
+
 test("relay signature changes with actor, path, or body", () => {
   const secret = "a-secure-relay-secret-with-more-than-32-bytes";
   const timestamp = "1787774400";

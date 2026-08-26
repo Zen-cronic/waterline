@@ -56,6 +56,20 @@ def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     assert "WATERLINE_PILOT_ACTOR" not in relay
 
 
+def test_database_packages_the_durable_mission_state_machine() -> None:
+    schema = (ROOT / "db" / "schema.sql").read_text()
+    cloud_setup = (ROOT / "db" / "cloud_setup.sql").read_text()
+
+    for status in (
+        "proposed", "rejected", "awaiting_attestation", "corrected",
+        "accepted", "dispatched",
+    ):
+        assert status in schema
+    assert "CREATE TABLE IF NOT EXISTS mission_events" in schema
+    assert "mission_events_status_check" in schema
+    assert "mission_events" in cloud_setup
+
+
 def test_product_copy_matches_the_curated_destination_scope() -> None:
     copy = "\n".join(
         (ROOT / path).read_text()

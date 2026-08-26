@@ -63,7 +63,6 @@ async function relay(request: NextRequest, context: RouteContext): Promise<Respo
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const headers = new Headers({
-    "content-type": "application/json",
     "x-waterline-actor": actor,
     "x-waterline-timestamp": timestamp,
     "x-waterline-signature": signRelayRequest(
@@ -75,6 +74,7 @@ async function relay(request: NextRequest, context: RouteContext): Promise<Respo
       timestamp,
     ),
   });
+  if (decision.upstreamBody) headers.set("content-type", "application/json");
 
   if (!local) {
     const audience = process.env.WATERLINE_AGENT_AUDIENCE ?? agent.origin;
@@ -88,9 +88,9 @@ async function relay(request: NextRequest, context: RouteContext): Promise<Respo
 
   const target = new URL(decision.upstreamPath, agent);
   const upstream = await fetch(target, {
-    method: "POST",
+    method: request.method,
     headers,
-    body: decision.upstreamBody,
+    body: decision.upstreamBody || undefined,
     cache: "no-store",
     redirect: "manual",
   });
@@ -105,3 +105,4 @@ async function relay(request: NextRequest, context: RouteContext): Promise<Respo
 }
 
 export const POST = relay;
+export const GET = relay;

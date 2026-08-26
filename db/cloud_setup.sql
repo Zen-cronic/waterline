@@ -15,7 +15,7 @@ SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_name IN (
-    'notams', 'stations', 'missions', 'pilot_attestations', 'ingests',
-    'dispatch_receipts'
+    'notams', 'stations', 'missions', 'mission_events', 'pilot_attestations',
+    'ingests', 'dispatch_receipts'
   )
 ORDER BY table_name;

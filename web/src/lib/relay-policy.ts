@@ -1,7 +1,11 @@
 const MISSION_ID = /^mission-[0-9a-f]{20}$/;
 const MAX_BODY_BYTES = 2_048;
 
-export type RelayAction = "mission.create" | "mission.pilot-attest";
+export type RelayAction =
+  | "mission.create"
+  | "mission.restore"
+  | "mission.resume"
+  | "mission.pilot-attest";
 
 export interface RelayDecision {
   action: RelayAction;
@@ -54,11 +58,26 @@ export function authorizeRelayRequest(input: {
   search: string;
   body: string;
 }): RelayDecision {
-  if (input.method.toUpperCase() !== "POST") {
-    reject(405, "METHOD_NOT_ALLOWED", "Mission relay accepts POST commands only");
-  }
   if (input.search) {
     reject(400, "QUERY_NOT_ALLOWED", "Mission relay query parameters are not allowed");
+  }
+
+  const method = input.method.toUpperCase();
+  if (
+    method === "GET" &&
+    input.path.length === 2 &&
+    input.path[0] === "missions" &&
+    MISSION_ID.test(input.path[1])
+  ) {
+    if (input.body) reject(400, "BODY_NOT_ALLOWED", "Mission restore accepts no body");
+    return {
+      action: "mission.restore",
+      upstreamPath: `/v1/missions/${input.path[1]}`,
+      upstreamBody: "",
+    };
+  }
+  if (method !== "POST") {
+    reject(405, "METHOD_NOT_ALLOWED", "Mission relay accepts GET restore or POST commands only");
   }
 
   const value = parseObject(input.body);
@@ -116,6 +135,23 @@ export function authorizeRelayRequest(input: {
         eta: value.eta,
         grace_min: value.grace_min,
       }),
+    };
+  }
+
+  if (
+    input.path.length === 3 &&
+    input.path[0] === "missions" &&
+    MISSION_ID.test(input.path[1]) &&
+    input.path[2] === "resume"
+  ) {
+    exactKeys(value, ["confirm_resume"]);
+    if (value.confirm_resume !== true) {
+      reject(400, "RESUME_CONFIRMATION_REQUIRED", "confirm_resume=true is required");
+    }
+    return {
+      action: "mission.resume",
+      upstreamPath: `/v1/missions/${input.path[1]}/resume`,
+      upstreamBody: JSON.stringify({ confirm_resume: true }),
     };
   }
 

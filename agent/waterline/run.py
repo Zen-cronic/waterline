@@ -39,22 +39,29 @@ async def run_briefing(
     user_id: str,
     session_service: Optional[BaseSessionService] = None,
     initial_state: Optional[dict[str, Any]] = None,
+    resume: bool = False,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Yield merged {type: layer|step|panel|agent|error|done} events for one briefing.
 
     The API owns both ids and seeds authenticated mission identity. Consequential
-    contact/attestation state is never accepted by this initial-run function.
+    contact/attestation state is never accepted here. ``resume=True`` reuses the
+    same durable session after a recorded interruption; it never creates a new
+    mission or silently replaces a missing session.
     """
     q: "asyncio.Queue[dict[str, Any] | None]" = asyncio.Queue()
     token = bind_queue(q)
     svc = session_service or make_session_service()
     existing = await svc.get_session(app_name=APP_NAME, user_id=user_id, session_id=session_id)
-    if existing is not None:
-        raise ValueError("server-generated session id already exists")
-    await svc.create_session(
-        app_name=APP_NAME, user_id=user_id, session_id=session_id,
-        state=initial_state or {},
-    )
+    if resume:
+        if existing is None:
+            raise ValueError("durable mission session does not exist")
+    else:
+        if existing is not None:
+            raise ValueError("server-generated session id already exists")
+        await svc.create_session(
+            app_name=APP_NAME, user_id=user_id, session_id=session_id,
+            state=initial_state or {},
+        )
     runner = Runner(app_name=APP_NAME, agent=build_pipeline(), session_service=svc)
 
     async def drive() -> None:
