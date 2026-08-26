@@ -6,6 +6,13 @@ import pytest
 from waterline.tools import dispatch_tools
 
 
+def _run_threads_inline(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def run_inline(function, *args):
+        return function(*args)
+
+    monkeypatch.setattr(dispatch_tools.asyncio, "to_thread", run_inline)
+
+
 def _context() -> SimpleNamespace:
     return SimpleNamespace(
         session=SimpleNamespace(id="briefing-resume-42"),
@@ -27,6 +34,7 @@ def _context() -> SimpleNamespace:
 
 
 def test_retry_resume_sends_no_duplicate(monkeypatch: pytest.MonkeyPatch) -> None:
+    _run_threads_inline(monkeypatch)
     claimed: set[str] = set()
     sends: list[str] = []
     completed: list[str] = []
@@ -59,6 +67,7 @@ def test_retry_resume_sends_no_duplicate(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_failed_smtp_claim_is_at_most_once(monkeypatch: pytest.MonkeyPatch) -> None:
     """A failed SMTP attempt remains claimed; retry needs operator reconciliation."""
+    _run_threads_inline(monkeypatch)
     claimed: set[str] = set()
     attempts = 0
 

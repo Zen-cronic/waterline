@@ -2,6 +2,9 @@
 .gcloudignore
 .git/
 .gitignore
+.agents/
+.claude/
+.codex/
 .python-version
 .playwright-mcp/
 **/__pycache__/
@@ -18,9 +21,9 @@ web/
 agent/data/
 data/outbox/
 
-# Only these runtime data classes cross the private build-context boundary.
+# Only the public-domain reference dataset crosses the Cloud Build boundary.
+# Local NAV CANADA captures remain excluded: their source terms do not grant a
+# clear right to bundle copied payloads in a deployed application.
 data/*
 !data/reference/
 !data/reference/**
-!data/captures/
-!data/captures/**

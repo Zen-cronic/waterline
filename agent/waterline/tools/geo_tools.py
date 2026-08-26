@@ -9,15 +9,20 @@ to the map, and returns only a compact scalar summary to the model.
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Any
 
 from google.adk.tools import ToolContext
 
 from .. import db
 from ..emit import emit_layer, emit_step, emit_panel
-from ..metar import infer_station_less
-from ..navcanada import fetch_notams
+from ..metar import infer_station_less, load_airport_index, stations_from_metar_dump
+from ..navcanada import fetch_metars, fetch_notams
 from ..config import DEFAULT_CORRIDOR_NM, DEFAULT_CRUISE_FL_LOWER
+
+
+_REFERENCE = Path(__file__).resolve().parents[3] / "data" / "reference"
+_AIRPORTS = load_airport_index(_REFERENCE / "airports_ca.csv")
 
 
 def _fc(features: list[dict[str, Any]]) -> dict[str, Any]:
@@ -31,21 +36,37 @@ def _route(tool_context: ToolContext) -> dict[str, Any]:
     return r
 
 
-async def fetch_and_load_notams(tool_context: ToolContext) -> dict[str, Any]:
-    """Pull the live NAV CANADA NOTAM dump for the route's Flight Information Region and load it.
+async def fetch_and_load_sources(tool_context: ToolContext) -> dict[str, Any]:
+    """Fetch and load current NOTAM and METAR inputs for the route's FIR.
 
     Reads the FIR site from the resolved route in session state. Returns a
-    provenance summary (records fetched, how many carried Q-line geometry).
+    structured provenance receipt for both products. Local developer captures
+    are labelled explicitly and never enter the deployed image.
     """
     fir_site = _route(tool_context)["fir_site"]
-    emit_step("IngestAgent", "fetch", f"Pulling live NOTAMs for {fir_site} from NAV CANADA…")
-    payload, url = await asyncio.to_thread(fetch_notams, fir_site)
-    res = await asyncio.to_thread(db.load_notams, fir_site, payload, url)
-    emit_panel("provenance", {"site": fir_site, "source": url, **res})
+    emit_step("IngestAgent", "fetch", f"Pulling current NOTAM and METAR inputs for {fir_site}…")
+    (notam_payload, notam_source), (metar_payload, metar_source) = await asyncio.gather(
+        asyncio.to_thread(fetch_notams, fir_site),
+        asyncio.to_thread(fetch_metars, fir_site),
+    )
+    stations = stations_from_metar_dump(metar_payload, _AIRPORTS)
+    notam_res = await asyncio.to_thread(
+        db.load_notams, fir_site, notam_payload, notam_source,
+    )
+    metar_res = await asyncio.to_thread(
+        db.load_stations, fir_site, stations, len(metar_payload.get("data", [])), metar_source,
+    )
+    provenance = {
+        "site": fir_site,
+        "notam": {**notam_source, **notam_res},
+        "metar": {**metar_source, **metar_res},
+    }
+    emit_panel("provenance", provenance)
     emit_step("IngestAgent", "loaded",
-              f"{res['parsed']}/{res['records']} NOTAMs carried Q-line geometry.")
-    tool_context.state["ingest"] = res
-    return {"fir_site": fir_site, **res, "source_url": url}
+              f"NOTAM {notam_res['parsed']}/{notam_res['records']} parsed; "
+              f"METAR {metar_res['parsed']}/{metar_res['records']} stations located.")
+    tool_context.state["ingest"] = provenance
+    return provenance
 
 
 async def filter_route_corridor(tool_context: ToolContext,

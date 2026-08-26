@@ -39,16 +39,26 @@ CREATE TABLE IF NOT EXISTS stations (
 );
 CREATE INDEX IF NOT EXISTS stations_point_gix ON stations USING gist (point);
 
--- Frozen live-data provenance: which FIR dump, when, how many records/parsed.
--- A judge can reproduce the pull; this row records exactly what we pulled.
+-- Source provenance for every NOTAM and METAR pull. A judge can reproduce a
+-- live URL and distinguish it from an explicitly labelled local-only capture.
 CREATE TABLE IF NOT EXISTS ingests (
     id          bigserial PRIMARY KEY,
     site        text NOT NULL,
+    product     text NOT NULL DEFAULT 'notam',
     fetched_at  timestamptz NOT NULL DEFAULT now(),
+    retrieved_at timestamptz,
     records     integer NOT NULL,
     parsed      integer NOT NULL,
-    source_url  text NOT NULL
+    source_url  text NOT NULL,
+    source_mode text NOT NULL DEFAULT 'legacy',
+    source_ref  text,
+    payload_sha256 text
 );
+ALTER TABLE ingests ADD COLUMN IF NOT EXISTS product text NOT NULL DEFAULT 'notam';
+ALTER TABLE ingests ADD COLUMN IF NOT EXISTS retrieved_at timestamptz;
+ALTER TABLE ingests ADD COLUMN IF NOT EXISTS source_mode text NOT NULL DEFAULT 'legacy';
+ALTER TABLE ingests ADD COLUMN IF NOT EXISTS source_ref text;
+ALTER TABLE ingests ADD COLUMN IF NOT EXISTS payload_sha256 text;
 
 -- At-most-once external dispatch ledger. The INSERT claim is committed before
 -- SMTP is attempted, so retry/resume cannot send a second notice. Recipient PII

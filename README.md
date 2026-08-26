@@ -1,8 +1,8 @@
 # Waterline
 
-**A live flight briefing for the 446 Canadian seaplane bases that don't have one.**
+**A live flight briefing for station-less Canadian water destinations.**
 
-A bush pilot flying a float plane to a remote lake gets no briefing from any tool on the market. Those tools are keyed to *identifiers* — an airport code that maps to a weather station. **446 of Canada's 449 registered seaplane bases have no identifier, so no station, so every briefing tool goes blank exactly where the pilot is going.** Waterline briefs the lake anyway: it reduces the whole Flight Information Region's live NOTAM feed down to the hazards that actually touch your route, and it *infers* a weather read for a station-less destination from the real observations that do exist nearby — never inventing a number, always showing its work.
+A bush pilot flying a float plane to a remote lake may have no identifier-keyed destination observation to request. Waterline's current resolver supports a curated set of five Ontario water destinations with no destination weather station. It reduces the whole Flight Information Region's live NOTAM feed down to the hazards that actually touch the route, and it *infers* a weather read from the real observations that do exist nearby — never inventing a number, always showing its work.
 
 > **The Twist:** every briefing tool is keyed to identifiers by construction. Waterline is keyed to **geometry** — a route corridor and an altitude band — so it works for a place that has no name in any aviation database.
 
@@ -15,7 +15,7 @@ A bush pilot flying a float plane to a remote lake gets no briefing from any too
 3. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
 4. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate prevents rejected or structurally unsafe briefings from reaching DispatchAgent, and DispatchAgent files one human-gated flight-following notice.
 
-Everything runs on live, reproducible government data. The exact source request is one line and needs no key:
+Normal runs fetch current, reproducible government data. A local-only frozen capture may be used when developing offline, and its provenance is labelled explicitly. The exact live source request is one line and needs no key:
 
 ```
 curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
@@ -26,7 +26,7 @@ curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
 | Agent | Job | Deterministic tool |
 |-------|-----|--------------------|
 | **RouteAgent** | resolve the request to coordinates | `resolve_route` |
-| **IngestAgent** | pull the live FIR NOTAM feed | `fetch_and_load_notams` |
+| **IngestAgent** | fetch and load current FIR NOTAM + METAR inputs | `fetch_and_load_sources` |
 | **CorridorAgent** | reduce the FIR set to the route | `filter_route_corridor` (PostGIS) |
 | **WeatherAgent** | infer the station-less read | `infer_destination_weather` (PostGIS) |
 | **BriefingComposer** | rank hazards for a low float flight, write the briefing | — |
@@ -78,7 +78,7 @@ cd ../web
 pnpm install && pnpm dev             # http://localhost:3010
 ```
 
-Data provenance: NAV CANADA NOTAM/METAR are live and consumed, never redistributed. Station coordinates come from the public-domain OurAirports dataset. A frozen capture in `data/captures/` gives the demo deterministic playback of a real pull.
+Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
 
 ## License
 

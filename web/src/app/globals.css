@@ -16,8 +16,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .form { padding: 14px 18px; display: grid; gap: 8px; border-bottom: 1px solid var(--edge); }
 .form label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
 .form input, .form select { background: var(--bg); border: 1px solid var(--edge); color: var(--ink);
-  border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; min-width: 0; width: 100%; }
 .form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.form .row > div { min-width: 0; }
 .btn { background: var(--cyan); color: #062024; border: 0; border-radius: 8px; padding: 10px;
   font-weight: 650; cursor: pointer; font-size: 13px; }
 .btn:disabled { opacity: .5; cursor: default; }
@@ -41,3 +42,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .legend .k { display:flex; align-items:center; gap:8px; margin:3px 0; }
 .legend .dot { width:12px; height:12px; border-radius:3px; }
 .prov { font-size: 11px; color: var(--dim); margin-top: 6px; word-break: break-all; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: minmax(520px, 58vh) minmax(420px, 42vh); height: auto; min-height: 100vh; }
+  .left { border-right: 0; border-bottom: 1px solid var(--edge); }
+  .right { min-height: 420px; }
+}

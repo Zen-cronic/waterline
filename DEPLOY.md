@@ -22,8 +22,9 @@ PostGIS ships with Cloud SQL for PostgreSQL — no build needed. Apply `db/schem
 
 ## 2. Agent on Cloud Run
 ```bash
-# from waterline/ (build context = project root; .gcloudignore deliberately
-# includes private local data/captures plus tracked data/reference, but no env files)
+# from waterline/ (build context = project root; .gcloudignore includes the
+# tracked public-domain reference data, but excludes local NAV CANADA captures
+# and env files)
 export WATERLINE_PROJECT="<PROJECT>"
 export WATERLINE_REGION="us-central1"
 export WATERLINE_SQL_CONNECTION="${WATERLINE_PROJECT}:${WATERLINE_REGION}:waterline-pg"
@@ -46,6 +47,7 @@ gcloud run deploy waterline-agent \
 - `WATERLINE_SESSION_DB` (SQLAlchemy URL) enables `DatabaseSessionService` = durable sessions = the crash-resume beat.
 - For the real-world loop, add `WATERLINE_SMTP_HOST/PORT/USER/PASS/FROM` to send real flight-following email.
 - `dispatch_receipts` claims the itinerary before SMTP. This is intentionally **at-most-once**: if SMTP fails ambiguously after the claim, automatic retry remains suppressed and an operator must reconcile the receipt.
+- The deployed service fetches NAV CANADA data live. Local frozen captures are intentionally excluded from its image; an unavailable live source therefore fails visibly instead of silently redistributing copied payloads.
 
 ## 3. Frontend
 
