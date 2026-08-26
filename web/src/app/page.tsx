@@ -1,71 +1,22 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { MapView, type MapHandle } from "@/components/MapView";
+import { ProofRail } from "@/components/ProofRail";
+import {
+  deriveRestoredMissionView,
+  type ConditionCardPanel,
+  type DegradedState,
+  type DispatchReceipt,
+  type Inference,
+  type Mission,
+  type PlanRevision,
+  type Provenance,
+  type QuarantineReceipt,
+  type StateEvent,
+  type VerificationGate,
+} from "@/lib/mission-view";
 
 type Step = { agent: string; kind: string; detail: string };
-type DispatchResult = {
-  to?: string;
-  channel?: string;
-  sent?: boolean;
-  duplicate_suppressed?: boolean;
-};
-type SourceReceipt = {
-  product: "notam" | "metar";
-  source_mode: "live" | "local_frozen_capture";
-  source_url: string;
-  source_ref: string;
-  records: number;
-  parsed: number;
-};
-type Provenance = { site: string; notam: SourceReceipt; metar: SourceReceipt };
-type Mission = {
-  mission_id: string;
-  owner_ref: string;
-  trace_id: string;
-  status: "proposed" | "rejected" | "awaiting_attestation" | "corrected" | "accepted" | "dispatched";
-};
-type StateEvent = {
-  event_id: string;
-  from_status?: string | null;
-  to_status: Mission["status"];
-  event_type: string;
-  reason_code: string;
-  trace_id: string;
-  evidence?: Record<string, unknown>;
-};
-type ModelReceipt = {
-  receipt_id: string;
-  source_ref: string;
-  artifact_sha256: string;
-  schema_version: string;
-  extractor: string;
-  validation_result: "accepted" | "review_required";
-  confidence: number;
-  reason_codes: string[];
-  trace_id: string;
-  dispatch_authority: false;
-};
-type ConditionCardPanel = {
-  image_url: string;
-  validation_result: "accepted" | "review_required";
-  reason_codes: string[];
-  model_receipt: ModelReceipt;
-};
-type QuarantineReceipt = {
-  receipt_id: string;
-  category: string;
-  content_sha256: string;
-  action: string;
-  dispatch_authority: false;
-  trace_id: string;
-};
-type PlanRevision = {
-  rejected_plan: { plan_id: string; landing_sector: string; reason_code: string };
-  corrected_plan: { plan_id: string; landing_sector: string; status: string };
-  dispatch_authority: false;
-  trace_id: string;
-};
 const LAKES = [
   "Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Wabikon Lake", "Smoothwater Lake",
 ];
@@ -86,7 +37,11 @@ export default function Page() {
   const [brief, setBrief] = useState("");
   const [verdict, setVerdict] = useState<{ ok: boolean; text: string } | null>(null);
   const [prov, setProv] = useState<Provenance | null>(null);
-  const [dispatch, setDispatch] = useState<DispatchResult | null>(null);
+  const [inference, setInference] = useState<Inference | null>(null);
+  const [briefingGate, setBriefingGate] = useState<VerificationGate | null>(null);
+  const [dispatchGate, setDispatchGate] = useState<VerificationGate | null>(null);
+  const [degraded, setDegraded] = useState<DegradedState | null>(null);
+  const [dispatch, setDispatch] = useState<DispatchReceipt | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
   const [timeline, setTimeline] = useState<StateEvent[]>([]);
   const [conditionCard, setConditionCard] = useState<ConditionCardPanel | null>(null);
@@ -125,16 +80,39 @@ export default function Page() {
           if (next.status !== "rejected") setRecoverable(false);
         } else if (ev.type === "recovery") {
           setRecoverable(ev.available === true);
-          if (ev.reasons?.length) setError(ev.reasons.join("; "));
-        } else if (ev.type === "error") setError(ev.detail ?? "Briefing failed");
-        else if (ev.type === "authority") setError((ev.reasons ?? []).join("; "));
+          const reasons = ev.reasons?.length ? ev.reasons : ["Briefing execution failed"];
+          setDegraded({ title: "Agent run degraded", reasons, recoverable: ev.available === true });
+          setError(reasons.join("; "));
+        } else if (ev.type === "error") {
+          const detail = ev.detail ?? "Briefing failed";
+          setError(detail);
+          setDegraded({ title: "Agent run degraded", reasons: [detail], recoverable: false });
+        }
+        else if (ev.type === "authority") {
+          const gate = { approved: ev.approved === true, reasons: ev.reasons ?? [] };
+          setDispatchGate(gate);
+          if (!gate.approved) setDegraded({
+            title: "Visual evidence held for review", reasons: gate.reasons,
+            recoverable: false,
+          });
+        }
         else if (ev.type === "panel" && ev.key === "condition_card")
           setConditionCard(ev.value as ConditionCardPanel);
         else if (ev.type === "panel" && ev.key === "quarantine")
           setQuarantine(ev.value as QuarantineReceipt);
         else if (ev.type === "panel" && ev.key === "plan_revision")
           setPlanRevision(ev.value as PlanRevision);
+        else if (ev.type === "panel" && ev.key === "inference")
+          setInference(ev.value as Inference);
         else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
+        else if (ev.type === "panel" && ev.key === "verification_gate")
+          setDispatchGate(ev.value as VerificationGate);
+        else if (ev.type === "panel" && ev.key === "mission_proof") {
+          setBriefingGate(ev.value.briefing_gate as VerificationGate);
+          setDispatchGate(ev.value.dispatch_gate as VerificationGate);
+          if (ev.value.inference) setInference(ev.value.inference as Inference);
+          if (ev.value.provenance) setProv(ev.value.provenance as Provenance);
+        }
         else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
         else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
         else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
@@ -159,29 +137,21 @@ export default function Page() {
           status: restored.mission.status,
         });
         setTimeline(restored.events);
-        const evaluated = restored.events.find(
-          (event: StateEvent) => event.event_type === "condition_card_evaluated",
-        ) as StateEvent | undefined;
-        const modelReceipt = evaluated?.evidence?.model_receipt as ModelReceipt | undefined;
-        if (modelReceipt) {
-          setConditionCard({
-            image_url: "/evidence/lady-evelyn-condition-card-v1.png",
-            validation_result: modelReceipt.validation_result,
-            reason_codes: modelReceipt.reason_codes,
-            model_receipt: modelReceipt,
-          });
-        }
-        const quarantined = restored.events.find(
-          (event: StateEvent) => event.event_type === "condition_card_quarantined",
-        ) as StateEvent | undefined;
-        const quarantineReceipt = quarantined?.evidence?.quarantine_receipt as
-          QuarantineReceipt | undefined;
-        if (quarantineReceipt) setQuarantine(quarantineReceipt);
-        const revised = restored.events.find(
-          (event: StateEvent) => event.event_type === "plan_revision_required",
-        ) as StateEvent | undefined;
-        const restoredPlan = revised?.evidence?.plan_revision as PlanRevision | undefined;
-        if (restoredPlan) setPlanRevision(restoredPlan);
+        const view = deriveRestoredMissionView(restored.mission, restored.events);
+        setConditionCard(view.conditionCard);
+        setQuarantine(view.quarantine);
+        setPlanRevision(view.planRevision);
+        setInference(view.inference);
+        setProv(view.provenance);
+        setBriefingGate(view.briefingGate);
+        setDispatchGate(view.dispatchGate);
+        setBrief(view.briefing);
+        if (view.verdict) setVerdict({
+          ok: view.verdict.trim().toUpperCase().startsWith("APPROVED"),
+          text: view.verdict,
+        });
+        setDegraded(view.degraded);
+        setDispatch(view.dispatch);
         const last = restored.events.at(-1) as StateEvent | undefined;
         setRecoverable(restored.mission.status === "rejected" &&
           last?.reason_code === "briefing_execution_failed");
@@ -194,6 +164,7 @@ export default function Page() {
     setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null);
     setDispatch(null); setMission(null); setTimeline([]); setRecoverable(false); setError("");
     setConditionCard(null); setQuarantine(null); setPlanRevision(null);
+    setInference(null); setBriefingGate(null); setDispatchGate(null); setDegraded(null);
     mapRef.current?.reset();
     try {
       const res = await fetch("/api/waterline/missions", {
@@ -210,7 +181,7 @@ export default function Page() {
 
   async function resume() {
     if (!mission || mission.status !== "rejected" || !recoverable) return;
-    setRecovering(true); setRecoverable(false); setError("");
+    setRecovering(true); setRecoverable(false); setError(""); setDegraded(null);
     try {
       const res = await fetch(`/api/waterline/missions/${mission.mission_id}/resume`, {
         method: "POST", headers: { "content-type": "application/json" },
@@ -238,19 +209,38 @@ export default function Page() {
         }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.detail?.message ?? result.detail ?? "Attestation failed");
+      if (!res.ok) {
+        const detail = result.detail;
+        if (detail?.duplicate_suppressed) {
+          setDispatch({
+            receipt_id: detail.receipt_id,
+            mission_id: detail.mission_id,
+            trace_id: detail.trace_id,
+            duplicate_suppressed: true,
+            status: "reconciliation_required",
+            at_most_once: detail.at_most_once === true,
+          });
+          setDispatchGate({ approved: false, reasons: [detail.message] });
+        }
+        throw new Error(detail?.message ?? detail ?? "Attestation failed");
+      }
       setMission({
         mission_id: result.mission_id, owner_ref: result.owner_ref,
         trace_id: result.trace_id, status: result.status,
       });
       for (const event of result.events ?? []) appendEvent(event);
-      setDispatch({ sent: result.dispatch.sent, channel: result.dispatch.channel, to: email });
+      setDispatchGate(result.authority as VerificationGate);
+      setDispatch({ ...result.dispatch, to: email } as DispatchReceipt);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Attestation failed");
     } finally {
       setAttesting(false);
     }
   }
+
+  const stateTimeline = timeline.filter((event) =>
+    event.from_status !== event.to_status || event.event_type === "recovery_started"
+  );
 
   return (
     <div className="app">
@@ -287,10 +277,10 @@ export default function Page() {
               <small>trace {mission.trace_id}</small>
             </div>
           )}
-          {timeline.length > 0 && (
+          {stateTimeline.length > 0 && (
             <div className="timeline" aria-label="Mission state timeline">
               <div className="section-h">Durable state timeline</div>
-              {timeline.map((event) => (
+              {stateTimeline.map((event) => (
                 <div className={`state-event state-${event.to_status}`} key={event.event_id}>
                   <i aria-hidden="true" />
                   <div>
@@ -300,48 +290,6 @@ export default function Page() {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-          {conditionCard && (
-            <section className="evidence-card" aria-label="Prepared condition-card evidence">
-              <div className="section-h">Prepared visual evidence</div>
-              <Image
-                src={conditionCard.image_url}
-                width={1536}
-                height={1024}
-                sizes="(max-width: 760px) 100vw, 420px"
-                alt="Synthetic Lady Evelyn Lake condition card showing the east cove obstructed and an untrusted OCR test note"
-              />
-              <div className="evidence-meta">
-                <strong className={conditionCard.validation_result === "accepted" ? "safe" : "held"}>
-                  {conditionCard.validation_result.replaceAll("_", " ")}
-                </strong>
-                <span>
-                  {conditionCard.model_receipt.extractor === "fixture"
-                    ? "Deterministic fixture extraction"
-                    : "Gemini structured extraction"}
-                  {` · ${Math.round(conditionCard.model_receipt.confidence * 100)}% confidence`}
-                </span>
-                <small>{conditionCard.model_receipt.receipt_id}</small>
-                <small>sha256 {conditionCard.model_receipt.artifact_sha256}</small>
-                <small>{conditionCard.model_receipt.schema_version}</small>
-                <small>dispatch authority: false</small>
-              </div>
-            </section>
-          )}
-          {quarantine && (
-            <div className="quarantine-card" role="status">
-              <strong>Embedded instruction quarantined</strong>
-              <span>No quarantined text entered trusted state or authority.</span>
-              <small>{quarantine.receipt_id}</small>
-              <small>content sha256 {quarantine.content_sha256}</small>
-            </div>
-          )}
-          {planRevision && (
-            <div className="plan-revision" aria-label="Deterministic plan revision">
-              <div><small>PLAN V1</small><strong>EAST COVE</strong><span>rejected · obstruction</span></div>
-              <b aria-hidden="true">→</b>
-              <div><small>PLAN V2</small><strong>WEST COVE</strong><span>proposed · pilot review</span></div>
             </div>
           )}
           {mission?.status === "rejected" && recoverable && (
@@ -378,26 +326,17 @@ export default function Page() {
               </button>
             </div>
           )}
-          {dispatch && (
-            <div className="verdict ok" style={{ background: "rgba(53,208,214,.12)", color: "#35d0d6", borderColor: "rgba(53,208,214,.3)" }}>
-              {dispatch.duplicate_suppressed
-                ? "✈ Itinerary already filed · retry sent no duplicate notice"
-                : `✈ Itinerary filed · flight-following notice sent to ${dispatch.to} via ${dispatch.channel}`}
-            </div>
-          )}
-          {prov && (
-            <div className="prov">
-              source: NOTAM {prov.notam.source_mode.replaceAll("_", " ")}
-              {` · ${prov.notam.parsed}/${prov.notam.records} parsed`}
-              {` · METAR ${prov.metar.source_mode.replaceAll("_", " ")}`}
-              {` · ${prov.metar.parsed}/${prov.metar.records} stations`}
-            </div>
-          )}
           {error && <div className="verdict no">{error}</div>}
         </div>
       </div>
       <div className="right">
         <MapView ref={mapRef} />
+        {planRevision && (
+          <div className={`map-consequence ${mission?.status === "dispatched" || mission?.status === "accepted" ? "accepted" : ""}`} aria-label="Current landing plan consequence">
+            <small>DETERMINISTIC CONSEQUENCE</small>
+            <div><span>V1 EAST</span><b>REJECTED</b><i aria-hidden="true">→</i><span>V2 WEST</span><strong>{mission?.status === "dispatched" || mission?.status === "accepted" ? "ACCEPTED" : "PILOT REVIEW"}</strong></div>
+          </div>
+        )}
         <div className="legend">
           <div className="k"><span className="dot" style={{ background: "#f2b45a" }} />route</div>
           <div className="k"><span className="dot" style={{ background: "#35d0d6" }} />corridor ±10 NM</div>
@@ -407,6 +346,18 @@ export default function Page() {
         </div>
         <div className="footer">NOT FOR OPERATIONAL USE</div>
       </div>
+      <ProofRail
+        mission={mission}
+        conditionCard={conditionCard}
+        quarantine={quarantine}
+        planRevision={planRevision}
+        inference={inference}
+        provenance={prov}
+        briefingGate={briefingGate}
+        dispatchGate={dispatchGate}
+        degraded={degraded}
+        dispatch={dispatch}
+      />
     </div>
   );
 }

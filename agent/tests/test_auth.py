@@ -343,7 +343,15 @@ def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> N
                 restore_path, headers=_headers(restore_path, b"", method="GET"),
             )
             assert restored.status_code == 200
-            assert len(restored.json()["events"]) == 5
+            assert len(restored.json()["events"]) == 6
+            proof = next(
+                event for event in restored.json()["events"]
+                if event["event_type"] == "briefing_evidence_recorded"
+            )["evidence"]
+            assert proof["briefing_gate"]["approved"] is True
+            assert proof["dispatch_gate"]["approved"] is False
+            assert proof["inference"]["sources"][0]["station_id"] == "CYXR"
+            assert "IGNORE SAFETY" not in json.dumps(proof)
             attacker = await client.get(
                 restore_path,
                 headers=_headers(restore_path, b"", actor="pilot:attacker", method="GET"),
@@ -636,6 +644,17 @@ def test_attestation_is_owner_bound_and_full_state_path_is_replay_safe(monkeypat
             result = accepted.json()
             assert result["status"] == "dispatched"
             assert result["receipt_id"] == "receipt-test-1"
+            assert result["authority"]["approved"] is True
+            assert result["dispatch"] == {
+                "receipt_id": "receipt-test-1",
+                "attestation_id": result["attestation_id"],
+                "mission_id": mission_id,
+                "trace_id": trace_id,
+                "sent": True,
+                "channel": "test",
+                "status": "sent",
+                "at_most_once": True,
+            }
             assert [event["to_status"] for event in result["events"]] == [
                 "corrected", "accepted", "dispatched",
             ]
@@ -715,6 +734,14 @@ def test_accepted_crash_recovery_reconfirms_attestation_without_duplicate_send(
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(path, content=body, headers=_headers(path, body))
             assert response.status_code == 409
+            assert response.json()["detail"] == {
+                "message": "duplicate notice suppressed; operator reconciliation required",
+                "duplicate_suppressed": True,
+                "receipt_id": None,
+                "mission_id": mission_id,
+                "trace_id": "trace-accepted-recovery",
+                "at_most_once": True,
+            }
             assert dispatch_attempts == 1
             assert store.missions[mission_id]["status"] == "accepted"
             assert any(event["event_type"] == "dispatch_recovery_started" for event in store.events)
