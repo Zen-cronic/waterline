@@ -2,7 +2,6 @@
 import { useRef, useState } from "react";
 import { MapView, type MapHandle } from "@/components/MapView";
 
-const AGENT = process.env.NEXT_PUBLIC_AGENT_URL || "http://127.0.0.1:8088";
 type Step = { agent: string; kind: string; detail: string };
 type DispatchResult = {
   to?: string;
@@ -19,6 +18,11 @@ type SourceReceipt = {
   parsed: number;
 };
 type Provenance = { site: string; notam: SourceReceipt; metar: SourceReceipt };
+type Mission = {
+  mission_id: string;
+  owner_ref: string;
+  status: "briefing" | "awaiting_attestation" | "dispatched";
+};
 const LAKES = [
   "Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Wabikon Lake", "Smoothwater Lake",
 ];
@@ -29,45 +33,82 @@ export default function Page() {
   const [dst, setDst] = useState("Lady Evelyn Lake");
   const [alt, setAlt] = useState(3500);
   const [email, setEmail] = useState("");
+  const [eta, setEta] = useState("16:00Z");
+  const [grace, setGrace] = useState(60);
   const [running, setRunning] = useState(false);
+  const [attesting, setAttesting] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
   const [brief, setBrief] = useState("");
   const [verdict, setVerdict] = useState<{ ok: boolean; text: string } | null>(null);
   const [prov, setProv] = useState<Provenance | null>(null);
   const [dispatch, setDispatch] = useState<DispatchResult | null>(null);
+  const [mission, setMission] = useState<Mission | null>(null);
+  const [error, setError] = useState("");
 
   async function run() {
-    setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null); setDispatch(null);
+    setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null);
+    setDispatch(null); setMission(null); setError("");
     mapRef.current?.reset();
-    const text = `Brief my flight from ${dep} to ${dst} at ${alt} feet this afternoon.`;
-    const res = await fetch(`${AGENT}/brief`, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text, session_id: `web-${Date.now()}`,
-        responsible_email: email || null, eta: "this afternoon", grace_min: 60 }),
-    });
-    const reader = res.body!.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const frames = buf.split("\n\n");
-      buf = frames.pop() ?? "";
-      for (const f of frames) {
-        const line = f.split("\n").find((l) => l.startsWith("data:"));
-        if (!line) continue;
-        let ev: any; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
-        if (ev.type === "layer") mapRef.current?.setLayer(ev);
-        else if (ev.type === "step") setSteps((s) => [...s, ev]);
-        else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
-        else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
-        else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
-        else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
-          setVerdict({ ok: ev.text.trim().toUpperCase().startsWith("APPROVED"), text: ev.text });
+    try {
+      const res = await fetch("/api/waterline/missions", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ departure: dep, destination: dst, cruise_alt_ft: alt }),
+      });
+      if (!res.ok || !res.body) throw new Error(`Mission intake failed (${res.status})`);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const frames = buf.split("\n\n");
+        buf = frames.pop() ?? "";
+        for (const f of frames) {
+          const line = f.split("\n").find((l) => l.startsWith("data:"));
+          if (!line) continue;
+          let ev: any; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+          if (ev.type === "layer") mapRef.current?.setLayer(ev);
+          else if (ev.type === "step") setSteps((s) => [...s, ev]);
+          else if (ev.type === "mission") setMission(ev as Mission);
+          else if (ev.type === "error") setError(ev.detail ?? "Briefing failed");
+          else if (ev.type === "authority") setError((ev.reasons ?? []).join("; "));
+          else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
+          else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
+          else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
+          else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
+            setVerdict({ ok: ev.text.trim().toUpperCase().startsWith("APPROVED"), text: ev.text });
+        }
       }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Mission intake failed");
+    } finally {
+      setRunning(false);
     }
-    setRunning(false);
+  }
+
+  async function attest() {
+    if (!mission || mission.status !== "awaiting_attestation") return;
+    setAttesting(true); setError("");
+    try {
+      const res = await fetch(`/api/waterline/missions/${mission.mission_id}/attest`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          confirm_dispatch: true,
+          responsible_email: email,
+          eta,
+          grace_min: grace,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.detail?.message ?? result.detail ?? "Attestation failed");
+      setMission({ mission_id: result.mission_id, owner_ref: result.owner_ref, status: result.status });
+      setDispatch({ sent: result.dispatch.sent, channel: result.dispatch.channel, to: email });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Attestation failed");
+    } finally {
+      setAttesting(false);
+    }
   }
 
   return (
@@ -89,11 +130,6 @@ export default function Page() {
               <label>Cruise (ft)</label>
               <input type="number" value={alt} onChange={(e) => setAlt(+e.target.value)} />
             </div>
-            <div>
-              <label>Flight-following (optional)</label>
-              <input placeholder="responsible person's email" value={email}
-                onChange={(e) => setEmail(e.target.value)} />
-            </div>
           </div>
           <button className="btn" onClick={run} disabled={running}>
             {running ? "Briefing…" : "Brief this flight"}
@@ -102,6 +138,13 @@ export default function Page() {
         <div className="feed">
           <div className="section-h">Agent roster</div>
           {steps.length === 0 && !running && <div className="prov">Seven agents brief in sequence.</div>}
+          {mission && (
+            <div className="mission-chip">
+              <span>{mission.mission_id}</span>
+              <strong>{mission.status.replaceAll("_", " ")}</strong>
+              <small>authenticated owner {mission.owner_ref}</small>
+            </div>
+          )}
           {steps.map((s, i) => (
             <div className="step" key={i}>
               <span className={`who ${s.agent}`}>{s.agent}</span>
@@ -110,6 +153,23 @@ export default function Page() {
           ))}
           {brief && <><div className="section-h">Briefing</div><div className="brief">{brief}</div></>}
           {verdict && <div className={`verdict ${verdict.ok ? "ok" : "no"}`}>{verdict.text}</div>}
+          {mission?.status === "awaiting_attestation" && (
+            <div className="attestation">
+              <div className="section-h">Human authority required</div>
+              <p>The briefing is held. One authenticated pilot attestation may resume this mission and authorize one flight-following notice.</p>
+              <label>Responsible person</label>
+              <input type="email" placeholder="ops@example.com" value={email}
+                onChange={(e) => setEmail(e.target.value)} />
+              <div className="row">
+                <div><label>ETA</label><input value={eta} onChange={(e) => setEta(e.target.value)} /></div>
+                <div><label>Grace (min)</label><input type="number" value={grace}
+                  onChange={(e) => setGrace(+e.target.value)} /></div>
+              </div>
+              <button className="btn" onClick={attest} disabled={attesting || !email || !eta}>
+                {attesting ? "Attesting…" : "Attest & file one notice"}
+              </button>
+            </div>
+          )}
           {dispatch && (
             <div className="verdict ok" style={{ background: "rgba(53,208,214,.12)", color: "#35d0d6", borderColor: "rgba(53,208,214,.3)" }}>
               {dispatch.duplicate_suppressed
@@ -125,6 +185,7 @@ export default function Page() {
               {` · ${prov.metar.parsed}/${prov.metar.records} stations`}
             </div>
           )}
+          {error && <div className="verdict no">{error}</div>}
         </div>
       </div>
       <div className="right">

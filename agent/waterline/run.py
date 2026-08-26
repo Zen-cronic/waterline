@@ -35,36 +35,33 @@ def make_session_service() -> BaseSessionService:
 
 async def run_briefing(
     user_text: str,
-    session_id: str = "demo",
-    user_id: str = "pilot",
+    session_id: str,
+    user_id: str,
     session_service: Optional[BaseSessionService] = None,
-    responsible_email: Optional[str] = None,
-    eta: Optional[str] = None,
-    grace_min: int = 60,
+    initial_state: Optional[dict[str, Any]] = None,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Yield merged {type: layer|step|panel|agent|error|done} events for one briefing.
 
-    responsible_email/eta/grace_min seed session state for the DispatchAgent (the
-    real-world loop). If responsible_email is None, dispatch is a no-op — the send
-    is gated on an explicit human contact.
+    The API owns both ids and seeds authenticated mission identity. Consequential
+    contact/attestation state is never accepted by this initial-run function.
     """
-    seed = {k: v for k, v in
-            {"responsible_email": responsible_email, "eta": eta, "grace_min": grace_min}.items()
-            if v is not None}
     q: "asyncio.Queue[dict[str, Any] | None]" = asyncio.Queue()
     token = bind_queue(q)
     svc = session_service or make_session_service()
-    # create_session is idempotent-friendly: reuse an existing one (resume) if present.
     existing = await svc.get_session(app_name=APP_NAME, user_id=user_id, session_id=session_id)
-    if existing is None:
-        await svc.create_session(app_name=APP_NAME, user_id=user_id, session_id=session_id)
+    if existing is not None:
+        raise ValueError("server-generated session id already exists")
+    await svc.create_session(
+        app_name=APP_NAME, user_id=user_id, session_id=session_id,
+        state=initial_state or {},
+    )
     runner = Runner(app_name=APP_NAME, agent=build_pipeline(), session_service=svc)
 
     async def drive() -> None:
         try:
             msg = types.Content(role="user", parts=[types.Part(text=user_text)])
             async for ev in runner.run_async(user_id=user_id, session_id=session_id,
-                                              new_message=msg, state_delta=seed or None):
+                                              new_message=msg):
                 if ev.content and ev.content.parts:
                     txt = "".join(p.text for p in ev.content.parts if getattr(p, "text", None))
                     if txt.strip():

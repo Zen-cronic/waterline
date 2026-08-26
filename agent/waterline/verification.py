@@ -29,7 +29,27 @@ class VerificationDecision:
 
 
 def assess_dispatch_readiness(state: Mapping[str, Any]) -> VerificationDecision:
-    """Fail closed unless semantic approval and provenance invariants agree."""
+    """Fail closed unless briefing proof and authenticated attestation agree."""
+    briefing_decision = assess_briefing_readiness(state)
+    reasons = list(briefing_decision.reasons)
+    owner_ref = state.get("mission_owner_ref")
+    mission_id = state.get("mission_id")
+    attestation = state.get("pilot_attestation")
+
+    if not isinstance(owner_ref, str) or not owner_ref:
+        reasons.append("authenticated mission owner is missing")
+    if not isinstance(mission_id, str) or not mission_id:
+        reasons.append("server-owned mission id is missing")
+    if not isinstance(attestation, Mapping) or attestation.get("confirmed") is not True:
+        reasons.append("authenticated pilot attestation is missing")
+    elif attestation.get("actor_ref") != owner_ref or attestation.get("mission_id") != mission_id:
+        reasons.append("pilot attestation is not bound to this mission owner")
+
+    return VerificationDecision(not reasons, tuple(reasons))
+
+
+def assess_briefing_readiness(state: Mapping[str, Any]) -> VerificationDecision:
+    """Validate semantic approval and reproducible briefing provenance."""
     reasons: list[str] = []
     verdict = state.get("verification")
     briefing = state.get("briefing")

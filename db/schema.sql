@@ -39,6 +39,31 @@ CREATE TABLE IF NOT EXISTS stations (
 );
 CREATE INDEX IF NOT EXISTS stations_point_gix ON stations USING gist (point);
 
+-- Server-owned mission/session identity. Only an authenticated web relay can
+-- create a mission; browser-supplied actor, user, and session ids are absent
+-- from the public command schema.
+CREATE TABLE IF NOT EXISTS missions (
+    mission_id   text PRIMARY KEY,
+    owner_ref    text NOT NULL,
+    session_id   text NOT NULL UNIQUE,
+    status       text NOT NULL DEFAULT 'briefing',
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    updated_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS missions_owner_idx ON missions (owner_ref, created_at DESC);
+
+-- One authenticated human attestation per mission. Contact PII is hashed; the
+-- actual address exists only for the bounded send attempt and dispatch ledger.
+CREATE TABLE IF NOT EXISTS pilot_attestations (
+    attestation_id text PRIMARY KEY,
+    mission_id     text NOT NULL UNIQUE REFERENCES missions(mission_id),
+    actor_ref      text NOT NULL,
+    contact_hash   text NOT NULL,
+    eta            text NOT NULL,
+    grace_min      integer NOT NULL CHECK (grace_min BETWEEN 15 AND 240),
+    attested_at    timestamptz NOT NULL DEFAULT now()
+);
+
 -- Source provenance for every NOTAM and METAR pull. A judge can reproduce a
 -- live URL and distinguish it from an explicitly labelled local-only capture.
 CREATE TABLE IF NOT EXISTS ingests (

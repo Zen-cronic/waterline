@@ -31,7 +31,7 @@ curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
 | **WeatherAgent** | infer the station-less read | `infer_destination_weather` (PostGIS) |
 | **BriefingComposer** | rank hazards for a low float flight, write the briefing | — |
 | **Verifier** | refuse any claim not traceable to a source | — |
-| **DispatchAgent** | file one human-gated flight-following notice | atomic Cloud SQL dispatch claim + SMTP/outbox |
+| **DispatchAgent** | after one authenticated pilot attestation, file one flight-following notice | atomic Cloud SQL dispatch claim + SMTP/outbox |
 
 The geometry is entirely in the tools; the agents orchestrate, rank, compose, and verify. **The model never receives a coordinate** — tools emit geometry to the map and return only scalars, so the LLM can narrate but cannot place a wrong point on the map.
 
@@ -39,7 +39,8 @@ The geometry is entirely in the tools; the agents orchestrate, rank, compose, an
 
 ```mermaid
 flowchart LR
-  UI[Next.js + MapLibre<br/>SSE, map builds itself] -- POST /brief --> SVC[FastAPI on Cloud Run]
+  UI[Next.js + MapLibre<br/>SSE, map builds itself] --> RELAY[Exact-path signed relay<br/>HttpOnly pilot session]
+  RELAY -- Cloud Run IAM + HMAC --> SVC[Private FastAPI mission API]
   SVC --> ADK[ADK SequentialAgent<br/>7 named agents · Gemini 3.5+ Flash<br/>fallback chain 3.7→3.6→3.5]
   ADK -- tools --> PG[(Cloud SQL · PostGIS<br/>corridor filter, station ranking)]
   ADK -- live --> NAV[NAV CANADA alpha API<br/>NOTAM / METAR]
@@ -48,7 +49,8 @@ flowchart LR
 
 - **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor.
 - **Crash recovery:** agent session state is checkpointed to Cloud SQL (`DatabaseSessionService`); a briefing killed mid-run resumes under the same session id.
-- **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, and the disclaimer before unlocking dispatch.
+- **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the disclaimer, and an authenticated owner-bound attestation before unlocking dispatch.
+- **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
 - **At-most-once notice:** Cloud SQL atomically claims an itinerary key before SMTP. Retry/resume and concurrent requests cannot send the same notice twice. An ambiguous SMTP failure intentionally remains claimed and requires operator reconciliation rather than an automatic retry that could duplicate a safety notice.
 - **The Twist is spatial:** the NAV CANADA API refuses geometry queries (`bbox=`, `radius=`, `point=` all return `alpha.geomNone`; only `site=` works), so the route-corridor filter is genuinely our code, not theirs.
 
@@ -79,6 +81,8 @@ pnpm install && pnpm dev             # http://localhost:3010
 ```
 
 Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
+
+Authority boundary: briefing intake cannot include an actor, session id, recipient, or dispatch instruction. The first run stops at `awaiting_attestation`; the same authenticated mission owner must then invoke the separate attestation command to authorize one duplicate-safe notice.
 
 ## License
 

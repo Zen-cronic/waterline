@@ -42,6 +42,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .legend .k { display:flex; align-items:center; gap:8px; margin:3px 0; }
 .legend .dot { width:12px; height:12px; border-radius:3px; }
 .prov { font-size: 11px; color: var(--dim); margin-top: 6px; word-break: break-all; }
+.mission-chip { display:grid; gap:2px; margin:10px 0; padding:9px 10px; border:1px solid var(--edge); border-radius:8px; background:var(--panel); font-size:11px; }
+.mission-chip span { color:var(--muted); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mission-chip strong { color:var(--amber); text-transform:uppercase; letter-spacing:.5px; }
+.mission-chip small { color:var(--dim); }
+.attestation { display:grid; gap:8px; margin-top:12px; padding:12px; border:1px solid rgba(242,180,90,.45); border-radius:10px; background:rgba(242,180,90,.07); }
+.attestation .section-h { margin:0; color:var(--amber); }
+.attestation p { margin:0 0 4px; color:var(--muted); font-size:12px; }
+.attestation label { color:var(--muted); font-size:11px; text-transform:uppercase; }
+.attestation input { min-width:0; width:100%; padding:8px 10px; border:1px solid var(--edge); border-radius:8px; background:var(--bg); color:var(--ink); }
+.attestation .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
 @media (max-width: 760px) {
   .app { grid-template-columns: 1fr; grid-template-rows: minmax(520px, 58vh) minmax(420px, 42vh); height: auto; min-height: 100vh; }
