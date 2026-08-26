@@ -8,6 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from waterline import condition_card
+from waterline.agents.model import FallbackGemini
 from waterline.condition_card import ConditionCardExtraction
 
 
@@ -141,6 +142,8 @@ def test_live_adapter_sends_image_bytes_and_requires_typed_output(monkeypatch) -
             self.aio = FakeAsyncClient()
 
     monkeypatch.setenv("WATERLINE_EVIDENCE_MODE", "gemini")
+    monkeypatch.setenv("GOOGLE_GENAI_USE_VERTEXAI", "true")
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "waterline-test")
     monkeypatch.setattr(condition_card.genai, "Client", FakeClient)
     result, extractor = asyncio.run(
         condition_card.extract_condition_card(artifact, image_bytes),
@@ -152,6 +155,56 @@ def test_live_adapter_sends_image_bytes_and_requires_typed_output(monkeypatch) -
     image_part = calls[0]["contents"][1]
     assert image_part.inline_data.data == image_bytes
     assert image_part.inline_data.mime_type == "image/png"
+
+
+def test_vertex_model_clients_use_a_separate_global_publisher_location(monkeypatch) -> None:
+    artifact, image_bytes, extraction = _fixture()
+    clients: list[dict] = []
+
+    class FakeAsyncClient:
+        def __init__(self) -> None:
+            self.models = self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def generate_content(self, **_kwargs):
+            return SimpleNamespace(parsed=extraction.model_dump(), text=None)
+
+    class FakeClient:
+        def __init__(self, **kwargs) -> None:
+            clients.append(kwargs)
+            self.aio = FakeAsyncClient()
+
+    monkeypatch.setenv("WATERLINE_EVIDENCE_MODE", "gemini")
+    monkeypatch.setenv("GOOGLE_GENAI_USE_VERTEXAI", "true")
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "waterline-test")
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
+    monkeypatch.delenv("WATERLINE_MODEL_LOCATION", raising=False)
+    monkeypatch.setattr(condition_card.genai, "Client", FakeClient)
+
+    asyncio.run(condition_card.extract_condition_card(artifact, image_bytes))
+    model = FallbackGemini(["gemini-3.7-flash"])
+
+    assert clients[0]["project"] == "waterline-test"
+    assert clients[0]["location"] == "global"
+    assert model._models[0].client_kwargs == {
+        "vertexai": True,
+        "project": "waterline-test",
+        "location": "global",
+    }
+
+
+def test_live_adapter_requires_explicit_vertex_mode(monkeypatch) -> None:
+    artifact, image_bytes, _extraction = _fixture()
+    monkeypatch.setenv("WATERLINE_EVIDENCE_MODE", "gemini")
+    monkeypatch.delenv("GOOGLE_GENAI_USE_VERTEXAI", raising=False)
+
+    with pytest.raises(RuntimeError, match="GOOGLE_GENAI_USE_VERTEXAI=true"):
+        asyncio.run(condition_card.extract_condition_card(artifact, image_bytes))
 
 
 def test_extraction_failure_receipt_has_no_exception_or_authority() -> None:

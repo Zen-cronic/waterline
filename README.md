@@ -38,20 +38,11 @@ The geometry is entirely in the tools; the agents orchestrate, rank, compose, an
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  UI[Next.js + MapLibre<br/>SSE, map builds itself] --> RELAY[Exact-path signed relay<br/>HttpOnly pilot session]
-  RELAY -- Cloud Run IAM + HMAC --> SVC[Private FastAPI mission API]
-  SVC --> VISION[Gemini typed visual extraction<br/>digest-bound deterministic validator]
-  VISION -- safe facts --> ADK
-  VISION -- hostile text hash only --> QUAR[Quarantine receipt]
-  SVC --> ADK[ADK SequentialAgent<br/>7 named agents · Gemini 3.5+ Flash<br/>fallback chain 3.7→3.6→3.5]
-  ADK -- tools --> PG[(Cloud SQL · PostGIS<br/>corridor filter, station ranking)]
-  ADK -- live --> NAV[NAV CANADA alpha API<br/>NOTAM / METAR]
-  ADK -- session state --> PG
-```
+![Waterline bounded-authority architecture](architecture/waterline-system.svg)
 
-- **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor.
+The [full architecture guide](ARCHITECTURE.md) names the reader, deterministic writer, sole human authorizer, public/private security boundary, and verified consequence. It also distinguishes implemented controls from deferred Google-managed capabilities, so the diagram never implies Model Armor, Agent Registry, or deployed observability that does not yet exist.
+
+- **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor. Vertex publisher calls use the proven `global` endpoint independently of the `us-central1` runtime/database region.
 - **Crash recovery:** agent session state is checkpointed to Cloud SQL (`DatabaseSessionService`); a briefing killed mid-run resumes under the same session id.
 - **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the disclaimer, and an authenticated owner-bound attestation before unlocking dispatch.
 - **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
@@ -91,6 +82,14 @@ Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bu
 Authority boundary: briefing intake cannot include an actor, session id, recipient, or dispatch instruction. The first run stops at `awaiting_attestation`; the same authenticated mission owner must then invoke the separate attestation command to authorize one duplicate-safe notice.
 
 Recovery boundary: worker failures are retained as `rejected` events and may be resumed only by the same owner against the same durable ADK session. If a crash occurs after acceptance, re-confirmation must match the stored attestation hash and the dispatch claim still prevents a second notice.
+
+## Verify and deploy
+
+- [`TESTING.md`](TESTING.md) is the deterministic-to-deployed verification matrix, including the five browser proof states and preview-deployment acceptance gates.
+- [`DEPLOY.md`](DEPLOY.md) contains the private-agent/public-web Cloud Run contract.
+- The operator checklist at `../submission/waterline/google-cloud-setup-checklist.md` is the authoritative live-resource record and contains direct project-resolved Google Cloud Console links.
+
+Current status: iterations 1–6 are local build checkpoints. The Google Cloud foundation exists, but no Waterline Cloud Run service, live Vertex model receipt, SMTP delivery, or public preview is claimed until the iteration 7 deployment proof passes.
 
 ## License
 
