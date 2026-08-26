@@ -77,6 +77,14 @@ def test_preview_deploy_contract_is_commit_bound_private_and_outbox_only() -> No
     assert "WATERLINE_SMTP_" not in script
 
 
+def test_cloud_sql_session_secret_uses_an_async_adk_driver() -> None:
+    script = (ROOT / "deploy" / "provision_cloud_sql.sh").read_text()
+
+    assert "postgresql+psycopg://" in script
+    assert "postgresql+pg8000://" not in script
+    assert "?host=/cloudsql/%s" in script
+
+
 def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     package = json.loads((ROOT / "web" / "package.json").read_text())
     dockerfile = (ROOT / "web" / "Dockerfile").read_text()
