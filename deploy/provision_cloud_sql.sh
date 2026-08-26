@@ -162,9 +162,12 @@ if [[ "$has_db_secret" != true ]]; then
     printf '@/%s?host=/cloudsql/%s' "$WL_SQL_DATABASE" "$WL_SQL_CONNECTION"
   } > "$secret_dir/database-url"
   {
-    printf 'postgresql+pg8000://%s:' "$WL_SQL_USER"
+    # ADK's DatabaseSessionService creates an async SQLAlchemy engine. The
+    # psycopg v3 dialect supports that contract; pg8000 is synchronous and
+    # causes Cloud Run to fail before it can bind PORT.
+    printf 'postgresql+psycopg://%s:' "$WL_SQL_USER"
     tr -d '\n' < "$secret_dir/app-password"
-    printf '@/%s?unix_sock=/cloudsql/%s/.s.PGSQL.5432' "$WL_SQL_DATABASE" "$WL_SQL_CONNECTION"
+    printf '@/%s?host=/cloudsql/%s' "$WL_SQL_DATABASE" "$WL_SQL_CONNECTION"
   } > "$secret_dir/session-db"
   chmod 600 "$secret_dir/database-url" "$secret_dir/session-db"
 
