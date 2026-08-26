@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from waterline import dispatch
 from waterline.tools import dispatch_tools
 
 
@@ -134,3 +135,31 @@ def test_client_style_authorized_flag_cannot_bypass_attestation(
     assert "pilot attestation" in result["reason"]
     assert claims == []
     assert sends == []
+
+
+def test_explicit_outbox_mode_cannot_accidentally_send_smtp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path,
+) -> None:
+    monkeypatch.setenv("WATERLINE_OUTBOUND_MODE", "outbox")
+    monkeypatch.setenv("WATERLINE_SMTP_HOST", "smtp.example.test")
+    monkeypatch.setenv("WATERLINE_SMTP_FROM", "waterline@example.test")
+    monkeypatch.setattr(dispatch, "_OUTBOX", tmp_path)
+
+    result = dispatch.send_email(
+        "pilot-owned@example.test", "Waterline test", "No external delivery.",
+    )
+
+    assert result["sent"] is True
+    assert result["channel"] == "outbox"
+    assert len(list(tmp_path.glob("*.eml"))) == 1
+
+
+def test_smtp_mode_fails_closed_without_complete_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WATERLINE_OUTBOUND_MODE", "smtp")
+    monkeypatch.delenv("WATERLINE_SMTP_HOST", raising=False)
+    monkeypatch.delenv("WATERLINE_SMTP_FROM", raising=False)
+
+    with pytest.raises(RuntimeError, match="requires host and sender"):
+        dispatch.outbound_mode()

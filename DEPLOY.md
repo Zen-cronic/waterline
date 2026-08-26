@@ -2,6 +2,8 @@
 
 Waterline is two Cloud Run services — a **private agent** (FastAPI + ADK) and a public **frontend relay** (Next.js standalone) — plus **PostGIS** on **Cloud SQL for PostgreSQL**. The browser has no agent URL or credential. The frontend's service identity invokes the private agent; its exact-path relay issues a tamper-evident HttpOnly pilot session and signs that opaque owner plus the normalized command body.
 
+For the guarded preview, run `./deploy/deploy_preview.sh` from a committed runtime tree. It builds both images with the current 12-character Git revision, deploys the private-agent/public-web boundary, grants only the web identity service-level invocation, and forces `WATERLINE_OUTBOUND_MODE=outbox` so preview verification cannot send an external message. The manual commands below document the same pieces and remain useful for recovery.
+
 ## Prerequisites
 - `gcloud` CLI installed and authenticated (`gcloud auth login`), project selected (`gcloud config set project <PROJECT_ID>`).
 - APIs enabled: `run.googleapis.com`, `cloudbuild.googleapis.com`, `sqladmin.googleapis.com`, `artifactregistry.googleapis.com`, `aiplatform.googleapis.com`, and `secretmanager.googleapis.com`.
@@ -43,7 +45,7 @@ gcloud run deploy waterline-agent \
   --service-account="${WATERLINE_RUNTIME_SA}" \
   --no-allow-unauthenticated \
   --add-cloudsql-instances="${WATERLINE_SQL_CONNECTION}" \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini,WATERLINE_OUTBOUND_MODE=outbox" \
   --set-secrets="DATABASE_URL=waterline-database-url:latest,WATERLINE_SESSION_DB=waterline-session-db:latest,WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
   --port=8080 \
   --min-instances=0 \
@@ -53,6 +55,7 @@ gcloud run deploy waterline-agent \
 - `min-instances 0` and a small `--max-instances` cap per the hackathon cost guidance.
 - `WATERLINE_SESSION_DB` (SQLAlchemy URL) enables `DatabaseSessionService` = durable sessions = the crash-resume beat.
 - For the real-world loop, add `WATERLINE_SMTP_HOST/PORT/USER/PASS/FROM` to send real flight-following email.
+- Preview deployment sets `WATERLINE_OUTBOUND_MODE=outbox` explicitly. This wins even if SMTP-looking variables are present and prevents accidental external delivery. Switch to `smtp` only with an operator-owned sender/destination and a separately approved secret.
 - `dispatch_receipts` claims the itinerary before SMTP. This is intentionally **at-most-once**: if SMTP fails ambiguously after the claim, automatic retry remains suppressed and an operator must reconcile the receipt.
 - `mission_events` is the append-only lifecycle proof. Each deterministic edge carries an event ID, trace ID, reason code, and bounded JSON evidence; raw contact PII and model reasoning are excluded.
 - `WATERLINE_EVIDENCE_MODE=gemini` makes the deployed agent use Vertex AI for the allowlisted condition-card image. Local development defaults to deterministic, digest-bound fixture extraction. Neither mode exposes a public upload surface; both keep model authority false and store hostile content as a hash-only quarantine receipt.
