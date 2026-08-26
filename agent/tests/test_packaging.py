@@ -27,12 +27,38 @@ def test_gcloud_source_contract_includes_reference_data_and_excludes_captures() 
     assert "!data/captures/**" not in docker_ignore
     for exclusion in (
         ".agents/", ".claude/", ".codex/", "**/.env", "**/.env.*",
-        "**/.venv/", "**/.pytest_cache/", "**/.next/",
+        "**/.venv/", "**/.pytest_cache/", "**/.next/", "architecture/",
     ):
         assert exclusion in ignore
     for exclusion in (".agents/", ".claude/", ".codex/"):
         assert exclusion in docker_ignore
     assert (ROOT / "data" / "reference" / "airports_ca.csv").is_file()
+
+
+def test_architecture_proof_is_truthful_and_submission_ready() -> None:
+    svg = (ROOT / "architecture" / "waterline-system.svg").read_text()
+    architecture = (ROOT / "ARCHITECTURE.md").read_text()
+    testing = (ROOT / "TESTING.md").read_text()
+
+    assert 'width="1920" height="1080" viewBox="0 0 1920 1080"' in svg
+    for lane in (
+        "Authenticated intake", "Gemini + ADK fleet", "Deterministic authority",
+        "Observable consequence",
+    ):
+        assert lane in svg
+    for capability in (
+        "IDENTITY", "GATEWAY", "MODEL ARMOR", "REGISTRY", "MEMORY", "OBSERVABILITY",
+    ):
+        assert capability in svg
+    assert svg.count('class="read-edge"') >= 5
+    assert svg.count('class="human-edge"') >= 3
+    assert svg.count('class="receipt-edge"') >= 4
+    assert "MODEL ARMOR · DEFERRED" in svg
+    assert "REGISTRY · DEFERRED" in svg
+    assert "no deployment claim" in svg
+    assert "This is not a claim that Google Cloud Agent Gateway is deployed" in architecture
+    assert "## Rubric traceability" in architecture
+    assert "## 5. Preview deployment acceptance" in testing
 
 
 def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:

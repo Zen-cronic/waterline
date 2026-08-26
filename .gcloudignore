@@ -17,6 +17,9 @@
 **/.next/
 **/*.log
 docs/
+architecture/
+ARCHITECTURE.md
+TESTING.md
 web/
 agent/data/
 data/outbox/

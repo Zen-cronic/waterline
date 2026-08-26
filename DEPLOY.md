@@ -7,6 +7,9 @@ Waterline is two Cloud Run services — a **private agent** (FastAPI + ADK) and 
 - APIs enabled: `run.googleapis.com`, `cloudbuild.googleapis.com`, `sqladmin.googleapis.com`, `artifactregistry.googleapis.com`, `aiplatform.googleapis.com`, and `secretmanager.googleapis.com`.
 - Separate `waterline-runtime` and `waterline-web` service accounts. The runtime needs Vertex AI User and Cloud SQL Client; both receive resource-scoped access to `waterline-relay-secret`. Do not create a service-account key.
 - Docker for the local container preflight. Do not deploy until both image smoke checks pass.
+- Run every local and cloud gate in `TESTING.md`. The external operator checklist is the authoritative live-resource record and contains direct Console links for project `ata-2026-waterline`.
+
+The reusable Cargo Release incident ledger informed this contract: quote every `--format='…'` expression, inspect source bundles before build submission, keep routable endpoints separate from ID-token audiences, and treat Cloud Run ingress and IAM invocation as independent controls. Waterline resource names and roles remain project-specific; no Cargo identifiers or permissions are copied.
 
 ## 1. Cloud SQL (PostGIS)
 ```bash
@@ -31,13 +34,16 @@ export WATERLINE_SQL_CONNECTION="${WATERLINE_PROJECT}:${WATERLINE_REGION}:waterl
 export WATERLINE_RUNTIME_SA="waterline-runtime@${WATERLINE_PROJECT}.iam.gserviceaccount.com"
 export WATERLINE_WEB_SA="waterline-web@${WATERLINE_PROJECT}.iam.gserviceaccount.com"
 
+test "$(gcloud config get-value project)" = "${WATERLINE_PROJECT}"
+./deploy/verify_cloud_foundation.sh
+
 gcloud run deploy waterline-agent \
   --source . \
   --region="${WATERLINE_REGION}" \
   --service-account="${WATERLINE_RUNTIME_SA}" \
   --no-allow-unauthenticated \
   --add-cloudsql-instances="${WATERLINE_SQL_CONNECTION}" \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},GOOGLE_CLOUD_LOCATION=${WATERLINE_REGION},WATERLINE_EVIDENCE_MODE=gemini" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini" \
   --set-secrets="DATABASE_URL=waterline-database-url:latest,WATERLINE_SESSION_DB=waterline-session-db:latest,WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
   --port=8080 \
   --min-instances=0 \
@@ -50,6 +56,7 @@ gcloud run deploy waterline-agent \
 - `dispatch_receipts` claims the itinerary before SMTP. This is intentionally **at-most-once**: if SMTP fails ambiguously after the claim, automatic retry remains suppressed and an operator must reconcile the receipt.
 - `mission_events` is the append-only lifecycle proof. Each deterministic edge carries an event ID, trace ID, reason code, and bounded JSON evidence; raw contact PII and model reasoning are excluded.
 - `WATERLINE_EVIDENCE_MODE=gemini` makes the deployed agent use Vertex AI for the allowlisted condition-card image. Local development defaults to deterministic, digest-bound fixture extraction. Neither mode exposes a public upload surface; both keep model authority false and store hostile content as a hash-only quarantine receipt.
+- `WATERLINE_MODEL_LOCATION=global` is intentionally separate from the `us-central1` infrastructure region. Both the ADK fallback chain and typed visual extractor pass the global publisher location explicitly; this avoids the verified regional Gemini 3.5 `404 NOT_FOUND` failure without moving Cloud Run or Cloud SQL.
 - The deployed service fetches NAV CANADA data live. Local frozen captures are intentionally excluded from its image; an unavailable live source therefore fails visibly instead of silently redistributing copied payloads.
 
 ## 3. Frontend relay
@@ -58,6 +65,7 @@ The agent URL is a server-only runtime variable. The browser calls same-origin `
 
 ```bash
 export WATERLINE_AGENT_URL="https://<agent>.run.app"
+export WATERLINE_AGENT_AUDIENCE="https://<canonical-agent>.run.app"
 export WATERLINE_WEB_IMAGE="us-central1-docker.pkg.dev/<PROJECT>/waterline/waterline-web:latest"
 
 cd web
@@ -70,7 +78,7 @@ gcloud run deploy waterline-web \
   --region="${WATERLINE_REGION}" \
   --service-account="${WATERLINE_WEB_SA}" \
   --allow-unauthenticated \
-  --set-env-vars="WATERLINE_AGENT_URL=${WATERLINE_AGENT_URL},WATERLINE_AGENT_AUDIENCE=${WATERLINE_AGENT_URL}" \
+  --set-env-vars="WATERLINE_AGENT_URL=${WATERLINE_AGENT_URL},WATERLINE_AGENT_AUDIENCE=${WATERLINE_AGENT_AUDIENCE}" \
   --set-secrets="WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
   --port=8080
 
@@ -89,7 +97,15 @@ docker run --rm -p 8080:8080 -e PORT=8080 waterline-web
 
 For local development, the relay and agent share a clearly local-only default signing secret when the agent URL is localhost. The relay still issues an HttpOnly owner session. A Cloud Run environment (`K_SERVICE`) has no secret fallback and fails closed unless `WATERLINE_RELAY_SECRET` is mounted.
 
-## 4. On-camera proof (a scored requirement)
+Keep `WATERLINE_AGENT_URL` (the routable request endpoint) and `WATERLINE_AGENT_AUDIENCE` (the exact canonical audience accepted by Cloud Run) separate even when they happen to be identical. Do not normalize away a required trailing slash. Verify the audience through a successful signed relay request and the private agent's Cloud Run request logs; never log the token itself.
+
+## 4. Post-deploy verification
+
+Run the preview-deployment acceptance section in `TESTING.md`. Use `/health` for a deployed health proof and corroborate it in Cloud Run request logs; do not assume a generic edge 404 came from application routing. Confirm the agent has no `allUsers` invoker binding, the web identity has only service-level `roles/run.invoker`, and both revisions point to immutable image digests.
+
+The project-resolved Console pages are maintained in `/home/zin-kg/code/hackathons/allthingsagentic-2026/submission/waterline/google-cloud-setup-checklist.md`. That file, not this generic command template, records the actual revision names, URLs, image digests, live receipts, and verification timestamps.
+
+## 5. On-camera proof (a scored requirement)
 The demo video must show the backend running on Google Cloud. Film the public Waterline URL exercising the signed relay, then show the private `waterline-agent` revision and its request logs plus the Cloud SQL instance in Cloud Console. The agent URL intentionally rejects an anonymous browser request, so do not present direct browser access to `/health` as the proof path. After recording, **turn services off** (`min-instances 0` already helps) per the cost guidance.
 
 Do not deploy the frontend to Vercel without replacing the Cloud Run service-identity relay; the current boundary intentionally relies on the `waterline-web` Google service account.

@@ -22,6 +22,7 @@ from google.adk.models.google_llm import Gemini
 from google.genai.errors import ServerError, ClientError
 
 from ..emit import emit_step
+from ..config import vertex_model_client_kwargs
 
 _TRANSIENT = (429, 503)
 _ROUNDS = 3  # how many times to sweep the whole chain before giving up
@@ -33,7 +34,8 @@ class FallbackGemini(BaseLlm):
 
     def __init__(self, chain: list[str], **kw):
         super().__init__(model=chain[0], chain=chain, **kw)
-        self._models = [Gemini(model=m) for m in chain]
+        client_kwargs = vertex_model_client_kwargs()
+        self._models = [Gemini(model=m, client_kwargs=client_kwargs) for m in chain]
 
     async def generate_content_async(
         self, llm_request: LlmRequest, stream: bool = False
