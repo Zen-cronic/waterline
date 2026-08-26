@@ -46,6 +46,14 @@ export const MapView = forwardRef<MapHandle>(function MapView(_props, ref) {
       container: holder.current, style: STYLE, center: [-80.2, 45.6], zoom: 5.2,
       attributionControl: { compact: true },
     });
+    // The public style can reference optional POI sprites that are absent from
+    // its sprite sheet. Waterline does not use those icons, so supply a
+    // transparent placeholder instead of emitting noisy browser warnings.
+    m.on("styleimagemissing", (event) => {
+      if (!m.hasImage(event.id)) {
+        m.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
+      }
+    });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
     m.on("load", () => { ready.current = true; pending.current.forEach(apply); pending.current = []; });
     map.current = m;
