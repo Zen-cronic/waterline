@@ -120,6 +120,7 @@ def test_database_packages_the_durable_mission_state_machine() -> None:
     assert "CREATE TABLE IF NOT EXISTS mission_events" in schema
     assert "mission_events_status_check" in schema
     assert "mission_events" in cloud_setup
+    assert 'GRANT USAGE, CREATE ON SCHEMA public TO :"app_user"' in cloud_setup
 
 
 def test_prepared_condition_card_is_identical_across_private_and_public_images() -> None:

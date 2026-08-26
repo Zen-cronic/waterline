@@ -2,7 +2,10 @@
 
 \ir schema.sql
 
-GRANT USAGE ON SCHEMA public TO :"app_user";
+-- Waterline owns its explicit application tables through the admin-run schema,
+-- while ADK's DatabaseSessionService initializes its own durable session tables
+-- at first use. CREATE is limited to this database's public schema.
+GRANT USAGE, CREATE ON SCHEMA public TO :"app_user";
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO :"app_user";
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO :"app_user";
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
