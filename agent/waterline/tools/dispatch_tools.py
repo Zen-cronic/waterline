@@ -51,6 +51,7 @@ async def dispatch_from_state(session_id: str,
             "filed": True,
             "sent": False,
             "duplicate_suppressed": True,
+            "receipt_id": dispatch_key,
             "to": to,
         }
         emit_panel("dispatch", result)
@@ -69,7 +70,7 @@ async def dispatch_from_state(session_id: str,
     emit_panel("dispatch", {"to": to, "eta": eta, "grace_min": grace, **result})
     emit_step("DispatchAgent", "filed",
               f"Itinerary filed; flight-following notice sent to {to} via {result['channel']}.")
-    return {"filed": True, **result}
+    return {"filed": True, "receipt_id": dispatch_key, **result}
 
 
 async def file_and_notify(tool_context: ToolContext) -> dict[str, Any]:

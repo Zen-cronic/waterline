@@ -142,6 +142,45 @@ def _safe_evidence_state(decision: EvidenceDecision) -> dict[str, Any]:
     return state
 
 
+def _bounded_briefing_evidence(
+    state: dict[str, Any], briefing_gate: dict[str, Any],
+) -> dict[str, Any]:
+    """Project session proof into a bounded, judge-visible restore snapshot."""
+    weather = state.get("weather") if isinstance(state.get("weather"), dict) else {}
+    sources = weather.get("sources") if isinstance(weather.get("sources"), list) else []
+    bounded_sources = [
+        {
+            key: source.get(key)
+            for key in (
+                "station_id", "dist_nm", "metar_raw", "wind_dir", "wind_kt",
+                "gust_kt", "vis_sm", "ceiling_ft",
+            )
+        }
+        for source in sources[:3]
+        if isinstance(source, dict)
+    ]
+    inference = {
+        key: weather.get(key)
+        for key in ("available", "reach_nm", "confidence", "confidence_note", "inferred")
+    }
+    inference["sources"] = bounded_sources
+    provenance = state.get("ingest") if isinstance(state.get("ingest"), dict) else None
+    dispatch_gate = state.get("verification_gate")
+    if not isinstance(dispatch_gate, dict):
+        dispatch_gate = assess_dispatch_readiness(state).as_dict()
+    return {
+        "briefing": state.get("briefing") if isinstance(state.get("briefing"), str) else "",
+        "semantic_verdict": (
+            state.get("verification") if isinstance(state.get("verification"), str) else ""
+        ),
+        "inference": inference,
+        "provenance": provenance,
+        "briefing_gate": briefing_gate,
+        "dispatch_gate": dispatch_gate,
+        "dispatch_authority": False,
+    }
+
+
 async def _prepare_visual_evidence(
     mission: dict[str, Any], identity: PilotIdentity,
 ) -> tuple[EvidenceDecision | None, dict[str, Any]]:
@@ -318,6 +357,13 @@ async def _briefing_stream(*, mission: dict[str, Any], identity: PilotIdentity,
         return
 
     state = session.state if session else {}
+    briefing_evidence = _bounded_briefing_evidence(state, readiness.as_dict())
+    db.record_mission_event(
+        mission["mission_id"], identity.owner_ref,
+        "briefing_evidence_recorded", "deterministic_briefing_gate_passed",
+        briefing_evidence,
+    )
+    yield _sse({"type": "panel", "key": "mission_proof", "value": briefing_evidence})
     condition_receipt = state.get("condition_receipt")
     plan_revision = state.get("flight_plan")
     has_corrected_plan = (
@@ -540,9 +586,22 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 mission_id, identity.owner_ref, "dispatch_failed", "notice_not_completed",
                 {
                     "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
+                    "receipt_id": result.get("receipt_id"),
                     "dispatch_authority": False,
                 },
             )
+            if result.get("duplicate_suppressed"):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "message": "duplicate notice suppressed; operator reconciliation required",
+                        "duplicate_suppressed": True,
+                        "receipt_id": result.get("receipt_id"),
+                        "mission_id": mission_id,
+                        "trace_id": mission["trace_id"],
+                        "at_most_once": True,
+                    },
+                )
             raise HTTPException(status_code=409, detail="dispatch was not completed")
 
         receipt_id = state.get("dispatch_receipt", {}).get("idempotency_key")
@@ -562,7 +621,17 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
             "trace_id": mission["trace_id"], "status": "dispatched",
             "attestation_id": attestation_id, "receipt_id": receipt_id,
             "events": [event for event in (corrected, accepted, dispatched) if event],
-            "dispatch": {"sent": True, "channel": result.get("channel")},
+            "authority": authority.as_dict(),
+            "dispatch": {
+                "receipt_id": receipt_id,
+                "attestation_id": attestation_id,
+                "mission_id": mission_id,
+                "trace_id": mission["trace_id"],
+                "sent": True,
+                "channel": result.get("channel"),
+                "status": "sent",
+                "at_most_once": True,
+            },
         }
 
     return app
