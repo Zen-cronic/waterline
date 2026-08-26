@@ -9,19 +9,9 @@ export type LayerEvent = {
 };
 export type MapHandle = { setLayer: (e: LayerEvent) => void; reset: () => void };
 
-// Keyless dark basemap (OSM data via CARTO) — no API key, terrain-agnostic, honest attribution.
-const STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  sources: {
-    base: {
-      type: "raster",
-      tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-              "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"],
-      tileSize: 256, attribution: "© OpenStreetMap © CARTO",
-    },
-  },
-  layers: [{ id: "base", type: "raster", source: "base" }],
-};
+// OpenFreeMap's public MapLibre style requires no registration or API key and
+// carries the required OpenMapTiles/OpenStreetMap attribution in the style.
+const STYLE = "https://tiles.openfreemap.org/styles/dark";
 
 // Paint spec per layer id: how each streamed layer renders.
 const PAINT: Record<string, () => maplibregl.LayerSpecification[]> = {
