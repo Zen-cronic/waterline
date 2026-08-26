@@ -1,7 +1,7 @@
 """The Waterline briefing roster — seven named agents, strict separation of concerns.
 
     RouteAgent      resolves the request to coordinates (tool: resolve_route)
-    IngestAgent     pulls live NOTAMs for the FIR      (tool: fetch_and_load_notams)
+    IngestAgent     loads current NOTAM + METAR inputs (tool: fetch_and_load_sources)
     CorridorAgent   filters the FIR set to the route   (tool: filter_route_corridor)
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
@@ -20,7 +20,7 @@ from .model import FallbackGemini
 from ..config import MODEL_CHAIN, RANKER_MODEL_CHAIN
 from ..tools.route_tools import resolve_route
 from ..tools.geo_tools import (
-    fetch_and_load_notams, filter_route_corridor, infer_destination_weather,
+    fetch_and_load_sources, filter_route_corridor, infer_destination_weather,
 )
 from ..tools.dispatch_tools import file_and_notify
 from ..verification import guard_dispatch
@@ -40,11 +40,11 @@ def build_pipeline() -> SequentialAgent:
         output_key="route_note",
     )
     ingest_agent = LlmAgent(
-        name="IngestAgent", model=main, tools=[fetch_and_load_notams],
+        name="IngestAgent", model=main, tools=[fetch_and_load_sources],
         instruction=(
-            "Call fetch_and_load_notams to pull the live NOTAM dump for the route's FIR from "
-            "NAV CANADA. Report in one sentence how many records were fetched and how many carried "
-            "parseable geometry. Do not list individual NOTAMs."),
+            "Call fetch_and_load_sources to pull current NOTAM and METAR inputs for the route's "
+            "FIR from NAV CANADA. Report the record/parsed counts and whether each source was live "
+            "or a labelled local frozen capture. Do not list individual records."),
         output_key="ingest_note",
     )
     corridor_agent = LlmAgent(

@@ -28,7 +28,25 @@ def connect() -> psycopg.Connection:
     return psycopg.connect(dsn(), row_factory=dict_row)
 
 
-def load_notams(site: str, payload: dict[str, Any], source_url: str) -> dict[str, int]:
+def _record_ingest(cur: Any, site: str, product: str, records: int, parsed: int,
+                   provenance: dict[str, Any]) -> None:
+    cur.execute(
+        """
+        INSERT INTO ingests (
+            site, product, records, parsed, source_url, source_mode, source_ref,
+            retrieved_at, payload_sha256
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,
+        (
+            site, product, records, parsed, provenance["source_url"],
+            provenance["source_mode"], provenance["source_ref"],
+            provenance["retrieved_at"], provenance["payload_sha256"],
+        ),
+    )
+
+
+def load_notams(site: str, payload: dict[str, Any],
+                provenance: dict[str, Any]) -> dict[str, Any]:
     """Parse a NAV CANADA dump and upsert every geometry-bearing NOTAM.
 
     The circle `area` is built in SQL with ST_Buffer over geography so the
@@ -52,15 +70,17 @@ def load_notams(site: str, payload: dict[str, Any], source_url: str) -> dict[str
                 """,
                 {**n.as_dict(), "radius_m": n.radius_nm * NM_TO_M},
             )
-        cur.execute(
-            "INSERT INTO ingests (site, records, parsed, source_url) VALUES (%s,%s,%s,%s)",
-            (site, records, len(notams), source_url),
-        )
+        _record_ingest(cur, site, "notam", records, len(notams), provenance)
         conn.commit()
-    return {"records": records, "parsed": len(notams)}
+    return {
+        "records": records,
+        "parsed": len(notams),
+        "source_mode": provenance["source_mode"],
+    }
 
 
-def load_stations(stations: list) -> int:
+def load_stations(site: str, stations: list, records: int,
+                  provenance: dict[str, Any]) -> dict[str, Any]:
     """Upsert located METAR stations (from metar.stations_from_metar_dump)."""
     with connect() as conn, conn.cursor() as cur:
         for s in stations:
@@ -74,8 +94,13 @@ def load_stations(stations: list) -> int:
                 """,
                 (s.station_id, s.name, s.elevation_m, s.metar_raw, s.observed_at, s.lon, s.lat),
             )
+        _record_ingest(cur, site, "metar", records, len(stations), provenance)
         conn.commit()
-    return len(stations)
+    return {
+        "records": records,
+        "parsed": len(stations),
+        "source_mode": provenance["source_mode"],
+    }
 
 
 def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:

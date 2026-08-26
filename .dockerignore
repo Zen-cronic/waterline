@@ -1,5 +1,8 @@
 .git/
 .gcloudignore
+.agents/
+.claude/
+.codex/
 .python-version
 .playwright-mcp/
 **/__pycache__/
@@ -18,5 +21,3 @@ data/outbox/
 data/*
 !data/reference/
 !data/reference/**
-!data/captures/
-!data/captures/**

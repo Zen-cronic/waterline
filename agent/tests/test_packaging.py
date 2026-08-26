@@ -17,17 +17,21 @@ def test_agent_container_uses_locked_poetry_and_cloud_run_contract() -> None:
     assert (ROOT / "agent" / "poetry.lock").is_file()
 
 
-def test_gcloud_source_contract_includes_runtime_data_and_excludes_secrets() -> None:
+def test_gcloud_source_contract_includes_reference_data_and_excludes_captures() -> None:
     ignore = (ROOT / ".gcloudignore").read_text()
+    docker_ignore = (ROOT / ".dockerignore").read_text()
 
-    for inclusion in ("!data/reference/**", "!data/captures/**"):
-        assert inclusion in ignore
+    assert "!data/reference/**" in ignore
+    assert "!data/captures/**" not in ignore
+    assert "!data/captures/**" not in docker_ignore
     for exclusion in (
-        "**/.env", "**/.env.*", "**/.venv/", "**/.pytest_cache/", "**/.next/",
+        ".agents/", ".claude/", ".codex/", "**/.env", "**/.env.*",
+        "**/.venv/", "**/.pytest_cache/", "**/.next/",
     ):
         assert exclusion in ignore
+    for exclusion in (".agents/", ".claude/", ".codex/"):
+        assert exclusion in docker_ignore
     assert (ROOT / "data" / "reference" / "airports_ca.csv").is_file()
-    assert list((ROOT / "data" / "captures").glob("*.json"))
 
 
 def test_frontend_has_explicit_build_url_and_cloud_run_listener() -> None:
@@ -43,3 +47,18 @@ def test_frontend_has_explicit_build_url_and_cloud_run_listener() -> None:
     assert "HOSTNAME=0.0.0.0" in dockerfile
     assert "PORT=8080" in dockerfile
     assert "NEXT_PUBLIC_AGENT_URL=${_NEXT_PUBLIC_AGENT_URL}" in cloudbuild
+
+
+def test_product_copy_matches_the_curated_destination_scope() -> None:
+    copy = "\n".join(
+        (ROOT / path).read_text()
+        for path in ("README.md", "web/src/app/layout.tsx", "web/src/app/page.tsx")
+    )
+
+    assert "446" not in copy
+    assert "449" not in copy
+    for destination in (
+        "Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Wabikon Lake",
+        "Smoothwater Lake",
+    ):
+        assert destination in copy

@@ -10,7 +10,18 @@ type DispatchResult = {
   sent?: boolean;
   duplicate_suppressed?: boolean;
 };
-const LAKES = ["Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Smoothwater Lake"];
+type SourceReceipt = {
+  product: "notam" | "metar";
+  source_mode: "live" | "local_frozen_capture";
+  source_url: string;
+  source_ref: string;
+  records: number;
+  parsed: number;
+};
+type Provenance = { site: string; notam: SourceReceipt; metar: SourceReceipt };
+const LAKES = [
+  "Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Wabikon Lake", "Smoothwater Lake",
+];
 
 export default function Page() {
   const mapRef = useRef<MapHandle>(null);
@@ -22,7 +33,7 @@ export default function Page() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [brief, setBrief] = useState("");
   const [verdict, setVerdict] = useState<{ ok: boolean; text: string } | null>(null);
-  const [prov, setProv] = useState<string | null>(null);
+  const [prov, setProv] = useState<Provenance | null>(null);
   const [dispatch, setDispatch] = useState<DispatchResult | null>(null);
 
   async function run() {
@@ -49,7 +60,7 @@ export default function Page() {
         let ev: any; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
         if (ev.type === "layer") mapRef.current?.setLayer(ev);
         else if (ev.type === "step") setSteps((s) => [...s, ev]);
-        else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value?.source ?? null);
+        else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
         else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
         else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
         else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
@@ -64,7 +75,7 @@ export default function Page() {
       <div className="left">
         <div className="brand">
           <h1><span>Waterline</span></h1>
-          <p>A live flight briefing for the 446 seaplane bases with no identifier — no station.</p>
+          <p>A live, provenance-first briefing for curated water destinations with no station.</p>
         </div>
         <div className="form">
           <label>Departure (identifier)</label>
@@ -106,7 +117,14 @@ export default function Page() {
                 : `✈ Itinerary filed · flight-following notice sent to ${dispatch.to} via ${dispatch.channel}`}
             </div>
           )}
-          {prov && <div className="prov">source: {prov}</div>}
+          {prov && (
+            <div className="prov">
+              source: NOTAM {prov.notam.source_mode.replaceAll("_", " ")}
+              {` · ${prov.notam.parsed}/${prov.notam.records} parsed`}
+              {` · METAR ${prov.metar.source_mode.replaceAll("_", " ")}`}
+              {` · ${prov.metar.parsed}/${prov.metar.records} stations`}
+            </div>
+          )}
         </div>
       </div>
       <div className="right">
