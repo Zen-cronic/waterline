@@ -62,6 +62,18 @@ for secret_name in waterline-database-url waterline-session-db; do
     --format='table(bindings.role)'
 done
 
+gcloud secrets versions list waterline-relay-secret \
+  --project="$WL_PROJECT_ID" \
+  --filter='state=ENABLED' \
+  --format='table(name,state,createTime)'
+for service_account in "$WL_RUNTIME_SA" "waterline-web@${WL_PROJECT_ID}.iam.gserviceaccount.com"; do
+  gcloud secrets get-iam-policy waterline-relay-secret \
+    --project="$WL_PROJECT_ID" \
+    --flatten='bindings[].members' \
+    --filter="bindings.members:${service_account}" \
+    --format='table(bindings.role,bindings.members)'
+done
+
 gcloud run services list \
   --project="$WL_PROJECT_ID" \
   --region="$WL_REGION" \

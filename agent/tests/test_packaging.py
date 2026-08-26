@@ -34,19 +34,26 @@ def test_gcloud_source_contract_includes_reference_data_and_excludes_captures() 
     assert (ROOT / "data" / "reference" / "airports_ca.csv").is_file()
 
 
-def test_frontend_has_explicit_build_url_and_cloud_run_listener() -> None:
+def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     package = json.loads((ROOT / "web" / "package.json").read_text())
     dockerfile = (ROOT / "web" / "Dockerfile").read_text()
     config = (ROOT / "web" / "next.config.ts").read_text()
     cloudbuild = (ROOT / "web" / "cloudbuild.yaml").read_text()
+    relay = (ROOT / "web" / "src" / "app" / "api" / "waterline" / "[...path]" / "route.ts").read_text()
 
     assert "0.0.0.0" in package["scripts"]["start"]
     assert "${PORT:-8080}" in package["scripts"]["start"]
     assert 'output: "standalone"' in config
-    assert "ARG NEXT_PUBLIC_AGENT_URL" in dockerfile
+    assert "NEXT_PUBLIC_AGENT_URL" not in config
+    assert "ARG NEXT_PUBLIC_AGENT_URL" not in dockerfile
     assert "HOSTNAME=0.0.0.0" in dockerfile
     assert "PORT=8080" in dockerfile
-    assert "NEXT_PUBLIC_AGENT_URL=${_NEXT_PUBLIC_AGENT_URL}" in cloudbuild
+    assert "NEXT_PUBLIC_AGENT_URL" not in cloudbuild
+    assert "GoogleAuth" in relay
+    assert "x-serverless-authorization" in relay
+    assert "x-waterline-signature" in relay
+    assert "resolvePilotSession" in relay
+    assert "WATERLINE_PILOT_ACTOR" not in relay
 
 
 def test_product_copy_matches_the_curated_destination_scope() -> None:

@@ -7,7 +7,7 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import ToolContext
 from google.genai import types
 
-from waterline.verification import assess_dispatch_readiness, guard_dispatch
+from waterline.verification import assess_briefing_readiness, assess_dispatch_readiness, guard_dispatch
 
 
 def _approved_state() -> dict:
@@ -24,11 +24,33 @@ def _approved_state() -> dict:
             "sources": [{"station_id": "CYXR", "metar_raw": "CYXR ..."}],
         },
         "corridor": {"hazards": [{"idx": 0}]},
+        "mission_id": "mission-0123456789abcdefabcd",
+        "mission_owner_ref": "pilot-owner-ref",
+        "pilot_attestation": {
+            "confirmed": True,
+            "mission_id": "mission-0123456789abcdefabcd",
+            "actor_ref": "pilot-owner-ref",
+        },
     }
 
 
 def test_deterministic_gate_requires_semantic_and_structured_approval() -> None:
     assert assess_dispatch_readiness(_approved_state()).approved is True
+    assert assess_briefing_readiness(_approved_state()).approved is True
+
+    unattested = _approved_state()
+    unattested["pilot_attestation"] = None
+    decision = assess_dispatch_readiness(unattested)
+    assert decision.approved is False
+    assert "authenticated pilot attestation is missing" in decision.reasons
+
+    forged = _approved_state()
+    forged["pilot_attestation"] = {
+        "confirmed": True,
+        "mission_id": forged["mission_id"],
+        "actor_ref": "pilot-attacker",
+    }
+    assert assess_dispatch_readiness(forged).approved is False
 
     rejected = _approved_state()
     rejected["verification"] = "REJECTED: station provenance is missing"

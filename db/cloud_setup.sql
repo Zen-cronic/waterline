@@ -14,5 +14,8 @@ SELECT postgis_full_version();
 SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
-  AND table_name IN ('notams', 'stations', 'ingests', 'dispatch_receipts')
+  AND table_name IN (
+    'notams', 'stations', 'missions', 'pilot_attestations', 'ingests',
+    'dispatch_receipts'
+  )
 ORDER BY table_name;

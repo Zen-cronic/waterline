@@ -24,11 +24,23 @@ def _context() -> SimpleNamespace:
                 "dst_name": "Lady Evelyn Lake",
                 "cruise_fl_upper": 35,
             },
-            "corridor": {"kept": 2, "total": 20},
-            "weather": {"reach_nm": 27.8},
-            "briefing": "INFERRED from CYXR. NOT FOR OPERATIONAL USE.",
             "eta": "16:00Z",
             "grace_min": 60,
+            "mission_id": "mission-0123456789abcdefabcd",
+            "mission_owner_ref": "pilot-owner-ref",
+            "pilot_attestation": {
+                "confirmed": True,
+                "mission_id": "mission-0123456789abcdefabcd",
+                "actor_ref": "pilot-owner-ref",
+            },
+            "verification": "APPROVED — sources and inference labels agree.",
+            "weather": {
+                "available": True,
+                "reach_nm": 27.8,
+                "sources": [{"station_id": "CYXR", "metar_raw": "CYXR ..."}],
+            },
+            "corridor": {"kept": 2, "total": 20, "hazards": []},
+            "briefing": "INFERRED from CYXR, 27.8 NM away. NOT FOR OPERATIONAL USE.",
         },
     )
 
@@ -93,3 +105,32 @@ def test_failed_smtp_claim_is_at_most_once(monkeypatch: pytest.MonkeyPatch) -> N
 
     assert retry["duplicate_suppressed"] is True
     assert attempts == 1
+
+
+def test_client_style_authorized_flag_cannot_bypass_attestation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dispatch recomputes authority instead of trusting a mutable state flag."""
+    _run_threads_inline(monkeypatch)
+    claims: list[str] = []
+    sends: list[str] = []
+    ctx = _context()
+    ctx.state["pilot_attestation"] = None
+
+    monkeypatch.setattr(
+        dispatch_tools.db,
+        "claim_dispatch",
+        lambda key, *_args: claims.append(key) or True,
+    )
+    monkeypatch.setattr(
+        dispatch_tools,
+        "send_email",
+        lambda to, *_args: sends.append(to) or {"sent": True},
+    )
+
+    result = asyncio.run(dispatch_tools.file_and_notify(ctx))
+
+    assert result["sent"] is False
+    assert "pilot attestation" in result["reason"]
+    assert claims == []
+    assert sends == []

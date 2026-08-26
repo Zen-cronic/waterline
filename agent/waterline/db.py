@@ -103,6 +103,103 @@ def load_stations(site: str, stations: list, records: int,
     }
 
 
+def create_mission(mission_id: str, owner_ref: str, session_id: str) -> bool:
+    """Persist a server-generated mission identity before any agent work starts."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO missions (mission_id, owner_ref, session_id)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (mission_id) DO NOTHING
+            RETURNING mission_id
+            """,
+            (mission_id, owner_ref, session_id),
+        )
+        created = cur.fetchone() is not None
+        conn.commit()
+    return created
+
+
+def owned_mission(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
+    """Return a mission only to its authenticated owner."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT mission_id, owner_ref, session_id, status, created_at, updated_at
+            FROM missions
+            WHERE mission_id = %s AND owner_ref = %s
+            """,
+            (mission_id, owner_ref),
+        )
+        row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def mark_mission_awaiting_attestation(mission_id: str, owner_ref: str) -> bool:
+    """Move a successfully verified initial run to its sole human gate."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE missions
+            SET status = 'awaiting_attestation', updated_at = now()
+            WHERE mission_id = %s AND owner_ref = %s AND status = 'briefing'
+            RETURNING mission_id
+            """,
+            (mission_id, owner_ref),
+        )
+        changed = cur.fetchone() is not None
+        conn.commit()
+    return changed
+
+
+def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str,
+                            responsible_email: str, eta: str, grace_min: int) -> bool:
+    """Atomically claim the one human attestation allowed for a mission."""
+    contact_hash = hashlib.sha256(
+        responsible_email.strip().lower().encode("utf-8"),
+    ).hexdigest()
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE missions
+            SET status = 'attestation_claimed', updated_at = now()
+            WHERE mission_id = %s AND owner_ref = %s AND status = 'awaiting_attestation'
+            RETURNING mission_id
+            """,
+            (mission_id, actor_ref),
+        )
+        if cur.fetchone() is None:
+            conn.rollback()
+            return False
+        cur.execute(
+            """
+            INSERT INTO pilot_attestations (
+                attestation_id, mission_id, actor_ref, contact_hash, eta, grace_min
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (attestation_id, mission_id, actor_ref, contact_hash, eta, grace_min),
+        )
+        conn.commit()
+    return True
+
+
+def mark_mission_dispatched(mission_id: str, owner_ref: str) -> bool:
+    """Commit the post-dispatch mission state for the authenticated owner."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE missions
+            SET status = 'dispatched', updated_at = now()
+            WHERE mission_id = %s AND owner_ref = %s AND status = 'attestation_claimed'
+            RETURNING mission_id
+            """,
+            (mission_id, owner_ref),
+        )
+        changed = cur.fetchone() is not None
+        conn.commit()
+    return changed
+
+
 def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:
     """Atomically claim one external dispatch before SMTP is attempted.
 
