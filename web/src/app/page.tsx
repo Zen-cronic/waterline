@@ -241,6 +241,9 @@ export default function Page() {
   const stateTimeline = timeline.filter((event) =>
     event.from_status !== event.to_status || event.event_type === "recovery_started"
   );
+  const canAttest = mission?.status === "awaiting_attestation" &&
+    conditionCard?.validation_result === "accepted" &&
+    planRevision !== null && briefingGate?.approved === true;
 
   return (
     <div className="app">
@@ -309,7 +312,7 @@ export default function Page() {
           ))}
           {brief && <><div className="section-h">Briefing</div><div className="brief">{brief}</div></>}
           {verdict && <div className={`verdict ${verdict.ok ? "ok" : "no"}`}>{verdict.text}</div>}
-          {mission?.status === "awaiting_attestation" && (
+          {canAttest && (
             <div className="attestation">
               <div className="section-h">Human authority required</div>
               <p>The briefing is held. One authenticated pilot attestation may resume this mission and authorize one flight-following notice.</p>
@@ -324,6 +327,12 @@ export default function Page() {
               <button className="btn" onClick={attest} disabled={attesting || !email || !eta}>
                 {attesting ? "Attesting…" : "Attest & file one notice"}
               </button>
+            </div>
+          )}
+          {mission?.status === "awaiting_attestation" && !canAttest && (
+            <div className="attestation">
+              <div className="section-h">Review required — dispatch held</div>
+              <p>The evidence gate did not approve this briefing. No attestation or notice is available.</p>
             </div>
           )}
           {error && <div className="verdict no">{error}</div>}

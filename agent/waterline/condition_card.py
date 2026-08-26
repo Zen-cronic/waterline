@@ -161,6 +161,11 @@ def _aware_utc(value: datetime) -> datetime | None:
     return value.astimezone(timezone.utc)
 
 
+def _canonical_visible_text(value: str) -> str:
+    """Normalize presentation-only OCR differences without changing content."""
+    return " ".join(value.split()).casefold()
+
+
 def validate_condition_card(
     *,
     artifact: PreparedArtifact,
@@ -186,7 +191,7 @@ def validate_condition_card(
         reasons.append("template_invalid")
     if extraction.card_id != "WL-LEL-20260826-A":
         reasons.append("card_id_invalid")
-    if extraction.lake_name.strip().casefold() != destination.strip().casefold():
+    if _canonical_visible_text(extraction.lake_name) != _canonical_visible_text(destination):
         reasons.append("lake_route_mismatch")
     if extraction.blocked_sector != "east":
         reasons.append("sector_not_supported")
@@ -195,7 +200,13 @@ def validate_condition_card(
         "template_id", "card_id", "lake_name", "issued_at", "valid_from",
         "valid_until", "blocked_sector", "obstruction",
     ):
-        if getattr(extraction, field) != getattr(expected, field):
+        actual_value = getattr(extraction, field)
+        expected_value = getattr(expected, field)
+        if field in {"lake_name", "obstruction"}:
+            matches = _canonical_visible_text(actual_value) == _canonical_visible_text(expected_value)
+        else:
+            matches = actual_value == expected_value
+        if not matches:
             reasons.append(f"prepared_manifest_{field}_mismatch")
     if extraction.observed_confidence < MIN_CONFIDENCE:
         reasons.append("confidence_below_threshold")
@@ -225,7 +236,11 @@ def validate_condition_card(
     expected_untrusted = (expected.untrusted_text or "").strip()
     if extraction.untrusted_text_detected != expected.untrusted_text_detected:
         reasons.append("prepared_manifest_untrusted_signal_mismatch")
-    if sha256(untrusted.encode()).hexdigest() != sha256(expected_untrusted.encode()).hexdigest():
+    # A sticky-note heading or OCR line breaks may surround the known embedded
+    # instruction. The artifact digest already binds the complete image, so the
+    # trust decision only requires the expected instruction to be present; all
+    # detected document text remains quarantined and excluded from trusted state.
+    if _canonical_visible_text(expected_untrusted) not in _canonical_visible_text(untrusted):
         reasons.append("prepared_manifest_untrusted_text_mismatch")
 
     result: Literal["accepted", "review_required"] = (

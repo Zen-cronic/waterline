@@ -144,6 +144,9 @@ test("judge-facing surface names every required proof state", () => {
     "SOLE AUTHORIZE", "AT-MOST-ONCE", "Verified consequence", "Replay suppressed",
   ]) assert.match(proofRail, new RegExp(label));
   assert.match(page, /Human authority required/);
+  assert.match(page, /Review required — dispatch held/);
+  assert.match(page, /conditionCard\?\.validation_result === "accepted"/);
+  assert.match(page, /briefingGate\?\.approved === true/);
   assert.match(page, /Interrupted run retained/);
   assert.match(page, /DETERMINISTIC CONSEQUENCE/);
 });
