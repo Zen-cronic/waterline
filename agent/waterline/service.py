@@ -31,6 +31,7 @@ from .condition_card import (
     failed_evidence_decision,
 )
 from .config import APP_NAME
+from .dispatch import outbound_mode
 from .run import make_session_service, run_briefing
 from .tools.dispatch_tools import dispatch_from_state
 from .verification import assess_briefing_readiness, assess_dispatch_readiness
@@ -419,7 +420,12 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "service": "waterline", "boundary": "private-relay"}
+        return {
+            "status": "ok",
+            "service": "waterline",
+            "boundary": "private-relay",
+            "outbound_mode": outbound_mode(),
+        }
 
     @app.post("/v1/missions")
     async def create_mission(req: MissionRequest, relay: Relay) -> StreamingResponse:

@@ -61,6 +61,22 @@ def test_architecture_proof_is_truthful_and_submission_ready() -> None:
     assert "## 5. Preview deployment acceptance" in testing
 
 
+def test_preview_deploy_contract_is_commit_bound_private_and_outbox_only() -> None:
+    script = (ROOT / "deploy" / "deploy_preview.sh").read_text()
+
+    assert "git rev-parse --short=12 HEAD" in script
+    assert "git diff --quiet" in script
+    assert "waterline-agent:${revision}" in script
+    assert "waterline-web:${revision}" in script
+    assert "--no-allow-unauthenticated" in script
+    assert "--allow-unauthenticated" in script
+    assert "serviceAccount:${WL_WEB_SA}" in script
+    assert "--role=roles/run.invoker" in script
+    assert "WATERLINE_MODEL_LOCATION=global" in script
+    assert "WATERLINE_OUTBOUND_MODE=outbox" in script
+    assert "WATERLINE_SMTP_" not in script
+
+
 def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     package = json.loads((ROOT / "web" / "package.json").read_text())
     dockerfile = (ROOT / "web" / "Dockerfile").read_text()
