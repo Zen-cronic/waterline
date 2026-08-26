@@ -21,7 +21,8 @@ web/
 agent/data/
 data/outbox/
 
-# Only the public-domain reference dataset crosses the Cloud Build boundary.
+# Only tracked runtime references cross the Cloud Build boundary: the
+# public-domain airport dataset and Waterline's synthetic condition-card asset.
 # Local NAV CANADA captures remain excluded: their source terms do not grant a
 # clear right to bundle copied payloads in a deployed application.
 data/*

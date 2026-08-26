@@ -23,8 +23,8 @@ PostGIS ships with Cloud SQL for PostgreSQL — no build needed. Apply `db/schem
 ## 2. Agent on Cloud Run
 ```bash
 # from waterline/ (build context = project root; .gcloudignore includes the
-# tracked public-domain reference data, but excludes local NAV CANADA captures
-# and env files)
+# tracked public-domain airport reference and synthetic condition-card evidence,
+# but excludes local NAV CANADA captures and env files)
 export WATERLINE_PROJECT="<PROJECT>"
 export WATERLINE_REGION="us-central1"
 export WATERLINE_SQL_CONNECTION="${WATERLINE_PROJECT}:${WATERLINE_REGION}:waterline-pg"
@@ -37,7 +37,7 @@ gcloud run deploy waterline-agent \
   --service-account="${WATERLINE_RUNTIME_SA}" \
   --no-allow-unauthenticated \
   --add-cloudsql-instances="${WATERLINE_SQL_CONNECTION}" \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},GOOGLE_CLOUD_LOCATION=${WATERLINE_REGION}" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},GOOGLE_CLOUD_LOCATION=${WATERLINE_REGION},WATERLINE_EVIDENCE_MODE=gemini" \
   --set-secrets="DATABASE_URL=waterline-database-url:latest,WATERLINE_SESSION_DB=waterline-session-db:latest,WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
   --port=8080 \
   --min-instances=0 \
@@ -49,6 +49,7 @@ gcloud run deploy waterline-agent \
 - For the real-world loop, add `WATERLINE_SMTP_HOST/PORT/USER/PASS/FROM` to send real flight-following email.
 - `dispatch_receipts` claims the itinerary before SMTP. This is intentionally **at-most-once**: if SMTP fails ambiguously after the claim, automatic retry remains suppressed and an operator must reconcile the receipt.
 - `mission_events` is the append-only lifecycle proof. Each deterministic edge carries an event ID, trace ID, reason code, and bounded JSON evidence; raw contact PII and model reasoning are excluded.
+- `WATERLINE_EVIDENCE_MODE=gemini` makes the deployed agent use Vertex AI for the allowlisted condition-card image. Local development defaults to deterministic, digest-bound fixture extraction. Neither mode exposes a public upload surface; both keep model authority false and store hostile content as a hash-only quarantine receipt.
 - The deployed service fetches NAV CANADA data live. Local frozen captures are intentionally excluded from its image; an unavailable live source therefore fails visibly instead of silently redistributing copied payloads.
 
 ## 3. Frontend relay
