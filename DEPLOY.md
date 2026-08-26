@@ -48,11 +48,12 @@ gcloud run deploy waterline-agent \
 - `WATERLINE_SESSION_DB` (SQLAlchemy URL) enables `DatabaseSessionService` = durable sessions = the crash-resume beat.
 - For the real-world loop, add `WATERLINE_SMTP_HOST/PORT/USER/PASS/FROM` to send real flight-following email.
 - `dispatch_receipts` claims the itinerary before SMTP. This is intentionally **at-most-once**: if SMTP fails ambiguously after the claim, automatic retry remains suppressed and an operator must reconcile the receipt.
+- `mission_events` is the append-only lifecycle proof. Each deterministic edge carries an event ID, trace ID, reason code, and bounded JSON evidence; raw contact PII and model reasoning are excluded.
 - The deployed service fetches NAV CANADA data live. Local frozen captures are intentionally excluded from its image; an unavailable live source therefore fails visibly instead of silently redistributing copied payloads.
 
 ## 3. Frontend relay
 
-The agent URL is a server-only runtime variable. The browser calls same-origin `/api/waterline/*`; the relay permits only mission creation and the owner-attestation command. For a remote agent, `google-auth-library` obtains a service-identity ID token and sends it as `X-Serverless-Authorization`. The HMAC additionally binds the injected pilot actor to the exact method, path, normalized body, and timestamp.
+The agent URL is a server-only runtime variable. The browser calls same-origin `/api/waterline/*`; the relay permits only mission creation, owner-bound timeline restore, bounded same-session recovery, and the owner-attestation command. For a remote agent, `google-auth-library` obtains a service-identity ID token and sends it as `X-Serverless-Authorization`. The HMAC additionally binds the injected pilot actor to the exact method, path, normalized body, and timestamp.
 
 ```bash
 export WATERLINE_AGENT_URL="https://<agent>.run.app"

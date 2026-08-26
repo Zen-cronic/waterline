@@ -46,6 +46,21 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .mission-chip span { color:var(--muted); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
 .mission-chip strong { color:var(--amber); text-transform:uppercase; letter-spacing:.5px; }
 .mission-chip small { color:var(--dim); }
+.timeline { margin:10px 0 12px; }
+.timeline .section-h { margin-top:0; }
+.state-event { position:relative; display:grid; grid-template-columns:12px 1fr; gap:8px; padding:5px 0; }
+.state-event:not(:last-child)::after { content:""; position:absolute; left:5px; top:17px; bottom:-5px; width:1px; background:var(--edge); }
+.state-event i { width:11px; height:11px; margin-top:3px; border:2px solid var(--dim); border-radius:50%; background:var(--panel-2); z-index:1; }
+.state-event div { display:grid; gap:1px; min-width:0; }
+.state-event strong { color:var(--ink); font-size:11px; text-transform:uppercase; letter-spacing:.45px; }
+.state-event span { color:var(--muted); font-size:11px; }
+.state-event small { color:var(--dim); font:9px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap:anywhere; }
+.state-rejected i { border-color:var(--red); background:rgba(239,107,107,.28); }
+.state-awaiting_attestation i { border-color:var(--amber); background:rgba(242,180,90,.28); }
+.state-corrected i, .state-accepted i, .state-dispatched i { border-color:var(--green); background:rgba(87,201,138,.28); }
+.recovery-card { display:grid; gap:7px; margin:10px 0; padding:11px; border:1px solid rgba(239,107,107,.42); border-radius:9px; background:rgba(239,107,107,.08); }
+.recovery-card strong { color:var(--red); font-size:12px; }
+.recovery-card span { color:var(--muted); font-size:11px; }
 .attestation { display:grid; gap:8px; margin-top:12px; padding:12px; border:1px solid rgba(242,180,90,.45); border-radius:10px; background:rgba(242,180,90,.07); }
 .attestation .section-h { margin:0; color:var(--amber); }
 .attestation p { margin:0 0 4px; color:var(--muted); font-size:12px; }

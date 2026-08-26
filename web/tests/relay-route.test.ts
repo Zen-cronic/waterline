@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { NextRequest } from "next/server";
 
-import { POST } from "../src/app/api/waterline/[...path]/route";
+import { GET, POST } from "../src/app/api/waterline/[...path]/route";
 import { signRelayRequest } from "../src/lib/relay-auth";
 import { PILOT_COOKIE, resolvePilotSession } from "../src/lib/pilot-session";
 
@@ -68,7 +68,34 @@ test("the same-origin route forwards only a normalized signed server command", a
   );
   assert.equal(headers.get("authorization"), null);
   assert.equal(headers.get("x-serverless-authorization"), null);
-  assert.match(response.headers.get("set-cookie") ?? "", /waterline_pilot=.*HttpOnly.*SameSite=Strict/);
+  const setCookie = response.headers.get("set-cookie") ?? "";
+  assert.match(setCookie, /waterline_pilot=.*HttpOnly.*SameSite=Strict/);
+
+  const missionId = "mission-0123456789abcdefabcd";
+  const cookie = setCookie.split(";", 1)[0];
+  const restore = new NextRequest(
+    `http://waterline.test/api/waterline/missions/${missionId}`,
+    { method: "GET", headers: { cookie } },
+  );
+  const restored = await GET(restore, {
+    params: Promise.resolve({ path: ["missions", missionId] }),
+  });
+  assert.equal(restored.status, 200);
+  assert.ok(captured);
+  assert.equal(captured.url, `http://127.0.0.1:8088/v1/missions/${missionId}`);
+  assert.equal(captured.init.method, "GET");
+  assert.equal(captured.init.body, undefined);
+  const restoreHeaders = new Headers(captured.init.headers);
+  assert.equal(restoreHeaders.get("x-waterline-actor"), actor);
+  const restoreTimestamp = restoreHeaders.get("x-waterline-timestamp");
+  assert.ok(restoreTimestamp);
+  assert.equal(
+    restoreHeaders.get("x-waterline-signature"),
+    signRelayRequest(
+      secret, "GET", `/v1/missions/${missionId}`, "", actor!, restoreTimestamp,
+    ),
+  );
+  assert.equal(restored.headers.get("set-cookie"), null);
 });
 
 test("pilot session cookies are owner-stable, expiring, and tamper-evident", () => {

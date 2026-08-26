@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapView, type MapHandle } from "@/components/MapView";
 
 type Step = { agent: string; kind: string; detail: string };
@@ -21,7 +21,17 @@ type Provenance = { site: string; notam: SourceReceipt; metar: SourceReceipt };
 type Mission = {
   mission_id: string;
   owner_ref: string;
-  status: "briefing" | "awaiting_attestation" | "dispatched";
+  trace_id: string;
+  status: "proposed" | "rejected" | "awaiting_attestation" | "corrected" | "accepted" | "dispatched";
+};
+type StateEvent = {
+  event_id: string;
+  from_status?: string | null;
+  to_status: Mission["status"];
+  event_type: string;
+  reason_code: string;
+  trace_id: string;
+  evidence?: Record<string, unknown>;
 };
 const LAKES = [
   "Lady Evelyn Lake", "Lake Temagami", "Biscotasi Lake", "Wabikon Lake", "Smoothwater Lake",
@@ -37,53 +47,114 @@ export default function Page() {
   const [grace, setGrace] = useState(60);
   const [running, setRunning] = useState(false);
   const [attesting, setAttesting] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [recoverable, setRecoverable] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
   const [brief, setBrief] = useState("");
   const [verdict, setVerdict] = useState<{ ok: boolean; text: string } | null>(null);
   const [prov, setProv] = useState<Provenance | null>(null);
   const [dispatch, setDispatch] = useState<DispatchResult | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
+  const [timeline, setTimeline] = useState<StateEvent[]>([]);
   const [error, setError] = useState("");
+
+  function appendEvent(event?: StateEvent) {
+    if (!event?.event_id) return;
+    setTimeline((current) => current.some((item) => item.event_id === event.event_id)
+      ? current : [...current, event]);
+  }
+
+  async function consumeMissionStream(res: Response) {
+    if (!res.ok || !res.body) throw new Error(`Mission command failed (${res.status})`);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const frames = buf.split("\n\n");
+      buf = frames.pop() ?? "";
+      for (const f of frames) {
+        const line = f.split("\n").find((l) => l.startsWith("data:"));
+        if (!line) continue;
+        let ev: any; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (ev.type === "layer") mapRef.current?.setLayer(ev);
+        else if (ev.type === "step") setSteps((s) => [...s, ev]);
+        else if (ev.type === "mission") {
+          const next = ev as Mission & { event?: StateEvent };
+          setMission(next);
+          appendEvent(next.event);
+          sessionStorage.setItem("waterline:last-mission", next.mission_id);
+          if (next.status !== "rejected") setRecoverable(false);
+        } else if (ev.type === "recovery") {
+          setRecoverable(ev.available === true);
+          if (ev.reasons?.length) setError(ev.reasons.join("; "));
+        } else if (ev.type === "error") setError(ev.detail ?? "Briefing failed");
+        else if (ev.type === "authority") setError((ev.reasons ?? []).join("; "));
+        else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
+        else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
+        else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
+        else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
+          setVerdict({ ok: ev.text.trim().toUpperCase().startsWith("APPROVED"), text: ev.text });
+      }
+    }
+  }
+
+  useEffect(() => {
+    const missionId = sessionStorage.getItem("waterline:last-mission");
+    if (!missionId) return;
+    let active = true;
+    void fetch(`/api/waterline/missions/${missionId}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const restored = await res.json();
+        if (!active) return;
+        setMission({
+          mission_id: restored.mission.mission_id,
+          owner_ref: restored.mission.owner_ref,
+          trace_id: restored.mission.trace_id,
+          status: restored.mission.status,
+        });
+        setTimeline(restored.events);
+        const last = restored.events.at(-1) as StateEvent | undefined;
+        setRecoverable(restored.mission.status === "rejected" &&
+          last?.reason_code === "briefing_execution_failed");
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   async function run() {
     setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null);
-    setDispatch(null); setMission(null); setError("");
+    setDispatch(null); setMission(null); setTimeline([]); setRecoverable(false); setError("");
     mapRef.current?.reset();
     try {
       const res = await fetch("/api/waterline/missions", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ departure: dep, destination: dst, cruise_alt_ft: alt }),
       });
-      if (!res.ok || !res.body) throw new Error(`Mission intake failed (${res.status})`);
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const frames = buf.split("\n\n");
-        buf = frames.pop() ?? "";
-        for (const f of frames) {
-          const line = f.split("\n").find((l) => l.startsWith("data:"));
-          if (!line) continue;
-          let ev: any; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
-          if (ev.type === "layer") mapRef.current?.setLayer(ev);
-          else if (ev.type === "step") setSteps((s) => [...s, ev]);
-          else if (ev.type === "mission") setMission(ev as Mission);
-          else if (ev.type === "error") setError(ev.detail ?? "Briefing failed");
-          else if (ev.type === "authority") setError((ev.reasons ?? []).join("; "));
-          else if (ev.type === "panel" && ev.key === "provenance") setProv(ev.value as Provenance);
-          else if (ev.type === "panel" && ev.key === "dispatch") setDispatch(ev.value);
-          else if (ev.type === "agent" && ev.final && ev.author === "BriefingComposer") setBrief(ev.text);
-          else if (ev.type === "agent" && ev.final && ev.author === "Verifier")
-            setVerdict({ ok: ev.text.trim().toUpperCase().startsWith("APPROVED"), text: ev.text });
-        }
-      }
+      await consumeMissionStream(res);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Mission intake failed");
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function resume() {
+    if (!mission || mission.status !== "rejected" || !recoverable) return;
+    setRecovering(true); setRecoverable(false); setError("");
+    try {
+      const res = await fetch(`/api/waterline/missions/${mission.mission_id}/resume`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm_resume: true }),
+      });
+      await consumeMissionStream(res);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Mission recovery failed");
+    } finally {
+      setRecovering(false);
     }
   }
 
@@ -102,7 +173,11 @@ export default function Page() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.detail?.message ?? result.detail ?? "Attestation failed");
-      setMission({ mission_id: result.mission_id, owner_ref: result.owner_ref, status: result.status });
+      setMission({
+        mission_id: result.mission_id, owner_ref: result.owner_ref,
+        trace_id: result.trace_id, status: result.status,
+      });
+      for (const event of result.events ?? []) appendEvent(event);
       setDispatch({ sent: result.dispatch.sent, channel: result.dispatch.channel, to: email });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Attestation failed");
@@ -143,6 +218,31 @@ export default function Page() {
               <span>{mission.mission_id}</span>
               <strong>{mission.status.replaceAll("_", " ")}</strong>
               <small>authenticated owner {mission.owner_ref}</small>
+              <small>trace {mission.trace_id}</small>
+            </div>
+          )}
+          {timeline.length > 0 && (
+            <div className="timeline" aria-label="Mission state timeline">
+              <div className="section-h">Durable state timeline</div>
+              {timeline.map((event) => (
+                <div className={`state-event state-${event.to_status}`} key={event.event_id}>
+                  <i aria-hidden="true" />
+                  <div>
+                    <strong>{event.to_status.replaceAll("_", " ")}</strong>
+                    <span>{event.reason_code.replaceAll("_", " ")}</span>
+                    <small>{event.event_id}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {mission?.status === "rejected" && recoverable && (
+            <div className="recovery-card">
+              <strong>Interrupted run retained</strong>
+              <span>The failure is durable. Resume the same mission and session.</span>
+              <button className="btn" onClick={resume} disabled={recovering}>
+                {recovering ? "Recovering…" : "Resume retained mission"}
+              </button>
             </div>
           )}
           {steps.map((s, i) => (

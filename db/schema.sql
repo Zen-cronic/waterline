@@ -46,11 +46,72 @@ CREATE TABLE IF NOT EXISTS missions (
     mission_id   text PRIMARY KEY,
     owner_ref    text NOT NULL,
     session_id   text NOT NULL UNIQUE,
-    status       text NOT NULL DEFAULT 'briefing',
+    trace_id     text NOT NULL,
+    request      jsonb NOT NULL,
+    status       text NOT NULL DEFAULT 'proposed',
     created_at   timestamptz NOT NULL DEFAULT now(),
     updated_at   timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE missions ADD COLUMN IF NOT EXISTS trace_id text;
+ALTER TABLE missions ADD COLUMN IF NOT EXISTS request jsonb;
+UPDATE missions SET trace_id = 'legacy-' || mission_id WHERE trace_id IS NULL;
+UPDATE missions SET request = '{}'::jsonb WHERE request IS NULL;
+-- Normalize the two pre-state-machine labels before enforcing the public graph.
+UPDATE missions SET status = 'proposed' WHERE status = 'briefing';
+UPDATE missions SET status = 'accepted' WHERE status = 'attestation_claimed';
+ALTER TABLE missions ALTER COLUMN trace_id SET NOT NULL;
+ALTER TABLE missions ALTER COLUMN request SET NOT NULL;
+ALTER TABLE missions ALTER COLUMN status SET DEFAULT 'proposed';
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'missions_status_check'
+    ) THEN
+        ALTER TABLE missions ADD CONSTRAINT missions_status_check CHECK (
+            status IN (
+                'proposed', 'rejected', 'awaiting_attestation',
+                'corrected', 'accepted', 'dispatched'
+            )
+        );
+    END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS missions_owner_idx ON missions (owner_ref, created_at DESC);
+
+-- Append-only proof of every deterministic state change and recovery/failure.
+-- Evidence is structured and must never contain raw contact PII or model reasoning.
+CREATE TABLE IF NOT EXISTS mission_events (
+    sequence      bigserial PRIMARY KEY,
+    event_id      text NOT NULL UNIQUE,
+    mission_id    text NOT NULL REFERENCES missions(mission_id),
+    from_status   text,
+    to_status     text NOT NULL,
+    event_type    text NOT NULL,
+    reason_code   text NOT NULL,
+    evidence      jsonb NOT NULL DEFAULT '{}'::jsonb,
+    trace_id      text NOT NULL,
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS mission_events_timeline_idx
+    ON mission_events (mission_id, sequence);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'mission_events_status_check'
+    ) THEN
+        ALTER TABLE mission_events ADD CONSTRAINT mission_events_status_check CHECK (
+            to_status IN (
+                'proposed', 'rejected', 'awaiting_attestation',
+                'corrected', 'accepted', 'dispatched'
+            )
+            AND (
+                from_status IS NULL OR from_status IN (
+                    'proposed', 'rejected', 'awaiting_attestation',
+                    'corrected', 'accepted', 'dispatched'
+                )
+            )
+        );
+    END IF;
+END $$;
 
 -- One authenticated human attestation per mission. Contact PII is hashed; the
 -- actual address exists only for the bounded send attempt and dispatch ledger.

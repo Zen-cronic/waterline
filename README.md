@@ -51,6 +51,7 @@ flowchart LR
 - **Crash recovery:** agent session state is checkpointed to Cloud SQL (`DatabaseSessionService`); a briefing killed mid-run resumes under the same session id.
 - **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the disclaimer, and an authenticated owner-bound attestation before unlocking dispatch.
 - **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
+- **Observable deterministic state:** agents cannot write mission status. Cloud SQL atomically commits `proposed → rejected → awaiting_attestation → corrected → accepted → dispatched`, with an append-only event ID, trace ID, reason code, and bounded evidence at every edge. An interrupted worker resumes the same mission/session; refresh restores the owner-bound timeline.
 - **At-most-once notice:** Cloud SQL atomically claims an itinerary key before SMTP. Retry/resume and concurrent requests cannot send the same notice twice. An ambiguous SMTP failure intentionally remains claimed and requires operator reconciliation rather than an automatic retry that could duplicate a safety notice.
 - **The Twist is spatial:** the NAV CANADA API refuses geometry queries (`bbox=`, `radius=`, `point=` all return `alpha.geomNone`; only `site=` works), so the route-corridor filter is genuinely our code, not theirs.
 
@@ -83,6 +84,8 @@ pnpm install && pnpm dev             # http://localhost:3010
 Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
 
 Authority boundary: briefing intake cannot include an actor, session id, recipient, or dispatch instruction. The first run stops at `awaiting_attestation`; the same authenticated mission owner must then invoke the separate attestation command to authorize one duplicate-safe notice.
+
+Recovery boundary: worker failures are retained as `rejected` events and may be resumed only by the same owner against the same durable ADK session. If a crash occurs after acceptance, re-confirmation must match the stored attestation hash and the dispatch claim still prevents a second notice.
 
 ## License
 
