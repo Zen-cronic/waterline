@@ -6,7 +6,7 @@
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
     Verifier        refuses any claim not traceable to a source (the failure-tolerant gate)
-    DispatchAgent   files one human-gated flight-following notice after deterministic approval
+    DispatchAgent   creates one human-gated flight-following handoff after deterministic approval
 
 The deterministic geometry lives entirely in the tools; the agents orchestrate,
 rank, compose, and — crucially — verify. The Verifier is the agent whose only job
@@ -110,10 +110,9 @@ def build_pipeline() -> SequentialAgent:
         before_agent_callback=guard_dispatch,
         instruction=(
             "The deterministic VerifierGate has authorized this step. You close the real-world loop. "
-            "Call file_and_notify to file the flight itinerary and "
-            "send the flight-following notice to the responsible person. If the tool reports no "
-            "responsible person was provided, say the itinerary was not filed and that the pilot can "
-            "add a contact to enable flight-following. Report the outcome in one sentence."),
+            "Call file_and_notify to create exactly one marked synthetic flight-following handoff "
+            "to the server-configured responsible person. Never call it a flight-plan filing, SAR "
+            "notification, or operational dispatch. Report the bounded outcome in one sentence."),
         output_key="dispatch_note",
     )
 

@@ -24,6 +24,8 @@ type ProofRailProps = {
   dispatchGate: VerificationGate | null;
   degraded: DegradedState | null;
   dispatch: DispatchReceipt | null;
+  onReplayDispatch?: () => void;
+  replayingDispatch?: boolean;
 };
 
 function short(value?: string, length = 18): string {
@@ -52,7 +54,7 @@ function AuthorityMap({
 }: Pick<ProofRailProps,
   "mission" | "conditionCard" | "briefingGate" | "dispatchGate" | "dispatch">) {
   const pilotAttested = mission && ["corrected", "accepted", "dispatched"].includes(mission.status);
-  const deliveryState = dispatch?.status === "sent"
+  const deliveryState = dispatch && dispatch.status !== "reconciliation_required"
     ? "verified"
     : dispatch?.duplicate_suppressed ? "blocked" : "held";
   return (
@@ -90,7 +92,7 @@ function AuthorityMap({
 export function ProofRail(props: ProofRailProps) {
   const {
     mission, conditionCard, quarantine, planRevision, inference, provenance,
-    briefingGate, dispatchGate, degraded, dispatch,
+    briefingGate, dispatchGate, degraded, dispatch, onReplayDispatch, replayingDispatch,
   } = props;
   const trusted = conditionCard?.trusted_evidence;
   const primary = inference?.sources?.[0];
@@ -130,6 +132,8 @@ export function ProofRail(props: ProofRailProps) {
             src={conditionCard.image_url}
             width={1536}
             height={1024}
+            unoptimized
+            loading="eager"
             sizes="(max-width: 1100px) 100vw, 420px"
             alt="Synthetic Lady Evelyn Lake condition card showing the east cove obstructed and an untrusted OCR test note"
           />
@@ -222,15 +226,27 @@ export function ProofRail(props: ProofRailProps) {
       )}
 
       {dispatch && (
-        <section className={`dispatch-receipt ${dispatch.status === "sent" ? "sent" : "held"}`} aria-label="Verified dispatch receipt">
-          <div className="proof-section-title"><span>{dispatch.status === "sent" ? "06 · Verified consequence" : "06 · Replay suppressed"}</span><small>at-most-once</small></div>
-          <strong>{dispatch.status === "sent" ? "NOTICE FILED" : "NO DUPLICATE SENT"}</strong>
-          <p>{dispatch.status === "sent"
-            ? `Flight-following notice completed via ${dispatch.channel}.`
+        <section className={`dispatch-receipt ${dispatch.status !== "reconciliation_required" ? "sent" : "held"}`} aria-label="Verified dispatch receipt">
+          <div className="proof-section-title"><span>{dispatch.status !== "reconciliation_required" ? "06 · Verified consequence" : "06 · Replay suppressed"}</span><small>at-most-once</small></div>
+          <strong>{dispatch.status === "delivered"
+            ? "DELIVERED"
+            : dispatch.status === "provider_accepted" ? "PROVIDER ACCEPTED"
+            : dispatch.status === "completed" ? "HANDOFF COMPLETED"
+            : "NO DUPLICATE SENT"}</strong>
+          <p>{dispatch.status !== "reconciliation_required"
+            ? `Marked synthetic flight-following handoff via ${dispatch.channel}; ${dispatch.provider_status || "transport completed"}.`
             : "An existing claim stopped the retry. Operator reconciliation is required."}</p>
+          {dispatch.recipient_redacted && <code>recipient {dispatch.recipient_redacted}</code>}
+          {dispatch.provider_reference && <code>provider ref {dispatch.provider_reference}</code>}
           <code>receipt {dispatch.receipt_id || "pending reconciliation"}</code>
           {dispatch.attestation_id && <code>attestation {dispatch.attestation_id}</code>}
           <code>trace {dispatch.trace_id}</code>
+          {dispatch.duplicate_suppressed && <strong>REPLAY SUPPRESSED · ORIGINAL RECEIPT RETURNED</strong>}
+          {onReplayDispatch && !dispatch.duplicate_suppressed && dispatch.status !== "reconciliation_required" && (
+            <button className="receipt-replay" onClick={onReplayDispatch} disabled={replayingDispatch}>
+              {replayingDispatch ? "Verifying replay safety…" : "Replay same command · prove no second SMS"}
+            </button>
+          )}
         </section>
       )}
     </aside>

@@ -106,11 +106,13 @@ export type DispatchReceipt = {
   attestation_id?: string;
   mission_id?: string;
   trace_id?: string;
-  to?: string;
+  recipient_redacted?: string;
   channel?: string;
+  provider_reference?: string;
+  provider_status?: string;
   sent?: boolean;
   duplicate_suppressed?: boolean;
-  status?: "sent" | "reconciliation_required";
+  status?: "provider_accepted" | "delivered" | "completed" | "reconciliation_required";
   at_most_once?: boolean;
 };
 
@@ -216,17 +218,28 @@ export function deriveRestoredMissionView(
   } : null;
 
   const dispatched = lastEvent(events, "dispatch_completed");
+  const delivery = lastEvent(events, "delivery_status_updated");
+  const replay = lastEvent(events, "dispatch_replayed");
   const dispatchFailure = lastEvent(events, "dispatch_failed");
   let dispatch: DispatchReceipt | null = null;
   if (dispatched) {
+    const providerStatus = String(
+      delivery?.evidence?.provider_status ?? dispatched.evidence?.provider_status ?? "",
+    );
+    const channel = String(dispatched.evidence?.channel ?? "");
     dispatch = {
       receipt_id: String(dispatched.evidence?.receipt_id ?? ""),
       attestation_id: String(dispatched.evidence?.attestation_id ?? ""),
       mission_id: mission.mission_id,
       trace_id: mission.trace_id,
-      channel: String(dispatched.evidence?.channel ?? ""),
+      channel,
+      provider_reference: String(dispatched.evidence?.provider_reference ?? ""),
+      provider_status: providerStatus,
+      recipient_redacted: String(dispatched.evidence?.recipient_redacted ?? ""),
       sent: true,
-      status: "sent",
+      duplicate_suppressed: replay?.evidence?.duplicate_suppressed === true,
+      status: providerStatus === "delivered" || providerStatus === "read"
+        ? "delivered" : channel === "sms" ? "provider_accepted" : "completed",
       at_most_once: true,
     };
     dispatchGate = { approved: true, reasons: [] };

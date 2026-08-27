@@ -11,9 +11,9 @@ The diagram is a 1920×1080, submission-ready view of the architecture that actu
 | Authenticated intake | Accept only route fields, issue an opaque owner session, attach the server-selected evidence artifact, and sign the exact command | `REQUEST` |
 | Gemini + ADK fleet | Extract typed visual fields, fetch/rank source data, filter geometry, infer, compose, and propose | `READ / PROPOSE`; dispatch authority is always false |
 | Deterministic authority | Validate safe fields, quarantine hostile content, write the constrained state graph, verify the pilot attestation, and atomically claim dispatch | `VALIDATE / RECORD`; the authenticated pilot is the sole authorizer |
-| Observable consequence | Stream the map and proof rail, show east rejection → west acceptance, retain recovery evidence, and display dispatch/replay receipts | Receives verified facts and receipts; cannot grant authority |
+| Observable consequence | Stream the map and proof rail, show east rejection → west acceptance, retain recovery evidence, and display provider-accepted/delivered/replay receipts | Receives verified facts and receipts; cannot grant authority |
 
-The public/private security boundary is between the same-origin Next.js relay and the private FastAPI agent. Cloud Run IAM authenticates the web service to the agent. HMAC binds the opaque owner, timestamp, HTTP method, normalized path, and normalized body. Browser input cannot select an actor, user/session ID, evidence path, recipient during intake, or dispatch instruction.
+The public/private security boundary is between the same-origin Next.js relay and the private FastAPI agent. Cloud Run IAM authenticates the web service to the agent. HMAC binds the opaque owner, timestamp, HTTP method, normalized path, and normalized body. Browser input cannot select an actor, user/session ID, evidence path, recipient, or dispatch instruction. The only public provider route validates Twilio's signature over the complete evolving form payload before forwarding three normalized receipt fields through a distinct relay identity.
 
 ## Trust plane: implemented versus deferred
 
@@ -40,7 +40,7 @@ Only three semantic edge types appear in the diagram: read-only inspection, boun
 | Rubric axis | Architectural proof | Judge-visible proof |
 |---|---|---|
 | Innovation | Geometry-keyed briefing for one of five curated station-less water destinations; typed multimodal condition evidence changes the plan | Live route/corridor map; visual card; inference confidence and raw METAR provenance; east rejection → west correction |
-| Architecture | Private agent, exact-path signed relay, server-owned identity, read/propose-only agents, deterministic writer/gates, sole pilot authorization, durable ledger, at-most-once claim | Authority Map; trace/event/reason IDs; quarantine; gate cards; verified dispatch and replay receipts |
+| Architecture | Private agent, exact-path signed relay, server-owned identity/recipient, signed provider callback, read/propose-only agents, deterministic writer/gates, sole pilot authorization, durable ledger, at-most-once claim | Authority Map; trace/event/reason IDs; quarantine; gate cards; provider-accepted/delivered and replay receipts |
 | Demo | One continuous state machine with a retained failure/recovery beat and a single consequential action | Awaiting, degraded, recovered, dispatched, and replay-suppressed cockpit states; no hidden model authority |
 | Google Cloud | Cloud Run source contracts, Vertex Gemini adapter, Cloud SQL/PostGIS, Secret Manager, Artifact Registry, keyless IAM | The deployed URL, private agent revision/request logs, Cloud SQL instance/data, Vertex activity, and image/build digests are iteration 7 proof—not yet claimed |
 
