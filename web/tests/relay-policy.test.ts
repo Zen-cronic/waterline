@@ -46,18 +46,50 @@ test("only explicit attestation command reaches the resume endpoint", () => {
     search: "",
     body: JSON.stringify({
       confirm_dispatch: true,
-      responsible_email: " OPS@Example.com ",
       eta: "16:00Z",
       grace_min: 60,
     }),
   });
   assert.equal(decision.action, "mission.pilot-attest");
   assert.equal(decision.upstreamPath, `/v1/missions/${missionId}/attest`);
-  assert.equal(JSON.parse(decision.upstreamBody).responsible_email, "ops@example.com");
+  assert.deepEqual(JSON.parse(decision.upstreamBody), {
+    confirm_dispatch: true,
+    eta: "16:00Z",
+    grace_min: 60,
+  });
+
+  assert.throws(
+    () => authorizeRelayRequest({
+      method: "POST",
+      path: ["missions", missionId, "attest"],
+      search: "",
+      body: JSON.stringify({
+        confirm_dispatch: true,
+        responsible_email: "attacker@example.com",
+        eta: "16:00Z",
+        grace_min: 60,
+      }),
+    }),
+    (error: unknown) => error instanceof RelayPolicyError && error.code === "UNEXPECTED_FIELDS",
+  );
 
   assert.throws(
     () => authorizeRelayRequest({ method: "POST", path: ["internal", "send"], search: "", body: "{}" }),
     (error: unknown) => error instanceof RelayPolicyError && error.code === "COMMAND_NOT_ALLOWED",
+  );
+
+  assert.throws(
+    () => authorizeRelayRequest({
+      method: "POST",
+      path: ["missions", missionId, "attest"],
+      search: "",
+      body: JSON.stringify({
+        confirm_dispatch: true,
+        eta: "16:00Z\nINJECTED SMS TEXT",
+        grace_min: 60,
+      }),
+    }),
+    (error: unknown) => error instanceof RelayPolicyError && error.code === "INVALID_ETA",
   );
 });
 

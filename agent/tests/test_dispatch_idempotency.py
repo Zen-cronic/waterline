@@ -19,7 +19,6 @@ def _context() -> SimpleNamespace:
         session=SimpleNamespace(id="briefing-resume-42"),
         state={
             "dispatch_authorized": True,
-            "responsible_email": "ops@example.com",
             "route": {
                 "dep_id": "CYYZ",
                 "dst_name": "Lady Evelyn Lake",
@@ -51,6 +50,7 @@ def test_retry_resume_sends_no_duplicate(monkeypatch: pytest.MonkeyPatch) -> Non
     claimed: set[str] = set()
     sends: list[str] = []
     completed: list[str] = []
+    receipts: dict[str, dict] = {}
 
     def claim(key: str, _session_id: str, _to: str) -> bool:
         if key in claimed:
@@ -59,13 +59,22 @@ def test_retry_resume_sends_no_duplicate(monkeypatch: pytest.MonkeyPatch) -> Non
         return True
 
     monkeypatch.setattr(dispatch_tools.db, "claim_dispatch", claim)
-    monkeypatch.setattr(
-        dispatch_tools.db, "complete_dispatch", lambda key, _channel: completed.append(key),
-    )
+    def complete(key, channel, provider_reference, provider_status, recipient_redacted):
+        completed.append(key)
+        receipts[key] = {
+            "status": "sent", "channel": channel,
+            "provider_reference": provider_reference, "provider_status": provider_status,
+            "recipient_redacted": recipient_redacted,
+        }
+
+    monkeypatch.setattr(dispatch_tools.db, "complete_dispatch", complete)
+    monkeypatch.setattr(dispatch_tools.db, "dispatch_receipt", lambda key: receipts.get(key))
     monkeypatch.setattr(
         dispatch_tools,
-        "send_email",
-        lambda to, _subject, _body: sends.append(to) or {"sent": True, "channel": "test", "to": to},
+        "send_notice",
+        lambda target, _subject, _email, _sms: sends.append(target.address) or {
+            "sent": True, "channel": "test", "status": "completed",
+        },
     )
     ctx = _context()
 
@@ -74,7 +83,9 @@ def test_retry_resume_sends_no_duplicate(monkeypatch: pytest.MonkeyPatch) -> Non
 
     assert first["sent"] is True
     assert retry["duplicate_suppressed"] is True
-    assert sends == ["ops@example.com"]
+    assert retry["sent"] is True
+    assert retry["status"] == "replay_suppressed"
+    assert sends == ["operator-owned@example.test"]
     assert len(completed) == 1
 
 
@@ -90,14 +101,15 @@ def test_failed_smtp_claim_is_at_most_once(monkeypatch: pytest.MonkeyPatch) -> N
         claimed.add(key)
         return True
 
-    def fail_send(_to: str, _subject: str, _body: str) -> dict:
+    def fail_send(*_args) -> dict:
         nonlocal attempts
         attempts += 1
         raise RuntimeError("simulated SMTP ambiguity")
 
     monkeypatch.setattr(dispatch_tools.db, "claim_dispatch", claim)
     monkeypatch.setattr(dispatch_tools.db, "complete_dispatch", lambda *_args: None)
-    monkeypatch.setattr(dispatch_tools, "send_email", fail_send)
+    monkeypatch.setattr(dispatch_tools.db, "dispatch_receipt", lambda _key: {"status": "claimed"})
+    monkeypatch.setattr(dispatch_tools, "send_notice", fail_send)
     ctx = _context()
 
     with pytest.raises(RuntimeError, match="SMTP ambiguity"):
@@ -125,8 +137,8 @@ def test_client_style_authorized_flag_cannot_bypass_attestation(
     )
     monkeypatch.setattr(
         dispatch_tools,
-        "send_email",
-        lambda to, *_args: sends.append(to) or {"sent": True},
+        "send_notice",
+        lambda target, *_args: sends.append(target.address) or {"sent": True},
     )
 
     result = asyncio.run(dispatch_tools.file_and_notify(ctx))
@@ -163,3 +175,62 @@ def test_smtp_mode_fails_closed_without_complete_configuration(
 
     with pytest.raises(RuntimeError, match="requires host and sender"):
         dispatch.outbound_mode()
+
+
+def test_sms_mode_requires_complete_server_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WATERLINE_OUTBOUND_MODE", "sms")
+    for name in (
+        "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER",
+        "WATERLINE_DEMO_SMS_TO", "WATERLINE_PUBLIC_WEB_URL", "WATERLINE_HANDOFF_SECRET",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    with pytest.raises(RuntimeError, match="complete Twilio"):
+        dispatch.outbound_mode()
+
+
+def test_twilio_receipt_distinguishes_acceptance_from_delivery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"sid": "SM" + "a" * 32, "status": "queued"}
+
+    monkeypatch.setenv("TWILIO_ACCOUNT_SID", "AC" + "b" * 32)
+    monkeypatch.setenv("TWILIO_AUTH_TOKEN", "token")
+    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15550001111")
+    captured: dict = {}
+
+    def post(url, **kwargs):
+        captured.update({"url": url, **kwargs})
+        return Response()
+
+    monkeypatch.setattr(dispatch.httpx, "post", post)
+    result = dispatch.send_sms(
+        "+15550002222", "WATERLINE DEMO — NO ACTIVE FLIGHT", "https://example.test/status",
+    )
+
+    assert result["status"] == "provider_accepted"
+    assert result["provider_status"] == "queued"
+    assert result["provider_reference"] == "SM" + "a" * 32
+    assert captured["data"]["StatusCallback"] == "https://example.test/status"
+
+
+def test_sms_copy_uses_the_validated_candidate_sector() -> None:
+    body = dispatch.compose_sms_notice(
+        {"dep_id": "CYYZ", "dst_name": "Lady Evelyn Lake"},
+        {"corrected_plan": {"landing_sector": "west"}},
+        "16:00Z",
+        "https://waterline.example/handoff/signed",
+    )
+
+    assert body.splitlines() == [
+        "WATERLINE DEMO — NO ACTIVE FLIGHT",
+        "CYYZ → Lady Evelyn Lake · WEST COVE · ETA 16:00Z",
+        "Briefing and route: https://waterline.example/handoff/signed",
+    ]

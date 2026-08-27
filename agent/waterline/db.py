@@ -275,11 +275,11 @@ def mission_timeline(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
 
 
 def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str,
-                            responsible_email: str, eta: str,
+                            responsible_contact: str, eta: str,
                             grace_min: int) -> dict[str, Any] | None:
     """Atomically claim the one human attestation allowed for a mission."""
     contact_hash = hashlib.sha256(
-        responsible_email.strip().lower().encode("utf-8"),
+        responsible_contact.strip().lower().encode("utf-8"),
     ).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
@@ -338,11 +338,11 @@ def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str
 
 
 def matching_pilot_attestation(mission_id: str, actor_ref: str,
-                               responsible_email: str, eta: str,
+                               responsible_contact: str, eta: str,
                                grace_min: int) -> dict[str, Any] | None:
     """Validate a recovery attestation without storing or returning contact PII."""
     contact_hash = hashlib.sha256(
-        responsible_email.strip().lower().encode("utf-8"),
+        responsible_contact.strip().lower().encode("utf-8"),
     ).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
@@ -351,7 +351,7 @@ def matching_pilot_attestation(mission_id: str, actor_ref: str,
             FROM pilot_attestations pa
             JOIN missions m ON m.mission_id = pa.mission_id
             WHERE pa.mission_id = %s AND pa.actor_ref = %s
-              AND m.owner_ref = %s AND m.status = 'accepted'
+              AND m.owner_ref = %s AND m.status IN ('accepted', 'dispatched')
               AND pa.contact_hash = %s AND pa.eta = %s AND pa.grace_min = %s
             """,
             (mission_id, actor_ref, actor_ref, contact_hash, eta, grace_min),
@@ -369,7 +369,7 @@ def mark_mission_dispatched(mission_id: str, owner_ref: str) -> bool:
 
 
 def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:
-    """Atomically claim one external dispatch before SMTP is attempted.
+    """Atomically claim one external dispatch before any provider is called.
 
     The primary-key insert is the cross-process recovery guard: retries and
     concurrent Cloud Run requests using the same itinerary key cannot both win.
@@ -391,18 +391,92 @@ def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> boo
     return claimed
 
 
-def complete_dispatch(idempotency_key: str, channel: str) -> None:
-    """Mark a claimed dispatch complete without exposing its recipient."""
+def complete_dispatch(idempotency_key: str, channel: str,
+                      provider_reference: str | None = None,
+                      provider_status: str | None = None,
+                      recipient_redacted: str | None = None) -> None:
+    """Mark a claim complete with bounded provider proof and no raw recipient."""
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
             UPDATE dispatch_receipts
-            SET status = 'sent', channel = %s, completed_at = now()
+            SET status = 'sent', channel = %s, provider_reference = %s,
+                provider_status = %s, recipient_redacted = %s, completed_at = now()
             WHERE idempotency_key = %s
             """,
-            (channel, idempotency_key),
+            (
+                channel, provider_reference, provider_status,
+                recipient_redacted, idempotency_key,
+            ),
         )
         conn.commit()
+
+
+def dispatch_receipt(idempotency_key: str) -> dict[str, Any] | None:
+    """Return bounded receipt proof for an idempotent replay."""
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT idempotency_key, status, channel, provider_reference,
+                   provider_status, recipient_redacted, claimed_at, completed_at
+            FROM dispatch_receipts WHERE idempotency_key = %s
+            """,
+            (idempotency_key,),
+        )
+        row = cur.fetchone()
+    return dict(row) if row else None
+
+
+_PROVIDER_STATUS_RANK = {
+    "accepted": 10, "scheduled": 10, "queued": 20, "sending": 30,
+    "sent": 40, "delivered": 50, "read": 60,
+    "failed": 50, "undelivered": 50, "canceled": 50,
+}
+_PROVIDER_TERMINAL = {"delivered", "read", "failed", "undelivered", "canceled"}
+
+
+def update_dispatch_provider_status(provider_reference: str, provider_status: str,
+                                    error_code: str | None = None) -> dict[str, Any] | None:
+    """Apply a signed provider callback without allowing out-of-order regression."""
+    if provider_status not in _PROVIDER_STATUS_RANK:
+        raise ValueError("unsupported provider status")
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT dr.idempotency_key, dr.provider_status, dr.recipient_redacted,
+                   m.mission_id, m.owner_ref, m.trace_id, m.status AS mission_status
+            FROM dispatch_receipts dr
+            JOIN missions m ON m.session_id = dr.session_id
+            WHERE dr.provider_reference = %s
+            FOR UPDATE OF dr
+            """,
+            (provider_reference,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            conn.rollback()
+            return None
+        current = row.get("provider_status")
+        should_update = (
+            current not in _PROVIDER_TERMINAL
+            and _PROVIDER_STATUS_RANK[provider_status] >= _PROVIDER_STATUS_RANK.get(current, -1)
+        )
+        if should_update:
+            cur.execute(
+                """
+                UPDATE dispatch_receipts SET provider_status = %s
+                WHERE provider_reference = %s
+                """,
+                (provider_status, provider_reference),
+            )
+        conn.commit()
+    return {
+        **dict(row),
+        "provider_reference": provider_reference,
+        "provider_status": provider_status if should_update else current,
+        "error_code": error_code,
+        "updated": should_update,
+    }
 
 
 def corridor_filter(

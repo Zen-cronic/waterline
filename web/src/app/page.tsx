@@ -26,7 +26,6 @@ export default function Page() {
   const [dep, setDep] = useState("CYYZ");
   const [dst, setDst] = useState("Lady Evelyn Lake");
   const [alt, setAlt] = useState(3500);
-  const [email, setEmail] = useState("");
   const [eta, setEta] = useState("16:00Z");
   const [grace, setGrace] = useState(60);
   const [running, setRunning] = useState(false);
@@ -160,6 +159,27 @@ export default function Page() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    if (!mission || mission.status !== "dispatched" || dispatch?.status !== "provider_accepted") return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/waterline/missions/${mission.mission_id}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const restored = await res.json();
+        if (!active) return;
+        setMission(restored.mission as Mission);
+        setTimeline(restored.events as StateEvent[]);
+        setDispatch(deriveRestoredMissionView(restored.mission, restored.events).dispatch);
+      } catch {
+        // Provider status polling is best-effort; the retained receipt remains authoritative.
+      }
+    };
+    void poll();
+    const timer = window.setInterval(poll, 2000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [mission?.mission_id, mission?.status, dispatch?.status]);
+
   async function run() {
     setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null);
     setDispatch(null); setMission(null); setTimeline([]); setRecoverable(false); setError("");
@@ -203,7 +223,6 @@ export default function Page() {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({
           confirm_dispatch: true,
-          responsible_email: email,
           eta,
           grace_min: grace,
         }),
@@ -230,9 +249,33 @@ export default function Page() {
       });
       for (const event of result.events ?? []) appendEvent(event);
       setDispatchGate(result.authority as VerificationGate);
-      setDispatch({ ...result.dispatch, to: email } as DispatchReceipt);
+      setDispatch(result.dispatch as DispatchReceipt);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Attestation failed");
+    } finally {
+      setAttesting(false);
+    }
+  }
+
+  async function replayDispatch() {
+    if (!mission || mission.status !== "dispatched" || !dispatch?.receipt_id) return;
+    setAttesting(true); setError("");
+    try {
+      const res = await fetch(`/api/waterline/missions/${mission.mission_id}/attest`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm_dispatch: true, eta, grace_min: grace }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.detail?.message ?? result.detail ?? "Replay safety check failed");
+      setMission({
+        mission_id: result.mission_id, owner_ref: result.owner_ref,
+        trace_id: result.trace_id, status: result.status,
+      });
+      for (const event of result.events ?? []) appendEvent(event);
+      setDispatchGate(result.authority as VerificationGate);
+      setDispatch(result.dispatch as DispatchReceipt);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Replay safety check failed");
     } finally {
       setAttesting(false);
     }
@@ -244,6 +287,7 @@ export default function Page() {
   const canAttest = mission?.status === "awaiting_attestation" &&
     conditionCard?.validation_result === "accepted" &&
     planRevision !== null && briefingGate?.approved === true;
+  const etaValid = /^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$/.test(eta);
 
   return (
     <div className="app">
@@ -317,15 +361,15 @@ export default function Page() {
               <div className="section-h">Human authority required</div>
               <p>The briefing is held. One authenticated pilot attestation may resume this mission and authorize one flight-following notice.</p>
               <label>Responsible person</label>
-              <input type="email" placeholder="ops@example.com" value={email}
-                onChange={(e) => setEmail(e.target.value)} />
+              <div className="configured-recipient">Server-configured · allowlisted · redacted in receipts</div>
               <div className="row">
-                <div><label>ETA</label><input value={eta} onChange={(e) => setEta(e.target.value)} /></div>
+                <div><label>ETA (UTC)</label><input value={eta} placeholder="16:00Z"
+                  onChange={(e) => setEta(e.target.value.toUpperCase())} /></div>
                 <div><label>Grace (min)</label><input type="number" value={grace}
                   onChange={(e) => setGrace(+e.target.value)} /></div>
               </div>
-              <button className="btn" onClick={attest} disabled={attesting || !email || !eta}>
-                {attesting ? "Attesting…" : "Attest & file one notice"}
+              <button className="btn" onClick={attest} disabled={attesting || !etaValid}>
+                {attesting ? "Attesting…" : "Attest & send one demo handoff"}
               </button>
             </div>
           )}
@@ -366,6 +410,8 @@ export default function Page() {
         dispatchGate={dispatchGate}
         degraded={degraded}
         dispatch={dispatch}
+        onReplayDispatch={mission?.status === "dispatched" ? replayDispatch : undefined}
+        replayingDispatch={attesting}
       />
     </div>
   );

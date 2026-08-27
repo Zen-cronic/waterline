@@ -7,14 +7,17 @@
     "dev": "next dev -p 3010",
     "build": "next build",
     "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node .next/standalone/server.js",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "record:demo": "node scripts/record-continuous-demo.mjs",
+    "capture:gallery": "node scripts/capture-demo-gallery.mjs"
   },
   "dependencies": {
     "google-auth-library": "^11.0.2",
     "maplibre-gl": "^5.24.0",
     "next": "16.3.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "twilio": "^6.1.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
