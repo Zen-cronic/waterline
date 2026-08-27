@@ -75,8 +75,8 @@ def assess_briefing_readiness(state: Mapping[str, Any]) -> VerificationDecision:
     upper_briefing = briefing.upper()
     if "INFERRED" not in upper_briefing:
         reasons.append("weather is not explicitly labelled INFERRED")
-    if not briefing.rstrip().endswith("NOT FOR OPERATIONAL USE."):
-        reasons.append("operational-use disclaimer is missing")
+    if not briefing.rstrip().endswith("PILOT REVIEW REQUIRED."):
+        reasons.append("pilot-review boundary is missing")
 
     sources = weather.get("sources")
     if not isinstance(sources, list) or not sources:

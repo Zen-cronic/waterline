@@ -16,7 +16,7 @@ def _approved_state() -> dict:
         "briefing": (
             "HAZARDS\nNOTAM 0 is on route.\n"
             "WEATHER\nINFERRED from CYXR, 27.8 NM away.\n"
-            "NOT FOR OPERATIONAL USE."
+            "PILOT REVIEW REQUIRED."
         ),
         "weather": {
             "available": True,
@@ -73,9 +73,9 @@ def test_condition_card_receipt_and_plan_are_part_of_dispatch_authority() -> Non
     state = _approved_state()
     state["mission_trace_id"] = "trace-condition-1"
     state["briefing"] = state["briefing"].replace(
-        "NOT FOR OPERATIONAL USE.",
+        "PILOT REVIEW REQUIRED.",
         "Plan v1 EAST cove is rejected. Plan v2 proposes WEST cove pending pilot REVIEW.\n"
-        "NOT FOR OPERATIONAL USE.",
+        "PILOT REVIEW REQUIRED.",
     )
     state["condition_receipt"] = {
         "validation_result": "accepted",

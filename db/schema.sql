@@ -159,3 +159,8 @@ CREATE TABLE IF NOT EXISTS dispatch_receipts (
     claimed_at      timestamptz NOT NULL DEFAULT now(),
     completed_at    timestamptz
 );
+ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS provider_reference text;
+ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS provider_status text;
+ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS recipient_redacted text;
+CREATE UNIQUE INDEX IF NOT EXISTS dispatch_receipts_provider_reference_idx
+    ON dispatch_receipts (provider_reference) WHERE provider_reference IS NOT NULL;

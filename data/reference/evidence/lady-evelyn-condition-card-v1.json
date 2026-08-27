@@ -3,7 +3,7 @@
   "source_ref": "prepared://lady-evelyn/condition-card-v1",
   "image_path": "evidence/lady-evelyn-condition-card-v1.png",
   "image_mime_type": "image/png",
-  "sha256": "92e504fe1fc846e0af1450ddcfeb66c00e88d08ea76186758895128d2ae0e36e",
+  "sha256": "79fc587a818392f0864f96ec73a8291ac6b36cebac8fbd7e7b5241fc155e8131",
   "expected_extraction": {
     "schema_version": "waterline.condition-card.extraction.v1",
     "template_id": "WATERLINE-WAC-01",

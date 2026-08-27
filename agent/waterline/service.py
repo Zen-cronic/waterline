@@ -31,7 +31,7 @@ from .condition_card import (
     failed_evidence_decision,
 )
 from .config import APP_NAME
-from .dispatch import outbound_mode
+from .dispatch import configured_delivery_target, outbound_mode
 from .run import make_session_service, run_briefing
 from .tools.dispatch_tools import dispatch_from_state
 from .verification import assess_briefing_readiness, assess_dispatch_readiness
@@ -55,17 +55,18 @@ class MissionRequest(BaseModel):
 class AttestationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     confirm_dispatch: Literal[True]
-    responsible_email: str = Field(min_length=5, max_length=254)
-    eta: str = Field(min_length=2, max_length=80)
+    eta: str = Field(pattern=r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$")
     grace_min: int = Field(ge=15, le=240)
 
-    @field_validator("responsible_email")
-    @classmethod
-    def validate_email(cls, value: str) -> str:
-        normalized = value.strip().lower()
-        if normalized.count("@") != 1 or normalized.startswith("@") or normalized.endswith("@"):
-            raise ValueError("responsible_email must be a valid address")
-        return normalized
+
+class ProviderStatusRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider_reference: str = Field(pattern=r"^SM[0-9A-Za-z]{16,64}$")
+    provider_status: Literal[
+        "accepted", "scheduled", "queued", "sending", "sent", "delivered",
+        "undelivered", "failed", "canceled", "read",
+    ]
+    error_code: str | None = Field(default=None, max_length=32)
 
 
 class ResumeRequest(BaseModel):
@@ -521,7 +522,7 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
         mission = db.owned_mission(mission_id, identity.owner_ref)
         if mission is None:
             raise HTTPException(status_code=404, detail="mission not found")
-        if mission["status"] not in {"awaiting_attestation", "accepted"}:
+        if mission["status"] not in {"awaiting_attestation", "accepted", "dispatched"}:
             raise HTTPException(status_code=409, detail="mission is not awaiting attestation")
 
         session = await sessions.get_session(
@@ -536,19 +537,20 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 detail={"message": "briefing is not ready to attest", "reasons": readiness.reasons},
             )
 
+        target = configured_delivery_target()
         corrected: dict[str, Any] | None = None
         accepted: dict[str, Any] | None = None
         if mission["status"] == "awaiting_attestation":
             attestation_id = f"attestation-{uuid4().hex[:20]}"
             corrected = db.claim_pilot_attestation(
                 attestation_id, mission_id, identity.owner_ref,
-                req.responsible_email, req.eta, req.grace_min,
+                target.address, req.eta, req.grace_min,
             )
             if corrected is None:
                 raise HTTPException(status_code=409, detail="attestation already claimed")
         else:
             prior = db.matching_pilot_attestation(
-                mission_id, identity.owner_ref, req.responsible_email, req.eta, req.grace_min,
+                mission_id, identity.owner_ref, target.address, req.eta, req.grace_min,
             )
             if prior is None:
                 raise HTTPException(status_code=409, detail="recovery attestation does not match")
@@ -561,8 +563,9 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
 
         state = dict(session.state)
         state.update({
-            "responsible_email": req.responsible_email, "eta": req.eta,
-            "grace_min": req.grace_min,
+            "eta": req.eta, "grace_min": req.grace_min,
+            "delivery_channel": target.channel,
+            "recipient_redacted": target.redacted,
             "pilot_attestation": {
                 "attestation_id": attestation_id, "mission_id": mission_id,
                 "actor_ref": identity.owner_ref, "confirmed": True,
@@ -610,15 +613,29 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 )
             raise HTTPException(status_code=409, detail="dispatch was not completed")
 
-        receipt_id = state.get("dispatch_receipt", {}).get("idempotency_key")
-        dispatched = db.transition_mission(
-            mission_id, identity.owner_ref, "accepted", "dispatched",
-            "dispatch_completed", "verified_notice_receipt",
-            {
-                "attestation_id": attestation_id, "receipt_id": receipt_id,
-                "channel": result.get("channel"), "dispatch_authority": False,
-            },
-        )
+        receipt_id = result.get("receipt_id") or state.get("dispatch_receipt", {}).get("idempotency_key")
+        receipt_evidence = {
+            "attestation_id": attestation_id,
+            "receipt_id": receipt_id,
+            "channel": result.get("channel"),
+            "provider_reference": result.get("provider_reference"),
+            "provider_status": result.get("provider_status"),
+            "recipient_redacted": result.get("recipient_redacted", target.redacted),
+            "status": result.get("status", "completed"),
+            "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
+            "at_most_once": True,
+            "dispatch_authority": False,
+        }
+        if mission["status"] == "dispatched":
+            dispatched = db.record_mission_event(
+                mission_id, identity.owner_ref,
+                "dispatch_replayed", "duplicate_suppressed", receipt_evidence,
+            )
+        else:
+            dispatched = db.transition_mission(
+                mission_id, identity.owner_ref, "accepted", "dispatched",
+                "dispatch_completed", "verified_notice_receipt", receipt_evidence,
+            )
         if dispatched is None:
             raise HTTPException(status_code=409, detail="dispatch state could not be committed")
 
@@ -635,9 +652,44 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 "trace_id": mission["trace_id"],
                 "sent": True,
                 "channel": result.get("channel"),
-                "status": "sent",
+                "provider_reference": result.get("provider_reference"),
+                "provider_status": result.get("provider_status"),
+                "recipient_redacted": result.get("recipient_redacted", target.redacted),
+                "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
+                "status": result.get("status", "completed"),
                 "at_most_once": True,
             },
+        }
+
+    @app.post("/v1/providers/twilio/status")
+    async def record_twilio_status(req: ProviderStatusRequest, relay: Relay) -> dict[str, Any]:
+        path = "/v1/providers/twilio/status"
+        identity = _authenticated_identity("POST", path, req.model_dump_json().encode(), relay)
+        if identity.actor != "provider:twilio-status":
+            raise HTTPException(status_code=403, detail="provider callback identity is invalid")
+        receipt = db.update_dispatch_provider_status(
+            req.provider_reference, req.provider_status, req.error_code,
+        )
+        if receipt is None:
+            raise HTTPException(status_code=404, detail="provider receipt not found")
+        if receipt["updated"]:
+            db.record_mission_event(
+                receipt["mission_id"], receipt["owner_ref"],
+                "delivery_status_updated", f"provider_{receipt['provider_status']}",
+                {
+                    "receipt_id": receipt["idempotency_key"],
+                    "provider_reference": receipt["provider_reference"],
+                    "provider_status": receipt["provider_status"],
+                    "recipient_redacted": receipt["recipient_redacted"],
+                    "error_code": receipt["error_code"],
+                    "dispatch_authority": False,
+                },
+            )
+        return {
+            "receipt_id": receipt["idempotency_key"],
+            "provider_reference": receipt["provider_reference"],
+            "provider_status": receipt["provider_status"],
+            "updated": receipt["updated"],
         }
 
     return app
