@@ -41,7 +41,7 @@ def _context() -> SimpleNamespace:
                 "sources": [{"station_id": "CYXR", "metar_raw": "CYXR ..."}],
             },
             "corridor": {"kept": 2, "total": 20, "hazards": []},
-            "briefing": "INFERRED from CYXR, 27.8 NM away. NOT FOR OPERATIONAL USE.",
+            "briefing": "INFERRED from CYXR, 27.8 NM away. PILOT REVIEW REQUIRED.",
         },
     )
 

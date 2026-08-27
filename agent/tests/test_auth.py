@@ -163,7 +163,7 @@ def _approved_state(initial: dict) -> dict:
         "briefing": (
             "HAZARDS\nNOTAM 0 is on route.\nWEATHER\n"
             f"INFERRED from CYXR, 27.8 NM away.{condition_line}\n"
-            "NOT FOR OPERATIONAL USE."
+            "PILOT REVIEW REQUIRED."
         ),
         "weather": {
             "available": True, "reach_nm": 27.8,

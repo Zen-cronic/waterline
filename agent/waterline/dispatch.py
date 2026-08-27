@@ -111,7 +111,7 @@ Search corridor: a ~{'10'} NM band along the straight line {dep} → {dst}.
 On-route hazards briefed: {corridor.get('kept','?')} NOTAMs (of {corridor.get('total','?')} in the region).
 Destination weather is INFERRED from the nearest station ~{reach} NM away — not measured at the lake.
 
---- BRIEFING (aid only; NOT FOR OPERATIONAL USE) ---
+--- PILOT-REVIEWED BRIEFING PACKAGE ---
 {briefing}
 """
     return subject, body
