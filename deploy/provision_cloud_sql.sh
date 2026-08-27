@@ -152,6 +152,7 @@ PGPASSFILE="$secret_dir/pgpass" psql \
   --port=9470 \
   --username=postgres \
   --dbname="$WL_SQL_DATABASE" \
+  --set=ON_ERROR_STOP=on \
   --set="app_user=$WL_SQL_USER" \
   --file="$secret_dir/setup.sql"
 
