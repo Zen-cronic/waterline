@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Waterline — briefing for the lakes that don't have one",
-  description: "A live flight briefing for the 446 Canadian seaplane bases with no identifier, no station.",
+  description: "A live, provenance-first flight briefing for curated station-less Canadian water destinations.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

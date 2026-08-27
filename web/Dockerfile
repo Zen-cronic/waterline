@@ -9,9 +9,7 @@ WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_AGENT_URL
-RUN test -n "${NEXT_PUBLIC_AGENT_URL}" \
-    && NEXT_PUBLIC_AGENT_URL="${NEXT_PUBLIC_AGENT_URL}" pnpm build
+RUN pnpm build
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
@@ -20,6 +18,7 @@ ENV NODE_ENV=production \
     PORT=8080
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/public ./public
 USER node
 EXPOSE 8080
 CMD ["node", "server.js"]

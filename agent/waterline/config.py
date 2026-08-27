@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 APP_NAME = "waterline"
 
@@ -22,6 +23,28 @@ RANKER_MODEL_CHAIN = [
         "WATERLINE_RANKER_CHAIN", "gemini-3.5-flash-lite,gemini-3.5-flash"
     ).split(",") if m.strip()
 ]
+
+
+def vertex_model_client_kwargs() -> dict[str, Any] | None:
+    """Pin Vertex publisher calls to their proven global endpoint.
+
+    Cloud Run, Cloud SQL, logs, and identities remain regional. Model publisher
+    availability is a separate concern, so deployment must not reuse the
+    infrastructure region as an implicit Gemini endpoint.
+    """
+    use_vertex = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower()
+    if use_vertex not in {"1", "true", "yes"}:
+        return None
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    if not project:
+        raise RuntimeError(
+            "GOOGLE_CLOUD_PROJECT is required when GOOGLE_GENAI_USE_VERTEXAI=true"
+        )
+    return {
+        "vertexai": True,
+        "project": project,
+        "location": os.environ.get("WATERLINE_MODEL_LOCATION", "global"),
+    }
 
 # A float plane rarely climbs above ~9,500 ft; the default altitude band.
 DEFAULT_CRUISE_FL_LOWER = 0

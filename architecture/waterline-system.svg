@@ -1,0 +1,304 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
+  <title id="title">Waterline bounded-authority architecture</title>
+  <desc id="description">Four lanes show authenticated intake, the read-only Gemini and ADK fleet, deterministic authority, and observable consequence. A trust plane and two exception paths make the security and recovery boundaries explicit.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06131b"/>
+      <stop offset="0.56" stop-color="#0a2029"/>
+      <stop offset="1" stop-color="#07151d"/>
+    </linearGradient>
+    <linearGradient id="lane" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#102b35" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#0a1b23" stop-opacity="0.96"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="9" stdDeviation="12" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+    <marker id="arrow-read" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#5dd8f0"/>
+    </marker>
+    <marker id="arrow-human" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ffbd66"/>
+    </marker>
+    <marker id="arrow-receipt" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#55e19c"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .eyebrow { fill: #68dff4; font-size: 15px; font-weight: 800; letter-spacing: 3px; }
+      .title { fill: #f2fbff; font-size: 42px; font-weight: 820; letter-spacing: -1px; }
+      .subtitle { fill: #a9c0ca; font-size: 18px; font-weight: 500; }
+      .trust-title { fill: #90a9b4; font-size: 13px; font-weight: 800; letter-spacing: 2px; }
+      .pill-label { fill: #dff7ff; font-size: 14px; font-weight: 760; }
+      .pill-detail { fill: #9bb6c1; font-size: 12px; font-weight: 520; }
+      .lane-num { fill: #5dd8f0; font-size: 14px; font-weight: 850; letter-spacing: 2px; }
+      .lane-title { fill: #f4fbfe; font-size: 22px; font-weight: 820; }
+      .lane-sub { fill: #88a6b1; font-size: 13px; font-weight: 650; letter-spacing: 0.5px; }
+      .node-kicker { fill: #67dff4; font-size: 12px; font-weight: 850; letter-spacing: 1.5px; }
+      .node-title { fill: #f0f9fc; font-size: 18px; font-weight: 780; }
+      .node-copy { fill: #abc2cb; font-size: 13px; font-weight: 520; }
+      .node-code { fill: #d7eef5; font-size: 12px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .good { fill: #55e19c; }
+      .warn { fill: #ffbd66; }
+      .bad { fill: #ff7388; }
+      .muted { fill: #7f9ca8; }
+      .edge-label { fill: #cde2e9; font-size: 12px; font-weight: 760; }
+      .legend { fill: #bfd3da; font-size: 13px; font-weight: 650; }
+      .read-edge { fill: none; stroke: #5dd8f0; stroke-width: 3; stroke-dasharray: 8 7; marker-end: url(#arrow-read); }
+      .human-edge { fill: none; stroke: #ffbd66; stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: round; marker-end: url(#arrow-human); }
+      .receipt-edge { fill: none; stroke: #55e19c; stroke-width: 4; marker-end: url(#arrow-receipt); }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#background)"/>
+  <circle cx="1680" cy="110" r="290" fill="#0c5668" opacity="0.12"/>
+  <circle cx="180" cy="970" r="260" fill="#126546" opacity="0.09"/>
+
+  <text x="56" y="48" class="eyebrow">WATERLINE // SYSTEM PROOF</text>
+  <text x="56" y="94" class="title">Agents assemble the briefing. The pilot and policy keep the key.</text>
+  <text x="56" y="126" class="subtitle">Station-less aviation intelligence · four lanes · bounded authority · verified consequence</text>
+
+  <g aria-label="Cross-cutting trust plane">
+    <rect x="56" y="157" width="1808" height="112" rx="18" fill="#0d2731" stroke="#254650"/>
+    <text x="78" y="181" class="trust-title">CROSS-CUTTING TRUST PLANE</text>
+
+    <g transform="translate(78 196)">
+      <rect width="272" height="52" rx="12" fill="#12323c" stroke="#3f7a88"/>
+      <circle cx="18" cy="18" r="5" fill="#55e19c"/>
+      <text x="32" y="21" class="pill-label">IDENTITY · ACTIVE</text>
+      <text x="14" y="40" class="pill-detail">Cloud Run IAM + opaque owner HMAC</text>
+    </g>
+    <g transform="translate(368 196)">
+      <rect width="272" height="52" rx="12" fill="#12323c" stroke="#3f7a88"/>
+      <circle cx="18" cy="18" r="5" fill="#55e19c"/>
+      <text x="32" y="21" class="pill-label">GATEWAY · ACTIVE</text>
+      <text x="14" y="40" class="pill-detail">Exact-path signed application relay</text>
+    </g>
+    <g transform="translate(658 196)">
+      <rect width="272" height="52" rx="12" fill="#101f26" stroke="#5c7078" stroke-dasharray="7 5"/>
+      <circle cx="18" cy="18" r="5" fill="#7f9ca8"/>
+      <text x="32" y="21" class="pill-label">MODEL ARMOR · DEFERRED</text>
+      <text x="14" y="40" class="pill-detail">Not enabled; no deployment claim</text>
+    </g>
+    <g transform="translate(948 196)">
+      <rect width="272" height="52" rx="12" fill="#101f26" stroke="#5c7078" stroke-dasharray="7 5"/>
+      <circle cx="18" cy="18" r="5" fill="#7f9ca8"/>
+      <text x="32" y="21" class="pill-label">REGISTRY · DEFERRED</text>
+      <text x="14" y="40" class="pill-detail">Not enabled; no deployment claim</text>
+    </g>
+    <g transform="translate(1238 196)">
+      <rect width="272" height="52" rx="12" fill="#12323c" stroke="#3f7a88"/>
+      <circle cx="18" cy="18" r="5" fill="#55e19c"/>
+      <text x="32" y="21" class="pill-label">MEMORY · ACTIVE</text>
+      <text x="14" y="40" class="pill-detail">Cloud SQL ADK session + event ledger</text>
+    </g>
+    <g transform="translate(1528 196)">
+      <rect width="314" height="52" rx="12" fill="#172d32" stroke="#af854b"/>
+      <circle cx="18" cy="18" r="5" fill="#ffbd66"/>
+      <text x="32" y="21" class="pill-label">OBSERVABILITY · DEPLOY GATE</text>
+      <text x="14" y="40" class="pill-detail">Trace/event IDs now; Cloud Run logs in I7</text>
+    </g>
+  </g>
+
+  <line x1="469" y1="291" x2="469" y2="902" stroke="#ffbd66" stroke-width="2" stroke-dasharray="6 7" opacity="0.7"/>
+  <rect x="367" y="279" width="204" height="26" rx="13" fill="#3a2d1d" stroke="#9e7742"/>
+  <text x="469" y="297" text-anchor="middle" class="edge-label warn">PUBLIC EDGE → PRIVATE AGENT</text>
+
+  <g filter="url(#shadow)">
+    <rect x="56" y="315" width="390" height="575" rx="22" fill="url(#lane)" stroke="#2b5966"/>
+    <rect x="490" y="315" width="390" height="575" rx="22" fill="url(#lane)" stroke="#2b5966"/>
+    <rect x="924" y="315" width="390" height="575" rx="22" fill="url(#lane)" stroke="#2b5966"/>
+    <rect x="1358" y="315" width="506" height="575" rx="22" fill="url(#lane)" stroke="#2b5966"/>
+  </g>
+
+  <g aria-label="Lane one authenticated intake">
+    <text x="80" y="348" class="lane-num">01</text>
+    <text x="80" y="378" class="lane-title">Authenticated intake</text>
+    <text x="80" y="401" class="lane-sub">REQUEST ONLY · SERVER OWNS IDENTITY</text>
+
+    <g transform="translate(80 426)">
+      <rect width="342" height="104" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">PILOT / BROWSER</text>
+      <text x="18" y="51" class="node-title">Route request</text>
+      <text x="18" y="74" class="node-copy">Departure · destination lake · altitude</text>
+      <text x="18" y="93" class="node-copy bad">No actor, recipient, session, or dispatch fields</text>
+    </g>
+
+    <g transform="translate(80 550)">
+      <rect width="342" height="122" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">SAME-ORIGIN RELAY</text>
+      <text x="18" y="51" class="node-title">Exact-path signed gateway</text>
+      <text x="18" y="75" class="node-copy">HttpOnly opaque pilot session</text>
+      <text x="18" y="96" class="node-copy">IAM ID token + HMAC(method/path/body/time)</text>
+      <text x="18" y="115" class="node-code">authority = REQUEST</text>
+    </g>
+
+    <g transform="translate(80 692)">
+      <rect width="342" height="150" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">SERVER-SELECTED EVIDENCE</text>
+      <text x="18" y="51" class="node-title">Prepared condition card</text>
+      <text x="18" y="75" class="node-copy">Allowlisted image + SHA-256 manifest</text>
+      <text x="18" y="97" class="node-copy">EAST COVE OBSTRUCTED · validity window</text>
+      <text x="18" y="119" class="node-copy bad">Embedded instruction is untrusted</text>
+      <text x="18" y="140" class="node-copy">No public upload or path selector</text>
+    </g>
+  </g>
+
+  <g aria-label="Lane two Gemini and ADK fleet">
+    <text x="514" y="348" class="lane-num">02</text>
+    <text x="514" y="378" class="lane-title">Gemini + ADK fleet</text>
+    <text x="514" y="401" class="lane-sub">READ / PROPOSE ONLY · AUTHORITY = 0</text>
+
+    <g transform="translate(514 426)">
+      <rect width="342" height="130" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">TYPED VISUAL PROPOSAL</text>
+      <text x="18" y="51" class="node-title">Vertex Gemini extractor</text>
+      <text x="18" y="75" class="node-copy">Versioned schema · confidence · model receipt</text>
+      <text x="18" y="98" class="node-copy">Safe fields proposed; raw instruction excluded</text>
+      <text x="18" y="120" class="node-code bad">dispatch_authority = false</text>
+    </g>
+
+    <g transform="translate(514 576)">
+      <rect width="342" height="148" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">SEQUENTIAL AGENT</text>
+      <text x="18" y="51" class="node-title">Seven scoped workers</text>
+      <text x="18" y="75" class="node-copy">Route → Ingest → Corridor → Weather</text>
+      <text x="18" y="97" class="node-copy">→ Composer → Verifier → DispatchAgent</text>
+      <text x="18" y="121" class="node-copy">Narrate/rank; tools own geometry and facts</text>
+      <text x="18" y="140" class="node-code">authority = READ / PROPOSE</text>
+    </g>
+
+    <g transform="translate(514 744)">
+      <rect width="342" height="98" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">SOURCE INSPECTION</text>
+      <text x="18" y="51" class="node-title">Live NAV CANADA + PostGIS</text>
+      <text x="18" y="75" class="node-copy">NOTAM/METAR receipts · corridor · stations</text>
+      <text x="18" y="92" class="node-copy">Raw observations travel with inference</text>
+    </g>
+  </g>
+
+  <g aria-label="Lane three deterministic authority">
+    <text x="948" y="348" class="lane-num">03</text>
+    <text x="948" y="378" class="lane-title">Deterministic authority</text>
+    <text x="948" y="401" class="lane-sub">VALIDATE / RECORD · HUMAN AUTHORIZES</text>
+
+    <g transform="translate(948 426)">
+      <rect width="342" height="128" rx="14" fill="#112b2f" stroke="#397869"/>
+      <text x="18" y="25" class="node-kicker good">POLICY VALIDATOR</text>
+      <text x="18" y="51" class="node-title">Safe-fact writer</text>
+      <text x="18" y="75" class="node-copy">Digest · freshness · lake · sector · schema</text>
+      <text x="18" y="97" class="node-copy">Confidence · provenance · gate invariants</text>
+      <text x="18" y="118" class="node-code good">authority = VALIDATE / RECORD</text>
+    </g>
+
+    <g transform="translate(948 574)">
+      <rect width="342" height="108" rx="14" fill="#112b2f" stroke="#397869"/>
+      <text x="18" y="25" class="node-kicker good">APPEND-ONLY STATE WRITER</text>
+      <text x="18" y="51" class="node-title">Cloud SQL event ledger</text>
+      <text x="18" y="75" class="node-code">proposed → rejected → awaiting</text>
+      <text x="18" y="96" class="node-code">→ corrected → accepted → dispatched</text>
+    </g>
+
+    <g transform="translate(948 702)">
+      <rect width="342" height="70" rx="14" fill="#392c1d" stroke="#a57b3f"/>
+      <text x="18" y="26" class="node-kicker warn">SOLE AUTHORIZE</text>
+      <text x="18" y="52" class="node-title">Authenticated pilot attestation</text>
+    </g>
+
+    <g transform="translate(948 792)">
+      <rect width="342" height="50" rx="14" fill="#12352d" stroke="#43a377"/>
+      <text x="18" y="21" class="node-kicker good">AT-MOST-ONCE CLAIM</text>
+      <text x="18" y="41" class="node-copy">Receipt is claimed before any send attempt</text>
+    </g>
+  </g>
+
+  <g aria-label="Lane four observable consequence">
+    <text x="1382" y="348" class="lane-num">04</text>
+    <text x="1382" y="378" class="lane-title">Observable consequence</text>
+    <text x="1382" y="401" class="lane-sub">MAP + PROOF RAIL · NO HIDDEN AUTHORITY</text>
+
+    <g transform="translate(1382 426)">
+      <rect width="458" height="122" rx="14" fill="#102832" stroke="#315866"/>
+      <text x="18" y="25" class="node-kicker">SINGLE JUDGE FRAME</text>
+      <text x="18" y="51" class="node-title">Streaming map + durable proof rail</text>
+      <text x="18" y="75" class="node-copy">Extraction · inference · provenance · gates · quarantine</text>
+      <text x="18" y="98" class="node-copy">Recovery · attestation · receipt · Authority Map</text>
+      <text x="18" y="116" class="node-copy muted">No secrets · no raw reasoning · NOT FOR OPERATIONAL USE</text>
+    </g>
+
+    <g transform="translate(1382 570)">
+      <rect width="458" height="104" rx="14" fill="#331f27" stroke="#a94f61"/>
+      <text x="18" y="25" class="node-kicker bad">DETERMINISTIC REJECTION</text>
+      <text x="18" y="53" class="node-title">V1 EAST REJECTED</text>
+      <text x="18" y="78" class="node-copy">Condition receipt retains obstruction reason</text>
+      <text x="18" y="97" class="node-code bad">dispatch held · pilot review</text>
+    </g>
+
+    <g transform="translate(1382 694)">
+      <rect width="458" height="78" rx="14" fill="#12352d" stroke="#43a377"/>
+      <text x="18" y="25" class="node-kicker good">VERIFIED REVISION</text>
+      <text x="18" y="53" class="node-title">V2 WEST ACCEPTED</text>
+    </g>
+
+    <g transform="translate(1382 792)">
+      <rect width="220" height="50" rx="14" fill="#12352d" stroke="#43a377"/>
+      <text x="16" y="21" class="node-kicker good">NOTICE RECEIPT</text>
+      <text x="16" y="41" class="node-copy">Verified one send</text>
+    </g>
+    <g transform="translate(1620 792)">
+      <rect width="220" height="50" rx="14" fill="#152830" stroke="#47636d"/>
+      <text x="16" y="21" class="node-kicker">REPLAY RECEIPT</text>
+      <text x="16" y="41" class="node-copy">No duplicate sent</text>
+    </g>
+  </g>
+
+  <!-- Read-only inspection paths -->
+  <path d="M422 611 C466 611 474 491 514 491" class="read-edge"/>
+  <path d="M422 766 C468 766 470 509 514 509" class="read-edge"/>
+  <path d="M856 491 C895 491 905 490 948 490" class="read-edge"/>
+  <path d="M856 650 C899 650 909 638 948 638" class="read-edge"/>
+  <text x="450" y="473" class="edge-label">signed request</text>
+  <text x="874" y="475" class="edge-label">typed proposal</text>
+
+  <!-- Bounded human / resume action -->
+  <path d="M422 477 C706 283 1118 291 1118 702" class="human-edge"/>
+  <text x="719" y="304" class="edge-label warn">one owner-bound attest / resume action</text>
+
+  <!-- Verified receipt / consequence paths -->
+  <path d="M1290 817 C1328 817 1338 817 1382 817" class="receipt-edge"/>
+  <path d="M1290 634 C1327 634 1340 622 1382 622" class="receipt-edge"/>
+
+  <!-- Explicit exception arcs -->
+  <path d="M685 556 C686 865 1005 878 1118 772" class="human-edge"/>
+  <rect x="680" y="850" width="360" height="27" rx="13" fill="#3a2d1d" stroke="#9e7742"/>
+  <text x="860" y="868" text-anchor="middle" class="edge-label warn">EXCEPTION A · hostile / ambiguous → quarantine + review</text>
+
+  <path d="M1120 554 C1130 904 1546 919 1608 674" class="receipt-edge"/>
+  <rect x="1114" y="860" width="444" height="27" rx="13" fill="#12352d" stroke="#43a377"/>
+  <text x="1336" y="878" text-anchor="middle" class="edge-label good">EXCEPTION B · card rejection → corrected west revision</text>
+
+  <g aria-label="Legend and status" transform="translate(56 925)">
+    <rect width="1808" height="105" rx="18" fill="#0d2731" stroke="#254650"/>
+    <text x="22" y="27" class="trust-title">ONLY THREE EDGE TYPES</text>
+
+    <line x1="22" y1="55" x2="94" y2="55" class="read-edge"/>
+    <text x="112" y="60" class="legend">read-only inspection</text>
+    <line x1="330" y1="55" x2="402" y2="55" class="human-edge"/>
+    <text x="420" y="60" class="legend">bounded human / resume action</text>
+    <line x1="720" y1="55" x2="792" y2="55" class="receipt-edge"/>
+    <text x="810" y="60" class="legend">verified receipt</text>
+
+    <rect x="1100" y="38" width="18" height="18" rx="4" fill="#12323c" stroke="#3f7a88"/>
+    <text x="1128" y="53" class="legend">implemented + locally verified</text>
+    <rect x="1373" y="38" width="18" height="18" rx="4" fill="#101f26" stroke="#5c7078" stroke-dasharray="4 3"/>
+    <text x="1401" y="53" class="legend">deferred · not claimed</text>
+
+    <text x="22" y="87" class="node-copy">Reader: Gemini/ADK fleet</text>
+    <text x="260" y="87" class="node-copy">Writer: deterministic policy + Cloud SQL</text>
+    <text x="604" y="87" class="node-copy">Authorizer: authenticated pilot</text>
+    <text x="906" y="87" class="node-copy">Security boundary: public relay → private agent</text>
+    <text x="1327" y="87" class="node-copy">Consequence: one notice + replay proof</text>
+  </g>
+
+  <text x="1864" y="1061" text-anchor="end" class="node-copy">Waterline · architecture proof · 2026-08-26</text>
+</svg>

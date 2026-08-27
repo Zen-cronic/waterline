@@ -26,8 +26,9 @@ RUN groupadd --system waterline && useradd --system --gid waterline --home /app/
 COPY --from=builder /build/agent/.venv /opt/venv
 COPY --chown=waterline:waterline agent/waterline ./waterline
 # Preserve the repository layout expected by route_tools.py/navcanada.py.
-# data/reference is tracked; private data/captures is included by .gcloudignore
-# when present and remains untracked.
+# data/reference contains the public-domain airport dataset and Waterline's
+# tracked synthetic evidence. Local NAV CANADA captures are deliberately
+# excluded from deployment by both ignore contracts.
 COPY --chown=waterline:waterline data /app/data
 RUN mkdir -p /app/agent/data/outbox && chown -R waterline:waterline /app/agent/data
 

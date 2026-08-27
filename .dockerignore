@@ -1,5 +1,8 @@
 .git/
 .gcloudignore
+.agents/
+.claude/
+.codex/
 .python-version
 .playwright-mcp/
 **/__pycache__/
@@ -12,11 +15,12 @@
 **/.next/
 **/*.log
 docs/
+architecture/
+ARCHITECTURE.md
+TESTING.md
 web/
 agent/data/
 data/outbox/
 data/*
 !data/reference/
 !data/reference/**
-!data/captures/
-!data/captures/**
