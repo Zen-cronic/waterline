@@ -73,7 +73,7 @@ test("restored proof keeps extraction, inference, provenance, gates, and quarant
       },
     }),
     event("event-3", "briefing_evidence_recorded", "deterministic_briefing_gate_passed", {
-      briefing: "INFERRED from CYXR. NOT FOR OPERATIONAL USE.",
+      briefing: "INFERRED from CYXR. PILOT REVIEW REQUIRED.",
       semantic_verdict: "APPROVED — traceable.",
       inference: {
         available: true, confidence: 0.14, reach_nm: 27.8,
@@ -101,7 +101,7 @@ test("restored proof keeps extraction, inference, provenance, gates, and quarant
   assert.equal(view.provenance?.notam.records, 471);
   assert.equal(view.briefingGate?.approved, true);
   assert.equal(view.dispatchGate?.approved, false);
-  assert.match(view.briefing, /NOT FOR OPERATIONAL USE/);
+  assert.match(view.briefing, /PILOT REVIEW REQUIRED/);
   assert.match(view.verdict, /^APPROVED/);
 });
 

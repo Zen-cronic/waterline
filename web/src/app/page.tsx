@@ -353,7 +353,7 @@ export default function Page() {
           <div className="k"><span className="dot" style={{ background: "#ef6b6b" }} />FIR-wide NOTAM</div>
           <div className="k"><span className="dot" style={{ background: "#57c98a" }} />source station</div>
         </div>
-        <div className="footer">NOT FOR OPERATIONAL USE</div>
+        <div className="footer">HACKATHON DEMO · PILOT REVIEW REQUIRED</div>
       </div>
       <ProofRail
         mission={mission}

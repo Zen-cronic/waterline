@@ -82,7 +82,7 @@ def build_pipeline() -> SequentialAgent:
             "WEATHER: give the inferred read, ALWAYS labelled as INFERRED from the nearest stations "
             "(name the nearest and its distance), with the confidence value. Never present it as "
             "measured at the destination.\n"
-            "End with exactly: NOT FOR OPERATIONAL USE."),
+            "End with exactly: PILOT REVIEW REQUIRED."),
         output_key="briefing",
     )
     verifier = LlmAgent(
