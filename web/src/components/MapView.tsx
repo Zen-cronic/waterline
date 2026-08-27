@@ -9,19 +9,9 @@ export type LayerEvent = {
 };
 export type MapHandle = { setLayer: (e: LayerEvent) => void; reset: () => void };
 
-// Keyless dark basemap (OSM data via CARTO) — no API key, terrain-agnostic, honest attribution.
-const STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  sources: {
-    base: {
-      type: "raster",
-      tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-              "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"],
-      tileSize: 256, attribution: "© OpenStreetMap © CARTO",
-    },
-  },
-  layers: [{ id: "base", type: "raster", source: "base" }],
-};
+// OpenFreeMap's public MapLibre style requires no registration or API key and
+// carries the required OpenMapTiles/OpenStreetMap attribution in the style.
+const STYLE = "https://tiles.openfreemap.org/styles/dark";
 
 // Paint spec per layer id: how each streamed layer renders.
 const PAINT: Record<string, () => maplibregl.LayerSpecification[]> = {
@@ -55,6 +45,14 @@ export const MapView = forwardRef<MapHandle>(function MapView(_props, ref) {
     const m = new maplibregl.Map({
       container: holder.current, style: STYLE, center: [-80.2, 45.6], zoom: 5.2,
       attributionControl: { compact: true },
+    });
+    // The public style can reference optional POI sprites that are absent from
+    // its sprite sheet. Waterline does not use those icons, so supply a
+    // transparent placeholder instead of emitting noisy browser warnings.
+    m.on("styleimagemissing", (event) => {
+      if (!m.hasImage(event.id)) {
+        m.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
+      }
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
     m.on("load", () => { ready.current = true; pending.current.forEach(apply); pending.current = []; });

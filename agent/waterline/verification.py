@@ -29,7 +29,27 @@ class VerificationDecision:
 
 
 def assess_dispatch_readiness(state: Mapping[str, Any]) -> VerificationDecision:
-    """Fail closed unless semantic approval and provenance invariants agree."""
+    """Fail closed unless briefing proof and authenticated attestation agree."""
+    briefing_decision = assess_briefing_readiness(state)
+    reasons = list(briefing_decision.reasons)
+    owner_ref = state.get("mission_owner_ref")
+    mission_id = state.get("mission_id")
+    attestation = state.get("pilot_attestation")
+
+    if not isinstance(owner_ref, str) or not owner_ref:
+        reasons.append("authenticated mission owner is missing")
+    if not isinstance(mission_id, str) or not mission_id:
+        reasons.append("server-owned mission id is missing")
+    if not isinstance(attestation, Mapping) or attestation.get("confirmed") is not True:
+        reasons.append("authenticated pilot attestation is missing")
+    elif attestation.get("actor_ref") != owner_ref or attestation.get("mission_id") != mission_id:
+        reasons.append("pilot attestation is not bound to this mission owner")
+
+    return VerificationDecision(not reasons, tuple(reasons))
+
+
+def assess_briefing_readiness(state: Mapping[str, Any]) -> VerificationDecision:
+    """Validate semantic approval and reproducible briefing provenance."""
     reasons: list[str] = []
     verdict = state.get("verification")
     briefing = state.get("briefing")
@@ -84,6 +104,46 @@ def assess_dispatch_readiness(state: Mapping[str, Any]) -> VerificationDecision:
     unknown_indices = sorted(referenced_indices - allowed_indices)
     if unknown_indices:
         reasons.append(f"unknown NOTAM indices referenced: {unknown_indices}")
+
+    condition_receipt = state.get("condition_receipt")
+    condition_evidence = state.get("condition_evidence")
+    flight_plan = state.get("flight_plan")
+    if condition_receipt is not None:
+        if not isinstance(condition_receipt, Mapping):
+            reasons.append("condition-card model receipt is malformed")
+        else:
+            if condition_receipt.get("validation_result") != "accepted":
+                reasons.append("condition-card evidence requires pilot review")
+            if condition_receipt.get("dispatch_authority") is not False:
+                reasons.append("condition-card extractor claimed dispatch authority")
+            if condition_receipt.get("trace_id") != state.get("mission_trace_id"):
+                reasons.append("condition-card receipt trace does not match the mission")
+        if not isinstance(condition_evidence, Mapping):
+            reasons.append("validator-approved condition evidence is missing")
+        elif isinstance(condition_receipt, Mapping):
+            if condition_evidence.get("artifact_sha256") != condition_receipt.get("artifact_sha256"):
+                reasons.append("condition evidence digest does not match its model receipt")
+            if condition_evidence.get("dispatch_authority") is not False:
+                reasons.append("condition evidence claimed dispatch authority")
+        if not isinstance(flight_plan, Mapping):
+            reasons.append("condition-driven plan revision is missing")
+        else:
+            rejected_plan = flight_plan.get("rejected_plan")
+            corrected_plan = flight_plan.get("corrected_plan")
+            if not isinstance(rejected_plan, Mapping) or (
+                rejected_plan.get("landing_sector"), rejected_plan.get("status")
+            ) != ("east", "rejected"):
+                reasons.append("plan v1 east-sector rejection is invalid")
+            if not isinstance(corrected_plan, Mapping) or (
+                corrected_plan.get("landing_sector"), corrected_plan.get("status")
+            ) != ("west", "proposed_pending_pilot"):
+                reasons.append("plan v2 west-sector proposal is invalid")
+            if flight_plan.get("dispatch_authority") is not False:
+                reasons.append("condition-driven plan claimed dispatch authority")
+        if "EAST" not in upper_briefing or "WEST" not in upper_briefing:
+            reasons.append("briefing omits the condition-driven east-to-west revision")
+        if "REVIEW" not in upper_briefing and "PENDING" not in upper_briefing:
+            reasons.append("west-sector proposal is not held for pilot review")
 
     return VerificationDecision(not reasons, tuple(reasons))
 

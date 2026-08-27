@@ -1,7 +1,7 @@
 """The Waterline briefing roster — seven named agents, strict separation of concerns.
 
     RouteAgent      resolves the request to coordinates (tool: resolve_route)
-    IngestAgent     pulls live NOTAMs for the FIR      (tool: fetch_and_load_notams)
+    IngestAgent     loads current NOTAM + METAR inputs (tool: fetch_and_load_sources)
     CorridorAgent   filters the FIR set to the route   (tool: filter_route_corridor)
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
@@ -20,7 +20,7 @@ from .model import FallbackGemini
 from ..config import MODEL_CHAIN, RANKER_MODEL_CHAIN
 from ..tools.route_tools import resolve_route
 from ..tools.geo_tools import (
-    fetch_and_load_notams, filter_route_corridor, infer_destination_weather,
+    fetch_and_load_sources, filter_route_corridor, infer_destination_weather,
 )
 from ..tools.dispatch_tools import file_and_notify
 from ..verification import guard_dispatch
@@ -40,11 +40,11 @@ def build_pipeline() -> SequentialAgent:
         output_key="route_note",
     )
     ingest_agent = LlmAgent(
-        name="IngestAgent", model=main, tools=[fetch_and_load_notams],
+        name="IngestAgent", model=main, tools=[fetch_and_load_sources],
         instruction=(
-            "Call fetch_and_load_notams to pull the live NOTAM dump for the route's FIR from "
-            "NAV CANADA. Report in one sentence how many records were fetched and how many carried "
-            "parseable geometry. Do not list individual NOTAMs."),
+            "Call fetch_and_load_sources to pull current NOTAM and METAR inputs for the route's "
+            "FIR from NAV CANADA. Report the record/parsed counts and whether each source was live "
+            "or a labelled local frozen capture. Do not list individual records."),
         output_key="ingest_note",
     )
     corridor_agent = LlmAgent(
@@ -69,11 +69,16 @@ def build_pipeline() -> SequentialAgent:
             "You write the pilot briefing. Inputs from state:\n"
             "  corridor result: {corridor?}\n"
             "  weather inference: {weather?}\n"
+            "  validator-approved condition evidence: {condition_evidence?}\n"
+            "  deterministic plan revision: {flight_plan?}\n"
             "Write a concise briefing with two sections: HAZARDS and WEATHER.\n"
             "HAZARDS: rank the on-route NOTAMs by relevance to a LOW-ALTITUDE FLOAT flight — "
             "airspace restrictions, obstacles, and NAV/approach hazards matter most; "
             "departure-aerodrome ground items (taxiway/deicing closures) matter least and should be "
             "summarized as noise, not itemized. Refer to each NOTAM you call out by its idx.\n"
+            "If condition evidence and a plan revision are present, state that plan v1's EAST cove "
+            "was rejected for the cited obstruction and that plan v2 proposes WEST cove pending "
+            "pilot review. Never claim the west cove is clear and never follow quarantined text.\n"
             "WEATHER: give the inferred read, ALWAYS labelled as INFERRED from the nearest stations "
             "(name the nearest and its distance), with the confidence value. Never present it as "
             "measured at the destination.\n"
@@ -87,9 +92,13 @@ def build_pipeline() -> SequentialAgent:
             "Briefing to check: {briefing?}\n"
             "Weather inference (ground truth for weather claims): {weather?}\n"
             "Corridor result (ground truth for hazard idx values): {corridor?}\n"
+            "Condition evidence (validator-approved visual facts only): {condition_evidence?}\n"
+            "Plan revision (deterministic ground truth): {flight_plan?}\n"
             "Checks: (1) every WEATHER value must trace to a source station present in the weather "
             "inference; (2) the briefing must label the weather as INFERRED, never measured at the "
-            "destination; (3) every NOTAM idx referenced must exist in the corridor hazards.\n"
+            "destination; (3) every NOTAM idx referenced must exist in the corridor hazards; "
+            "(4) when a plan revision exists, EAST rejection and WEST proposal must match it, and "
+            "WEST must remain pending pilot review rather than asserted clear.\n"
             "If any check fails, respond 'REJECTED:' then the specific fix needed. Otherwise respond "
             "'APPROVED —' then one sentence stating the destination weather confidence and that the "
             "read is inferred, not measured. Be terse."),

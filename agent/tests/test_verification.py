@@ -7,7 +7,7 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import ToolContext
 from google.genai import types
 
-from waterline.verification import assess_dispatch_readiness, guard_dispatch
+from waterline.verification import assess_briefing_readiness, assess_dispatch_readiness, guard_dispatch
 
 
 def _approved_state() -> dict:
@@ -24,11 +24,33 @@ def _approved_state() -> dict:
             "sources": [{"station_id": "CYXR", "metar_raw": "CYXR ..."}],
         },
         "corridor": {"hazards": [{"idx": 0}]},
+        "mission_id": "mission-0123456789abcdefabcd",
+        "mission_owner_ref": "pilot-owner-ref",
+        "pilot_attestation": {
+            "confirmed": True,
+            "mission_id": "mission-0123456789abcdefabcd",
+            "actor_ref": "pilot-owner-ref",
+        },
     }
 
 
 def test_deterministic_gate_requires_semantic_and_structured_approval() -> None:
     assert assess_dispatch_readiness(_approved_state()).approved is True
+    assert assess_briefing_readiness(_approved_state()).approved is True
+
+    unattested = _approved_state()
+    unattested["pilot_attestation"] = None
+    decision = assess_dispatch_readiness(unattested)
+    assert decision.approved is False
+    assert "authenticated pilot attestation is missing" in decision.reasons
+
+    forged = _approved_state()
+    forged["pilot_attestation"] = {
+        "confirmed": True,
+        "mission_id": forged["mission_id"],
+        "actor_ref": "pilot-attacker",
+    }
+    assert assess_dispatch_readiness(forged).approved is False
 
     rejected = _approved_state()
     rejected["verification"] = "REJECTED: station provenance is missing"
@@ -45,6 +67,55 @@ def test_deterministic_gate_requires_semantic_and_structured_approval() -> None:
     decision = assess_dispatch_readiness(invented)
     assert decision.approved is False
     assert "unknown NOTAM indices referenced: [99]" in decision.reasons
+
+
+def test_condition_card_receipt_and_plan_are_part_of_dispatch_authority() -> None:
+    state = _approved_state()
+    state["mission_trace_id"] = "trace-condition-1"
+    state["briefing"] = state["briefing"].replace(
+        "NOT FOR OPERATIONAL USE.",
+        "Plan v1 EAST cove is rejected. Plan v2 proposes WEST cove pending pilot REVIEW.\n"
+        "NOT FOR OPERATIONAL USE.",
+    )
+    state["condition_receipt"] = {
+        "validation_result": "accepted",
+        "artifact_sha256": "a" * 64,
+        "trace_id": "trace-condition-1",
+        "dispatch_authority": False,
+    }
+    state["condition_evidence"] = {
+        "artifact_sha256": "a" * 64,
+        "blocked_sector": "east",
+        "dispatch_authority": False,
+    }
+    state["flight_plan"] = {
+        "rejected_plan": {"landing_sector": "east", "status": "rejected"},
+        "corrected_plan": {
+            "landing_sector": "west", "status": "proposed_pending_pilot",
+        },
+        "dispatch_authority": False,
+    }
+    assert assess_dispatch_readiness(state).approved is True
+
+    for mutate in (
+        lambda value: value["condition_receipt"].update({"validation_result": "review_required"}),
+        lambda value: value["condition_receipt"].update({"dispatch_authority": True}),
+        lambda value: value["condition_evidence"].update({"artifact_sha256": "b" * 64}),
+        lambda value: value["flight_plan"]["corrected_plan"].update({"landing_sector": "east"}),
+        lambda value: value.update({"briefing": value["briefing"].replace("WEST", "")}),
+    ):
+        candidate = {
+            **state,
+            "condition_receipt": dict(state["condition_receipt"]),
+            "condition_evidence": dict(state["condition_evidence"]),
+            "flight_plan": {
+                **state["flight_plan"],
+                "rejected_plan": dict(state["flight_plan"]["rejected_plan"]),
+                "corrected_plan": dict(state["flight_plan"]["corrected_plan"]),
+            },
+        }
+        mutate(candidate)
+        assert assess_dispatch_readiness(candidate).approved is False
 
 
 class _MustNotRunAgent(BaseAgent):

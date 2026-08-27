@@ -1,8 +1,10 @@
 # Waterline
 
-**A live flight briefing for the 446 Canadian seaplane bases that don't have one.**
+**A live flight briefing for station-less Canadian water destinations.**
 
-A bush pilot flying a float plane to a remote lake gets no briefing from any tool on the market. Those tools are keyed to *identifiers* — an airport code that maps to a weather station. **446 of Canada's 449 registered seaplane bases have no identifier, so no station, so every briefing tool goes blank exactly where the pilot is going.** Waterline briefs the lake anyway: it reduces the whole Flight Information Region's live NOTAM feed down to the hazards that actually touch your route, and it *infers* a weather read for a station-less destination from the real observations that do exist nearby — never inventing a number, always showing its work.
+**Public preview:** [waterline-web-2hjaxuzova-uc.a.run.app](https://waterline-web-2hjaxuzova-uc.a.run.app) — deployed in `us-central1` from commit `03e6aa2`. The agent is private; the public UI reaches it only through the signed Cloud Run service-identity relay. Preview dispatch uses an explicit ephemeral outbox and sends no external email.
+
+A bush pilot flying a float plane to a remote lake may have no identifier-keyed destination observation to request. Waterline's current resolver supports a curated set of five Ontario water destinations with no destination weather station. It reduces the whole Flight Information Region's live NOTAM feed down to the hazards that actually touch the route, and it *infers* a weather read from the real observations that do exist nearby — never inventing a number, always showing its work.
 
 > **The Twist:** every briefing tool is keyed to identifiers by construction. Waterline is keyed to **geometry** — a route corridor and an altitude band — so it works for a place that has no name in any aviation database.
 
@@ -11,11 +13,12 @@ A bush pilot flying a float plane to a remote lake gets no briefing from any too
 ## What it does, in one run
 
 1. You enter a departure identifier (e.g. `CYYZ`), a destination lake with no identifier (e.g. *Lady Evelyn Lake*), and a cruise altitude.
-2. Waterline pulls the **live NAV CANADA** NOTAM feed for the Flight Information Region — hundreds of NOTAMs — and reduces it, in PostGIS, to only the ones whose geometry intersects your route corridor and altitude band. *(Measured: 471 → 79 on a Toronto-FIR route — 83% of the FIR dropped as off-route.)*
-3. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
-4. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate prevents rejected or structurally unsafe briefings from reaching DispatchAgent, and DispatchAgent files one human-gated flight-following notice.
+2. For Lady Evelyn Lake, the authenticated service attaches one prepared synthetic condition-card photograph. Gemini proposes a typed extraction; a deterministic validator binds it to the tracked digest, accepts the east-cove obstruction, and quarantines the embedded hostile instruction without copying that text into trusted state.
+3. Waterline pulls the **live NAV CANADA** NOTAM feed for the Flight Information Region — hundreds of NOTAMs — and reduces it, in PostGIS, to only the ones whose geometry intersects your route corridor and altitude band. *(Measured: 471 → 79 on a Toronto-FIR route — 83% of the FIR dropped as off-route.)*
+4. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
+5. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate rejects east-cove plan v1 and proposes west-cove plan v2 pending pilot review, and DispatchAgent files one human-gated flight-following notice.
 
-Everything runs on live, reproducible government data. The exact source request is one line and needs no key:
+Normal runs fetch current, reproducible government data. A local-only frozen capture may be used when developing offline, and its provenance is labelled explicitly. The exact live source request is one line and needs no key:
 
 ```
 curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
@@ -26,29 +29,27 @@ curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
 | Agent | Job | Deterministic tool |
 |-------|-----|--------------------|
 | **RouteAgent** | resolve the request to coordinates | `resolve_route` |
-| **IngestAgent** | pull the live FIR NOTAM feed | `fetch_and_load_notams` |
+| **IngestAgent** | fetch and load current FIR NOTAM + METAR inputs | `fetch_and_load_sources` |
 | **CorridorAgent** | reduce the FIR set to the route | `filter_route_corridor` (PostGIS) |
 | **WeatherAgent** | infer the station-less read | `infer_destination_weather` (PostGIS) |
 | **BriefingComposer** | rank hazards for a low float flight, write the briefing | — |
 | **Verifier** | refuse any claim not traceable to a source | — |
-| **DispatchAgent** | file one human-gated flight-following notice | atomic Cloud SQL dispatch claim + SMTP/outbox |
+| **DispatchAgent** | after one authenticated pilot attestation, file one flight-following notice | atomic Cloud SQL dispatch claim + SMTP/outbox |
 
 The geometry is entirely in the tools; the agents orchestrate, rank, compose, and verify. **The model never receives a coordinate** — tools emit geometry to the map and return only scalars, so the LLM can narrate but cannot place a wrong point on the map.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  UI[Next.js + MapLibre<br/>SSE, map builds itself] -- POST /brief --> SVC[FastAPI on Cloud Run]
-  SVC --> ADK[ADK SequentialAgent<br/>7 named agents · Gemini 3.5+ Flash<br/>fallback chain 3.7→3.6→3.5]
-  ADK -- tools --> PG[(Cloud SQL · PostGIS<br/>corridor filter, station ranking)]
-  ADK -- live --> NAV[NAV CANADA alpha API<br/>NOTAM / METAR]
-  ADK -- session state --> PG
-```
+![Waterline bounded-authority architecture](architecture/waterline-system.svg)
 
-- **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor.
+The [full architecture guide](ARCHITECTURE.md) names the reader, deterministic writer, sole human authorizer, public/private security boundary, and verified consequence. It also distinguishes implemented controls from deferred Google-managed capabilities, so the diagram never implies Model Armor, Agent Registry, or deployed observability that does not yet exist.
+
+- **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor. Vertex publisher calls use the proven `global` endpoint independently of the `us-central1` runtime/database region.
 - **Crash recovery:** agent session state is checkpointed to Cloud SQL (`DatabaseSessionService`); a briefing killed mid-run resumes under the same session id.
-- **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, and the disclaimer before unlocking dispatch.
+- **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the disclaimer, and an authenticated owner-bound attestation before unlocking dispatch.
+- **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
+- **Observable deterministic state:** agents cannot write mission status. Cloud SQL atomically commits `proposed → rejected → awaiting_attestation → corrected → accepted → dispatched`, with an append-only event ID, trace ID, reason code, and bounded evidence at every edge. An interrupted worker resumes the same mission/session; refresh restores the owner-bound timeline.
+- **Multimodal trust boundary:** the browser cannot upload or select evidence. The server allowlists one prepared Lady Evelyn card by digest; Gemini returns a strict schema with zero authority, and deterministic checks decide whether safe fields enter session state. Embedded instructions become hash-only quarantine receipts. Corrupt, stale, ambiguous, malformed, or low-confidence evidence requests review and skips the agent pipeline.
 - **At-most-once notice:** Cloud SQL atomically claims an itinerary key before SMTP. Retry/resume and concurrent requests cannot send the same notice twice. An ambiguous SMTP failure intentionally remains claimed and requires operator reconciliation rather than an automatic retry that could duplicate a safety notice.
 - **The Twist is spatial:** the NAV CANADA API refuses geometry queries (`bbox=`, `radius=`, `point=` all return `alpha.geomNone`; only `site=` works), so the route-corridor filter is genuinely our code, not theirs.
 
@@ -78,7 +79,19 @@ cd ../web
 pnpm install && pnpm dev             # http://localhost:3010
 ```
 
-Data provenance: NAV CANADA NOTAM/METAR are live and consumed, never redistributed. Station coordinates come from the public-domain OurAirports dataset. A frozen capture in `data/captures/` gives the demo deterministic playback of a real pull.
+Data provenance: deployed NAV CANADA NOTAM/METAR are fetched live and are not bundled in the application image. Station coordinates come from the public-domain OurAirports dataset. The Lady Evelyn condition card is a Waterline-created synthetic test artifact whose manifest and SHA-256 digest are tracked with the image. Ignored local captures in `data/captures/` may support developer-only playback, but never cross the Cloud Build boundary.
+
+Authority boundary: briefing intake cannot include an actor, session id, recipient, or dispatch instruction. The first run stops at `awaiting_attestation`; the same authenticated mission owner must then invoke the separate attestation command to authorize one duplicate-safe notice.
+
+Recovery boundary: worker failures are retained as `rejected` events and may be resumed only by the same owner against the same durable ADK session. If a crash occurs after acceptance, re-confirmation must match the stored attestation hash and the dispatch claim still prevents a second notice.
+
+## Verify and deploy
+
+- [`TESTING.md`](TESTING.md) is the deterministic-to-deployed verification matrix, including the five browser proof states and preview-deployment acceptance gates.
+- [`DEPLOY.md`](DEPLOY.md) contains the private-agent/public-web Cloud Run contract.
+- The operator checklist at `../submission/waterline/google-cloud-setup-checklist.md` is the authoritative live-resource record and contains direct project-resolved Google Cloud Console links.
+
+Current status: iterations 1–7 are accepted. The preview has verified live Vertex Gemini extraction, live NAV CANADA ingestion, private-agent/public-web IAM, durable Cloud SQL restoration, one outbox consequence, and replay rejection. SMTP delivery is not configured or claimed; iteration 8 is demo readiness.
 
 ## License
 

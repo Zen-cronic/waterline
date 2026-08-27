@@ -45,6 +45,19 @@ def _smtp_configured() -> bool:
     return bool(os.environ.get("WATERLINE_SMTP_HOST") and os.environ.get("WATERLINE_SMTP_FROM"))
 
 
+def outbound_mode() -> str:
+    """Return the explicit outbound mode, failing closed on unsafe configuration."""
+    configured = os.environ.get("WATERLINE_OUTBOUND_MODE")
+    if configured is None:
+        return "smtp" if _smtp_configured() else "outbox"
+    mode = configured.strip().lower()
+    if mode not in {"outbox", "smtp"}:
+        raise RuntimeError("WATERLINE_OUTBOUND_MODE must be 'outbox' or 'smtp'")
+    if mode == "smtp" and not _smtp_configured():
+        raise RuntimeError("SMTP outbound mode requires host and sender configuration")
+    return mode
+
+
 def send_email(to: str, subject: str, body: str) -> dict[str, Any]:
     """Send an email for real via SMTP, or write it to the local outbox as a fallback."""
     frm = os.environ.get("WATERLINE_SMTP_FROM", "waterline@localhost")
@@ -54,7 +67,7 @@ def send_email(to: str, subject: str, body: str) -> dict[str, Any]:
     msg["Subject"] = subject
     msg.set_content(body)
 
-    if _smtp_configured():
+    if outbound_mode() == "smtp":
         host = os.environ["WATERLINE_SMTP_HOST"]
         port = int(os.environ.get("WATERLINE_SMTP_PORT", "587"))
         user = os.environ.get("WATERLINE_SMTP_USER")
