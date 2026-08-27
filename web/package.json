@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node .next/standalone/server.js",
     "test": "tsx --test tests/*.test.ts",
+    "verify:deployed-outbox": "node scripts/verify-deployed-outbox.mjs",
     "record:demo": "node scripts/record-continuous-demo.mjs",
     "capture:gallery": "node scripts/capture-demo-gallery.mjs"
   },
