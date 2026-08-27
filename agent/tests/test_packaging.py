@@ -91,6 +91,7 @@ def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     config = (ROOT / "web" / "next.config.ts").read_text()
     cloudbuild = (ROOT / "web" / "cloudbuild.yaml").read_text()
     relay = (ROOT / "web" / "src" / "app" / "api" / "waterline" / "[...path]" / "route.ts").read_text()
+    agent_command = (ROOT / "web" / "src" / "lib" / "agent-command.ts").read_text()
 
     assert "0.0.0.0" in package["scripts"]["start"]
     assert "${PORT:-8080}" in package["scripts"]["start"]
@@ -100,9 +101,9 @@ def test_frontend_uses_a_runtime_private_relay_and_cloud_run_listener() -> None:
     assert "HOSTNAME=0.0.0.0" in dockerfile
     assert "PORT=8080" in dockerfile
     assert "NEXT_PUBLIC_AGENT_URL" not in cloudbuild
-    assert "GoogleAuth" in relay
-    assert "x-serverless-authorization" in relay
-    assert "x-waterline-signature" in relay
+    assert "GoogleAuth" in agent_command
+    assert "x-serverless-authorization" in agent_command
+    assert "x-waterline-signature" in agent_command
     assert "resolvePilotSession" in relay
     assert "WATERLINE_PILOT_ACTOR" not in relay
     assert "COPY --from=builder --chown=node:node /app/public ./public" in dockerfile

@@ -109,19 +109,12 @@ export function authorizeRelayRequest(input: {
     MISSION_ID.test(input.path[1]) &&
     input.path[2] === "attest"
   ) {
-    exactKeys(value, ["confirm_dispatch", "eta", "grace_min", "responsible_email"]);
+    exactKeys(value, ["confirm_dispatch", "eta", "grace_min"]);
     if (value.confirm_dispatch !== true) {
       reject(400, "ATTESTATION_REQUIRED", "confirm_dispatch=true is required");
     }
-    if (typeof value.responsible_email !== "string") {
-      reject(400, "INVALID_EMAIL", "responsible_email must be a valid address");
-    }
-    const responsibleEmail = value.responsible_email.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+$/.test(responsibleEmail) || responsibleEmail.length > 254) {
-      reject(400, "INVALID_EMAIL", "responsible_email must be a valid address");
-    }
-    if (typeof value.eta !== "string" || value.eta.length < 2 || value.eta.length > 80) {
-      reject(400, "INVALID_ETA", "eta must be 2-80 characters");
+    if (typeof value.eta !== "string" || !/^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$/.test(value.eta)) {
+      reject(400, "INVALID_ETA", "eta must be a UTC time such as 16:00Z");
     }
     if (!Number.isSafeInteger(value.grace_min) || Number(value.grace_min) < 15 || Number(value.grace_min) > 240) {
       reject(400, "INVALID_GRACE", "grace_min must be an integer from 15 to 240");
@@ -131,7 +124,6 @@ export function authorizeRelayRequest(input: {
       upstreamPath: `/v1/missions/${input.path[1]}/attest`,
       upstreamBody: JSON.stringify({
         confirm_dispatch: true,
-        responsible_email: responsibleEmail,
         eta: value.eta,
         grace_min: value.grace_min,
       }),

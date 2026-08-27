@@ -30,7 +30,10 @@ const PAINT: Record<string, () => maplibregl.LayerSpecification[]> = {
     paint: { "circle-radius": 7, "circle-color": "#57c98a",
       "circle-stroke-color": "#0a0f16", "circle-stroke-width": 2 } },
     { id: "stations-label", type: "symbol", source: "stations",
-    layout: { "text-field": ["get", "station_id"], "text-size": 11, "text-offset": [0, 1.4] },
+    layout: {
+      "text-field": ["get", "station_id"], "text-font": ["Noto Sans Regular"],
+      "text-size": 11, "text-offset": [0, 1.4],
+    },
     paint: { "text-color": "#57c98a" } }],
 };
 

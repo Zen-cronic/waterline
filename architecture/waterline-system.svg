@@ -223,7 +223,7 @@
       <text x="18" y="51" class="node-title">Streaming map + durable proof rail</text>
       <text x="18" y="75" class="node-copy">Extraction · inference · provenance · gates · quarantine</text>
       <text x="18" y="98" class="node-copy">Recovery · attestation · receipt · Authority Map</text>
-      <text x="18" y="116" class="node-copy muted">No secrets · no raw reasoning · NOT FOR OPERATIONAL USE</text>
+      <text x="18" y="116" class="node-copy muted">No secrets · no raw reasoning · pilot remains authorizer</text>
     </g>
 
     <g transform="translate(1382 570)">
@@ -242,8 +242,8 @@
 
     <g transform="translate(1382 792)">
       <rect width="220" height="50" rx="14" fill="#12352d" stroke="#43a377"/>
-      <text x="16" y="21" class="node-kicker good">NOTICE RECEIPT</text>
-      <text x="16" y="41" class="node-copy">Verified one send</text>
+      <text x="16" y="21" class="node-kicker good">PROVIDER RECEIPT</text>
+      <text x="16" y="41" class="node-copy">Accepted → signed callback</text>
     </g>
     <g transform="translate(1620 792)">
       <rect width="220" height="50" rx="14" fill="#152830" stroke="#47636d"/>
@@ -297,7 +297,7 @@
     <text x="260" y="87" class="node-copy">Writer: deterministic policy + Cloud SQL</text>
     <text x="604" y="87" class="node-copy">Authorizer: authenticated pilot</text>
     <text x="906" y="87" class="node-copy">Security boundary: public relay → private agent</text>
-    <text x="1327" y="87" class="node-copy">Consequence: one notice + replay proof</text>
+    <text x="1327" y="87" class="node-copy">Consequence: one SMS + delivery/replay proof</text>
   </g>
 
   <text x="1864" y="1061" text-anchor="end" class="node-copy">Waterline · architecture proof · 2026-08-26</text>
