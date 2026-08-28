@@ -2,7 +2,7 @@
 
 **A live flight briefing for station-less Canadian water destinations.**
 
-**Public preview:** [waterline-web-2hjaxuzova-uc.a.run.app](https://waterline-web-2hjaxuzova-uc.a.run.app) — deployed in `us-central1` from commit `03e6aa2`. The agent is private; the public UI reaches it only through the signed Cloud Run service-identity relay. Preview dispatch uses an explicit ephemeral outbox and sends no external email.
+**Public preview:** [waterline-web-2hjaxuzova-uc.a.run.app](https://waterline-web-2hjaxuzova-uc.a.run.app) — deployed in `us-central1` from commit `43552f4`. The agent is private; the public UI reaches it only through the signed Cloud Run service-identity relay. The active revision is explicitly in ephemeral outbox mode and sends no external message.
 
 A bush pilot flying a float plane to a remote lake may have no identifier-keyed destination observation to request. Waterline's current resolver supports a curated set of five Ontario water destinations with no destination weather station. It reduces the whole Flight Information Region's live NOTAM feed down to the hazards that actually touch the route, and it *infers* a weather read from the real observations that do exist nearby — never inventing a number, always showing its work.
 
@@ -91,7 +91,7 @@ Recovery boundary: worker failures are retained as `rejected` events and may be 
 - [`DEPLOY.md`](DEPLOY.md) contains the private-agent/public-web Cloud Run contract.
 - The operator checklist at `../submission/waterline/google-cloud-setup-checklist.md` is the authoritative live-resource record and contains direct project-resolved Google Cloud Console links.
 
-Current status: iterations 1–7 are accepted. Iteration 8 has a locally verified, server-allowlisted SMS adapter, signed Twilio delivery callbacks, an expiring signed handoff summary, email/outbox fallback, and original-receipt replay semantics. The public preview still runs the prior outbox revision; SMS delivery is not claimed until a separately authorized deployment and operator-owned phone test pass.
+Current status: iterations 1–8 are merged, deployed, and live-verified in guarded outbox mode. The deployed candidate includes a server-allowlisted SMS adapter, signed Twilio delivery callbacks, an expiring signed handoff summary, email/outbox fallback, and original-receipt replay semantics. A continuous 126.98-second outbox take proves the live mission, wrong-path correction, pilot authority, one at-most-once handoff, and replay suppression with zero browser errors. SMS delivery is not claimed until provider secrets are configured and one separately authorized operator-owned phone test passes.
 
 ## License
 
