@@ -3,6 +3,11 @@
 Paste-ready draft for the All Things Agentic Hackathon. Every unresolved field is marked
 `PENDING OPERATOR`; do not replace those markers until the linked artifact or choice is verified.
 
+Authenticated Devpost state checked 2026-08-28: project `1387756` exists at
+`https://devpost.com/software/1387756`, but remains an **Untitled** `submission_pre_draft` with no
+published slug, description, tagline, video URL, or final submission timestamp. Updating this file
+does not update Devpost.
+
 ## Project name
 
 **Waterline**
@@ -125,6 +130,21 @@ no-network outbox; it does not claim SMS delivery. Operator upload bundle:
 multi-agent/security story, but Waterline does not deploy Agent Registry or Model Armor; confirm that
 tradeoff before selecting it. Taskmaster is the safer fit for the complete evidence-to-handoff workflow.`
 
+## Submitter type
+
+`PENDING OPERATOR — choose exactly one: Individuals, Team of individuals, or Organization.`
+
+## Submitter country of residence
+
+`PENDING OPERATOR — select the operator's actual eligible country/territory. Do not infer this from
+timezone, repository metadata, or account profile.`
+
+## Organization name
+
+`PENDING OPERATOR — this field is marked required by Devpost. If submitting as an Organization, use
+its exact legal name. Otherwise follow the live form's individual/team instruction; do not invent an
+organization.`
+
 ## What date did you start this project?
 
 `08-20-26`
@@ -175,13 +195,16 @@ All people, phone contacts, route plans, and condition-card contents in this flo
 
 ## Which Google SDK did you use?
 
-Select **Google ADK** and **Google Gen AI SDK**. ADK coordinates seven scoped agents; the Gen AI SDK
-invokes Vertex Gemini for ADK model turns and the typed visual extraction adapter.
+This is a **single-select** dropdown. Select **Agent Development Kit (ADK)** because it coordinates
+the seven scoped agents. The description and Built with fields separately identify the Google Gen AI
+SDK used for Vertex Gemini model turns and typed visual extraction.
 
 ## Which Google Cloud service(s) did you use?
 
-Select **Cloud Run** and **Cloud SQL**. Also name Vertex AI, Secret Manager, and Artifact Registry
-where free text is available. Do not select undeployed managed-agent products.
+Despite the plural label, Devpost exposes a **single-select** dropdown. Select **Cloud Run** because
+it hosts the demonstrated public/private application. The description and Built with fields
+separately identify Cloud SQL/PostGIS, Vertex AI, Secret Manager, and Artifact Registry. Do not
+select undeployed managed-agent products.
 
 ## Architecture diagram
 
@@ -202,6 +225,11 @@ Do not claim optional bonus models; none is integrated.
 - Public-domain OurAirports station reference data.
 - Waterline-created synthetic Lady Evelyn condition card, bound to a tracked digest and manifest.
 
+`PENDING OPERATOR — third-party authorization for the undocumented NAV CANADA JSON endpoint is not
+yet proven. Resolve or explicitly accept the risk recorded in
+../submission/waterline/data-authorization-handoff.md before final submission; do not call it an
+open or licensed API without evidence.`
+
 ## AI tools used during development
 
 OpenAI Codex assisted with implementation, review, testing, deployment automation, and submission
@@ -220,3 +248,9 @@ and already includes the required disclosure that it was created for entering th
 
 The draft is `/home/zin-kg/code/hackathons/allthingsagentic-2026/submission/waterline/social.md`
 and includes `#AllThingsAgenticHackathon`.
+
+## Startup Excellence opt-in
+
+`PENDING OPERATOR — opt in only if submitting on behalf of an incorporated organization and able to
+provide its exact name plus a corporate email address. Otherwise leave both optional startup fields
+blank.`
