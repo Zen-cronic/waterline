@@ -116,7 +116,8 @@ secret-bearing screenshots.
 
 Accepted local film: 1920×1080 H.264, 126.98 seconds, one continuous source, zero cuts/splices,
 mission `mission-7b188e93d37e4a72bfe7`, receipt `c742fcdf…d11fbf`. The filmed consequence is the
-no-network outbox; it does not claim SMS delivery.
+no-network outbox; it does not claim SMS delivery. Operator upload bundle:
+`../submission/waterline/video/`.
 
 ## Category
 
@@ -147,8 +148,7 @@ Current audit state: **private**. Before submission, either make it public or gr
 
 https://github.com/Zen-cronic/waterline/blob/main/LICENSE
 
-The root file is MIT. `PENDING OPERATOR — after pushing, verify GitHub detects MIT in the repository
-About panel.`
+The root file is MIT and GitHub detects **MIT License** in the repository metadata.
 
 ## Did you add reproducible setup instructions to your README?
 
