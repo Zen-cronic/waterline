@@ -10,23 +10,20 @@ fi
 
 WL_PROJECT_ID="${WL_PROJECT_ID:-ata-2026-waterline}"
 WL_REGION="${WL_REGION:-us-central1}"
+WL_GCLOUD_BIN="${WL_GCLOUD_BIN:-gcloud}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ "$(gcloud config get-value project 2>/dev/null)" != "$WL_PROJECT_ID" ]]; then
+if [[ "$("$WL_GCLOUD_BIN" config get-value project 2>/dev/null)" != "$WL_PROJECT_ID" ]]; then
   echo "Refusing to update services: active project does not match $WL_PROJECT_ID." >&2
   exit 1
 fi
 
-for secret in \
-  waterline-twilio-account-sid \
-  waterline-twilio-auth-token \
-  waterline-twilio-from-number \
-  waterline-demo-sms-to \
-  waterline-handoff-secret
-do
-  gcloud secrets describe "$secret" --project="$WL_PROJECT_ID" >/dev/null
-done
+WL_PROJECT_ID="$WL_PROJECT_ID" \
+WL_REGION="$WL_REGION" \
+WL_GCLOUD_BIN="$WL_GCLOUD_BIN" \
+  "$script_dir/verify_sms_promotion_readiness.sh"
 
-web_url="$(gcloud run services describe waterline-web \
+web_url="$("$WL_GCLOUD_BIN" run services describe waterline-web \
   --project="$WL_PROJECT_ID" --region="$WL_REGION" --format='value(status.url)')"
 if [[ "$web_url" != https://* ]]; then
   echo "Refusing to enable SMS: public Waterline URL is invalid." >&2
@@ -34,14 +31,14 @@ if [[ "$web_url" != https://* ]]; then
 fi
 
 # Public callback verification and the read-only signed summary must be ready first.
-gcloud run services update waterline-web \
+"$WL_GCLOUD_BIN" run services update waterline-web \
   --project="$WL_PROJECT_ID" \
   --region="$WL_REGION" \
   --update-env-vars="WATERLINE_PUBLIC_WEB_URL=${web_url}" \
   --update-secrets="TWILIO_AUTH_TOKEN=waterline-twilio-auth-token:latest,WATERLINE_HANDOFF_SECRET=waterline-handoff-secret:latest" \
   --quiet
 
-gcloud run services update waterline-agent \
+"$WL_GCLOUD_BIN" run services update waterline-agent \
   --project="$WL_PROJECT_ID" \
   --region="$WL_REGION" \
   --update-env-vars="WATERLINE_OUTBOUND_MODE=sms,WATERLINE_PUBLIC_WEB_URL=${web_url}" \

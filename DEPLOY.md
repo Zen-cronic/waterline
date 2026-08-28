@@ -114,6 +114,14 @@ Do not place Twilio values or the operator-owned phone number in repository file
 
 Grant the runtime identity access to all five. Grant the web identity access only to the Twilio auth token and handoff secret; it needs those to validate callbacks and render the expiring read-only summary, but it never receives the recipient or sender. The promotion script also pins `WATERLINE_PUBLIC_WEB_URL` on both services so webhook validation uses Twilio's exact public callback URL even behind Cloud Run's proxy. Apply the additive `db/schema.sql` migration before enabling the adapter.
 
+After creating the five secret resources, enabled versions, and scoped IAM bindings, run the read-only preflight:
+
+```bash
+./deploy/verify_sms_promotion_readiness.sh
+```
+
+It checks the active project, enabled secret versions, exact runtime/web secret access, private-agent/public-web invocation boundaries, current `outbox` safety mode, and the ready callback origin. It reads metadata and IAM only—never secret payloads—and changes nothing. The promotion script runs this same gate again before creating a revision.
+
 After the new committed images pass the guarded outbox deployment, authorize and run:
 
 ```bash
