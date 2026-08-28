@@ -103,12 +103,12 @@ Pub/Sub, Eventarc, Firestore, or GKE; those are not deployed Waterline dependenc
 
 Upload in this order:
 
-1. `architecture/waterline-system.png` — four authority lanes, trust plane, and exception arcs.
-2. `.playwright-mcp/continuous-demo-outbox/01-awaiting-attestation.png` — live evidence, wrong path, and pilot boundary.
-3. `.playwright-mcp/continuous-demo-outbox/03-replay-suppressed.png` — one original receipt and no duplicate handoff.
+1. `../submission/waterline/gallery/architecture.png` — four authority lanes, trust plane, and exception arcs.
+2. `../submission/waterline/gallery/01-live-evidence-awaiting-attestation.png` — live evidence, wrong path, and pilot boundary.
+3. `../submission/waterline/gallery/02-replay-suppressed.png` — one original receipt and no duplicate handoff.
 
-The Playwright paths are ignored local evidence. Copy the selected PNGs into the submission package
-before upload; never commit contact PII or secret-bearing screenshots.
+These are the visually inspected submission-package copies. Never replace them with contact PII or
+secret-bearing screenshots.
 
 ## Video demo link
 
@@ -185,7 +185,7 @@ where free text is available. Do not select undeployed managed-agent products.
 
 ## Architecture diagram
 
-Upload `architecture/waterline-system.png` (1920×1080, 592,516 bytes). Editable source:
+Upload `architecture/waterline-system.png` (1920×1080, 592,259 bytes). Editable source:
 `architecture/waterline-system.svg`.
 
 ## Which Google AI models did you use?

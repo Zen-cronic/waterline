@@ -95,8 +95,8 @@
     <g transform="translate(1528 196)">
       <rect width="314" height="52" rx="12" fill="#172d32" stroke="#af854b"/>
       <circle cx="18" cy="18" r="5" fill="#ffbd66"/>
-      <text x="32" y="21" class="pill-label">OBSERVABILITY · DEPLOY GATE</text>
-      <text x="14" y="40" class="pill-detail">Trace/event IDs now; Cloud Run logs in I7</text>
+      <text x="32" y="21" class="pill-label">OBSERVABILITY · ACTIVE</text>
+      <text x="14" y="40" class="pill-detail">Trace/event IDs + Cloud Run request logs</text>
     </g>
   </g>
 
@@ -297,7 +297,7 @@
     <text x="260" y="87" class="node-copy">Writer: deterministic policy + Cloud SQL</text>
     <text x="604" y="87" class="node-copy">Authorizer: authenticated pilot</text>
     <text x="906" y="87" class="node-copy">Security boundary: public relay → private agent</text>
-    <text x="1327" y="87" class="node-copy">Consequence: one SMS + delivery/replay proof</text>
+    <text x="1327" y="87" class="node-copy">Consequence: one handoff + receipt/replay proof</text>
   </g>
 
   <text x="1864" y="1061" text-anchor="end" class="node-copy">Waterline · architecture proof · 2026-08-26</text>
