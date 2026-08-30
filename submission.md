@@ -37,7 +37,9 @@ We wanted agents to do the evidence-heavy work without quietly becoming the oper
 Waterline briefs a curated set of five station-less Ontario water destinations by geometry rather
 than by destination code. For one live Lady Evelyn Lake mission, it ingests current NAV CANADA
 NOTAM and METAR data, filters the Toronto FIR to the route corridor in PostGIS, and infers a
-destination read from nearby real stations with explicit confidence and raw-source provenance.
+destination read from nearby real stations with explicit confidence and raw-source provenance. In
+the deployed proof, the database-native corridor query reduced 471 FIR NOTAMs to 79 — an 83%
+off-route reduction before the bounded result reached the agents.
 
 A prepared synthetic condition-card photograph contains a checked east-cove obstruction and a
 hostile embedded instruction. Gemini extracts a typed, zero-authority proposal. Deterministic code
@@ -54,10 +56,12 @@ Seven named agents run on Google's Agent Development Kit with Gemini 3.5-or-newe
 
 The private FastAPI agent runs on Cloud Run. Next.js exposes only a same-origin, exact-path relay
 that authenticates to the agent with a keyless Cloud Run service identity and binds each command to
-an opaque owner using HMAC. Cloud SQL for PostgreSQL/PostGIS owns spatial filtering, durable ADK
-sessions, the constrained mission state graph, pilot attestations, and an atomic at-most-once
-dispatch ledger. The browser cannot choose a recipient, actor, session ID, evidence path, or agent
-endpoint.
+an opaque owner using HMAC. Cloud SQL for PostgreSQL/PostGIS owns the exact corridor query:
+`ST_Intersects` filters GiST-indexed NOTAM areas against the buffered route while altitude/time
+predicates remain in SQL rather than Python row paging. With `WATERLINE_SESSION_DB` configured, the
+same service also persists ADK sessions, the constrained mission state graph, pilot attestations,
+and the atomic at-most-once dispatch ledger. The browser cannot choose a recipient, actor, session
+ID, evidence path, or agent endpoint.
 
 ### Challenges we ran into
 
@@ -208,7 +212,7 @@ select undeployed managed-agent products.
 
 ## Architecture diagram
 
-Upload `architecture/waterline-system.png` (1920×1080, 592,259 bytes). Editable source:
+Upload `architecture/waterline-system.png` (1920×1080, 592,193 bytes). Editable source:
 `architecture/waterline-system.svg`.
 
 ## Which Google AI models did you use?

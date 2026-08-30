@@ -23,7 +23,7 @@ The public/private security boundary is between the same-origin Next.js relay an
 | Gateway | Implemented as the application boundary | Exact-path same-origin relay, Cloud Run IAM ID token, and HMAC request binding. This is not a claim that Google Cloud Agent Gateway is deployed. |
 | Model Armor | Deferred | Not enabled and not claimed. Hash-only hostile-text quarantine and deterministic validation are application controls, not Model Armor. |
 | Registry | Deferred | No Agent Registry resource exists and none is claimed. The seven-agent roster is code-defined. |
-| Memory | Implemented | ADK `DatabaseSessionService`, missions, append-only events, attestations, and dispatch receipts in Cloud SQL/PostgreSQL |
+| Memory | Implemented | With `WATERLINE_SESSION_DB` configured, ADK `DatabaseSessionService`, missions, append-only events, attestations, and dispatch receipts persist in Cloud SQL/PostgreSQL. PostGIS is load-bearing for a separate reason: exact corridor reduction remains a database query rather than Python row paging. |
 | Observability | Implemented and deployed | Trace IDs, event IDs, reason codes, source/model/gate receipts, durable recovery, Cloud Run revision/request logs, and the accepted continuous outbox proof. |
 
 This status split is deliberate. Model Armor and Registry appear in the trust plane so a judge can see where they would sit, while dashed styling and explicit “deferred” labels prevent an architecture aspiration from becoming a false deployed-service claim.
@@ -42,7 +42,7 @@ Only three semantic edge types appear in the diagram: read-only inspection, boun
 | Innovation | Geometry-keyed briefing for one of five curated station-less water destinations; typed multimodal condition evidence changes the plan | Live route/corridor map; visual card; inference confidence and raw METAR provenance; east rejection → west correction |
 | Architecture | Private agent, exact-path signed relay, server-owned identity/recipient, signed provider callback, read/propose-only agents, deterministic writer/gates, sole pilot authorization, durable ledger, at-most-once claim | Authority Map; trace/event/reason IDs; quarantine; gate cards; outbox handoff/replay receipts; provider acceptance/delivery states only when SMS is configured |
 | Demo | One continuous state machine with a retained failure/recovery beat and a single consequential action | Awaiting, degraded, recovered, dispatched, and replay-suppressed cockpit states; no hidden model authority |
-| Google Cloud | Cloud Run source contracts, Vertex Gemini adapter, Cloud SQL/PostGIS, Secret Manager, Artifact Registry, keyless IAM | Public web revision, private agent revision/IAM, Cloud SQL data, live Vertex/NAV CANADA receipts, request logs, and immutable build/image digests are deployed and verified |
+| Google Cloud | Cloud Run source contracts, Vertex Gemini adapter, Cloud SQL/PostGIS, Secret Manager, Artifact Registry, keyless IAM. Cloud SQL is chosen by the core query: `ST_Intersects` filters GiST-indexed NOTAM areas against the buffered route, with altitude/time predicates in the same SQL query. | Public web revision, private agent revision/IAM, Cloud SQL data, live Vertex/NAV CANADA receipts, request logs, immutable build/image digests, and the measured 471 → 79 NOTAM corridor reduction are deployed and verified |
 
 ## Artifact use
 
