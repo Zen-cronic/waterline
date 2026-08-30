@@ -2,7 +2,7 @@
 
 ![Waterline bounded-authority architecture](architecture/waterline-system.svg)
 
-The diagram is a 1920×1080, submission-ready view of the deployed architecture. It makes five roles visible without relying on model prose: the reader, writer, authorizer, security boundary, and physical/digital consequence.
+The diagram is a 1920×1080, submission-ready view of the deployed architecture. A component-type legend, one explicit Google Cloud boundary, and four large left-to-right stages make five roles visible without relying on model prose: the reader, writer, authorizer, security boundary, and physical/digital consequence. The consequence panel is deliberately current-state-aware: the Twilio adapter is implemented, SMS configuration is pending, and the accepted proof remains the outbox plus replay-suppression take until a signed delivery callback is recorded.
 
 ## Four lanes
 

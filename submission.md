@@ -212,7 +212,7 @@ select undeployed managed-agent products.
 
 ## Architecture diagram
 
-Upload `architecture/waterline-system.png` (1920×1080, 592,193 bytes). Editable source:
+Upload `architecture/waterline-system.png` (1920×1080, 666,438 bytes). Editable source:
 `architecture/waterline-system.svg`.
 
 ## Which Google AI models did you use?
