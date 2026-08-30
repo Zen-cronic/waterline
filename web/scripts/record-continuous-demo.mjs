@@ -32,6 +32,8 @@ const browserErrors = [];
 let missionId = null;
 let receiptId = null;
 let recordingError = null;
+let providerDelivered = false;
+let replaySuppressed = false;
 
 function mark(name, detail = undefined) {
   const at = Number(((Date.now() - startedAt) / 1000).toFixed(2));
@@ -144,6 +146,7 @@ try {
 
   await page.getByText("DELIVERED", { exact: true }).waitFor({ timeout: 90_000 });
   await page.getByText("DELIVERED", { exact: true }).scrollIntoViewIfNeeded();
+  providerDelivered = true;
   await page.screenshot({ path: path.join(outputDirectory, "03-delivered.png") });
   await hold(
     page,
@@ -155,6 +158,7 @@ try {
   await page.getByRole("button", { name: "Replay same command · prove no second SMS" }).click();
   await page.getByText("REPLAY SUPPRESSED · ORIGINAL RECEIPT RETURNED", { exact: true }).waitFor();
   assert.equal((await page.getByText(/^receipt /).textContent())?.replace(/^receipt /, ""), receiptId);
+  replaySuppressed = true;
   await page.getByText("REPLAY SUPPRESSED · ORIGINAL RECEIPT RETURNED", { exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(outputDirectory, "04-replay-suppressed.png") });
   await hold(
@@ -198,9 +202,12 @@ if (recordingError) verificationErrors.push(recordingError instanceof Error
 if (finalDuration >= 240) verificationErrors.push(`Take is ${finalDuration}s; cap is under 240s`);
 if (Math.abs(rawDuration - finalDuration) > 0.25) verificationErrors.push("Transcode changed duration");
 if (browserErrors.length) verificationErrors.push(`Browser errors: ${browserErrors.join(" | ")}`);
+if (!providerDelivered) verificationErrors.push("Signed provider callback did not reach DELIVERED");
+if (!replaySuppressed) verificationErrors.push("Original-receipt replay suppression was not proved");
 const report = {
   status: verificationErrors.length ? "FAILED" : "PASSED",
   app_url: appUrl,
+  transport: "sms",
   started_at: new Date(startedAt).toISOString(),
   finished_at: new Date().toISOString(),
   continuous: true,
@@ -208,6 +215,12 @@ const report = {
   viewport,
   mission_id: missionId,
   receipt_id: receiptId,
+  final_state: {
+    boundary: "human",
+    outbound_mode: "sms",
+    delivery: providerDelivered ? "delivered" : null,
+    duplicate_suppressed: replaySuppressed,
+  },
   beats,
   browser_errors: browserErrors,
   artifacts: { rawVideoPath, finalVideoPath, rawDuration, finalDuration, sha256 },

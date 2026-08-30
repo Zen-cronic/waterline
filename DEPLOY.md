@@ -133,6 +133,21 @@ The script verifies the active project and required secret resources, updates th
 
 Twilio's create response may be `accepted` or `queued`; Waterline labels this **PROVIDER ACCEPTED**, not delivered. Only a request with a valid `X-Twilio-Signature` can advance the durable receipt to **DELIVERED**. Callback status can arrive out of order, so the database updater is monotonic and terminal states do not regress. These contracts follow Twilio's [Message resource](https://www.twilio.com/docs/messaging/api/message-resource), [status callback](https://www.twilio.com/docs/messaging/guides/track-outbound-message-status), and [webhook security](https://www.twilio.com/docs/usage/webhooks/webhooks-security) guidance.
 
+### Record the real SMS consequence
+
+Use `web/scripts/record-continuous-demo.mjs` as the only SMS attempt. Start the browser and phone capture before clicking the attestation control, then preserve this causal sequence in one continuous timeline:
+
+1. The browser is held at **Human authority required** and the operator-owned phone is visibly idle.
+2. One authenticated pilot action invokes **Attest & send one demo handoff**.
+3. Waterline shows **PROVIDER ACCEPTED** with a redacted recipient and provider reference.
+4. The real phone receives the marked `WATERLINE DEMO — NO ACTIVE FLIGHT` SMS. Show the notification or message body briefly without exposing either phone number.
+5. The signed Twilio callback advances the same browser receipt to **DELIVERED**.
+6. Replay the identical command; the browser must return the original receipt and show **REPLAY SUPPRESSED**, while the phone receives nothing else.
+
+A camera view of the physical phone is the strongest proof. For an Android phone, a continuous `scrcpy --record` capture is an acceptable cleaner inset; UI automation may wake the device or open the real received notification, but it must not fabricate or inject the message. If browser and phone are recorded separately, synchronize them as a disclosed picture-in-picture without changing event order. Never replace the real provider delivery with a simulated Messages UI.
+
+The recorder's JSON report labels the take `transport: sms` and passes only after the signed callback reaches `delivered`, replay suppression is visible, the browser has no errors, and the continuous browser source remains under four minutes. Keep the existing outbox film until the SMS take and phone evidence both pass; SMS is an upgrade, not a reason to lose the already-submittable proof.
+
 If SMS provisioning or operator-owned delivery fails twice in rehearsal, stop debugging the provider and configure `WATERLINE_OUTBOUND_MODE=smtp` with `WATERLINE_DEMO_EMAIL_TO` plus the existing SMTP variables. Re-run all delivery, replay, persistence, capture, and recording gates after changing transport.
 
 ## 5. Post-deploy verification
