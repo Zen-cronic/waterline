@@ -38,7 +38,7 @@ const provenance = {
   metar: { source_mode: "live", source_ref: "navcanada:metar", records: 53, parsed: 29, payload_sha256: "d".repeat(64) },
 };
 const proof = {
-  briefing: "HAZARDS\nEAST cove is obstructed; plan v2 proposes WEST cove pending pilot review.\nWEATHER\nINFERRED from CYXR, 27.8 NM away. PILOT REVIEW REQUIRED.",
+  briefing: "### HAZARDS\n**EAST cove is obstructed**; plan v2 proposes **WEST cove** pending pilot review.\n\n- One changed NOTAM resurfaced at full weight.\n- Unchanged owner-acknowledged route noise was suppressed.\n\n### WEATHER\n**INFERRED** from CYXR, 27.8 NM away.\n\nPILOT REVIEW REQUIRED.",
   semantic_verdict: "APPROVED — inferred weather and source evidence agree.",
   inference, provenance,
   briefing_gate: { approved: true, reasons: [] },
@@ -80,16 +80,20 @@ function timeline() {
         provider_reference: providerReference, provider_status: "queued",
         recipient_redacted: "+1••••••1234", status: "provider_accepted", at_most_once: true,
       }),
+      event("event-10", "dispatched", "dispatched", "flight_memory_written", "terminal_attested_notam_ack", {
+        kind: "notam_ack", written: 79, considered: 79, embedding_model: "gemini-embedding-001",
+        owner_scoped: true, dispatch_authority: false,
+      }),
     );
   }
   if (stage === "delivered" || stage === "replay") {
-    events.push(event("event-10", "dispatched", "dispatched", "delivery_status_updated", "provider_delivered", {
+    events.push(event("event-11", "dispatched", "dispatched", "delivery_status_updated", "provider_delivered", {
       receipt_id: receiptId, provider_reference: providerReference, provider_status: "delivered",
       recipient_redacted: "+1••••••1234",
     }));
   }
   if (stage === "replay") {
-    events.push(event("event-11", "dispatched", "dispatched", "dispatch_replayed", "duplicate_suppressed", {
+    events.push(event("event-12", "dispatched", "dispatched", "dispatch_replayed", "duplicate_suppressed", {
       receipt_id: receiptId, provider_reference: providerReference, provider_status: "delivered",
       duplicate_suppressed: true, at_most_once: true,
     }));
@@ -110,8 +114,15 @@ const stream = [
   { type: "layer", layer: "route", label: "CYYZ → Lady Evelyn Lake", rev: "1", status: "ready", rowCount: 1, geojson: { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[-79.63, 43.68], [-80.14, 47.32]] } }] } },
   { type: "layer", layer: "corridor", label: "route corridor ±10 NM", rev: "1", status: "ready", rowCount: 1, geojson: { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[-79.82, 43.68], [-79.43, 43.68], [-79.95, 47.34], [-80.33, 47.30], [-79.82, 43.68]]] } }] } },
   { type: "layer", layer: "stations", label: "3 source stations", rev: "1", status: "ready", rowCount: 1, geojson: { type: "FeatureCollection", features: [{ type: "Feature", properties: { station_id: "CYXR" }, geometry: { type: "Point", coordinates: [-79.85, 47.70] } }] } },
+  { type: "layer", layer: "notams", label: "23 NOTAMs after owner memory", rev: "1", status: "ready", rowCount: 2, geojson: { type: "FeatureCollection", features: [
+    { type: "Feature", properties: { idx: 4, memory_changed: true, fir_wide: false }, geometry: { type: "Point", coordinates: [-79.82, 44.15] } },
+    { type: "Feature", properties: { idx: 11, memory_changed: false, fir_wide: false }, geometry: { type: "Point", coordinates: [-80.0, 45.5] } },
+  ] } },
   { type: "step", agent: "IngestAgent", kind: "live", detail: "NAV CANADA NOTAM 456/456 · METAR 29/53" },
-  { type: "step", agent: "CorridorAgent", kind: "filtered", detail: "PostGIS retained 86 on-route notices" },
+  { type: "step", agent: "CorridorAgent", kind: "filtered", detail: "PostGIS geometry reduced 471 → 79 on-route notices" },
+  { type: "step", agent: "RecallAgent", kind: "reduced", detail: "79 → 23 after owner-scoped memory (56 unchanged acknowledgements suppressed)." },
+  { type: "step", agent: "RecallAgent", kind: "changed", detail: "NOTAM 4 resurfaced at full weight: source digest changed." },
+  { type: "step", agent: "RecallAgent", kind: "routed", detail: "Gemini reads 14 of 23; Gemma triaged the rest without dropping the raw layer." },
   { type: "panel", key: "condition_card", value: { image_url: "/evidence/lady-evelyn-condition-card-v1.png", validation_result: "accepted", reason_codes: [], model_receipt: modelReceipt, trusted_evidence: timeline()[1].evidence.trusted_evidence } },
   { type: "panel", key: "quarantine", value: timeline()[2].evidence.quarantine_receipt },
   { type: "panel", key: "plan_revision", value: plan },
@@ -189,6 +200,8 @@ try {
   await page.locator("#map canvas").waitFor();
   await page.waitForTimeout(2000);
   await page.screenshot({ path: path.join(outputDirectory, "01-wrong-path-awaiting.png") });
+  await page.locator(".markdown-brief").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(outputDirectory, "01b-rendered-briefing.png") });
 
   await page.getByRole("button", { name: "Attest & send one demo handoff" }).click();
   await page.getByText("PROVIDER ACCEPTED", { exact: true }).waitFor();
