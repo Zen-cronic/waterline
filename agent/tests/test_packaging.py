@@ -41,24 +41,23 @@ def test_architecture_proof_is_truthful_and_submission_ready() -> None:
     testing = (ROOT / "TESTING.md").read_text()
 
     assert 'width="1920" height="1080" viewBox="0 0 1920 1080"' in svg
-    for lane in (
-        "Authenticated intake", "Gemini + ADK fleet", "Deterministic authority",
-        "Observable consequence",
+    for stage in (
+        "Pilot and follower", "Cloud Run boundary", "Private agents, durable truth",
+        "Ephemeral coordination",
     ):
-        assert lane in svg
-    for capability in (
-        "IDENTITY", "GATEWAY", "MODEL ARMOR", "REGISTRY", "MEMORY", "OBSERVABILITY",
+        assert stage in svg
+    for boundary in (
+        "Cloud SQL · PostGIS · pgvector", "Cloud Firestore",
+        "FIRESTORE MESSAGES CANNOT CHANGE ROUTE, ATTESTATION, OR MISSION STATE",
     ):
-        assert capability in svg
-    assert svg.count('class="read-edge"') >= 5
-    assert svg.count('class="human-edge"') >= 3
-    assert svg.count('class="receipt-edge"') >= 4
-    assert "MODEL ARMOR · DEFERRED" in svg
-    assert "REGISTRY · DEFERRED" in svg
-    assert "no deployment claim" in svg
-    assert "This is not a claim that Google Cloud Agent Gateway is deployed" in architecture
+        assert boundary in svg
+    assert svg.count('class="edge"') >= 10
+    assert "AUTHORITATIVE" in svg
+    assert "EPHEMERAL REAL-TIME COORDINATION" in svg
+    assert "## Firestore boundary" in architecture
+    assert "## Deployed proof" in architecture
     assert "## Rubric traceability" in architecture
-    assert "## 5. Preview deployment acceptance" in testing
+    assert "## Deployed acceptance" in testing
 
 
 def test_preview_deploy_contract_is_commit_bound_private_and_firestore_only() -> None:

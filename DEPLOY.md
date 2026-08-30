@@ -1,162 +1,61 @@
-# Deploying Waterline to Google Cloud
+# Waterline deployment
 
-Waterline is two Cloud Run services — a **private agent** (FastAPI + ADK) and a public **frontend relay** (Next.js standalone) — plus **PostGIS** on **Cloud SQL for PostgreSQL**. The browser has no agent URL or credential. The frontend's service identity invokes the private agent; its exact-path relay issues a tamper-evident HttpOnly pilot session and signs that opaque owner plus the normalized command body.
-
-For the guarded preview, run `./deploy/deploy_preview.sh` from a committed runtime tree. It builds both images with the current 12-character Git revision, deploys the private-agent/public-web boundary, grants only the web identity service-level invocation, and forces `WATERLINE_OUTBOUND_MODE=outbox` so preview verification cannot send an external message. The manual commands below document the same pieces and remain useful for recovery.
+Waterline deploys a public Next.js service and private FastAPI/ADK service to Cloud Run in `us-central1`. Cloud SQL is authoritative; Firebase Auth and Firestore provide one-hour realtime coordination.
 
 ## Prerequisites
-- `gcloud` CLI installed and authenticated (`gcloud auth login`), project selected (`gcloud config set project <PROJECT_ID>`).
-- APIs enabled: `run.googleapis.com`, `cloudbuild.googleapis.com`, `sqladmin.googleapis.com`, `artifactregistry.googleapis.com`, `aiplatform.googleapis.com`, and `secretmanager.googleapis.com`.
-- Separate `waterline-runtime` and `waterline-web` service accounts. The runtime needs Vertex AI User and Cloud SQL Client; both receive resource-scoped access to `waterline-relay-secret`. Do not create a service-account key.
-- Docker for the local container preflight. Do not deploy until both image smoke checks pass.
-- Run every local and cloud gate in `TESTING.md`. The external operator checklist is the authoritative live-resource record and contains direct Console links for project `ata-2026-waterline`.
 
-The reusable Cargo Release incident ledger informed this contract: quote every `--format='…'` expression, inspect source bundles before build submission, keep routable endpoints separate from ID-token audiences, and treat Cloud Run ingress and IAM invocation as independent controls. Waterline resource names and roles remain project-specific; no Cargo identifiers or permissions are copied.
+- APIs: Cloud Run, Cloud Build, Artifact Registry, Vertex AI, Cloud SQL Admin, Secret Manager, IAM, Firestore, Identity Toolkit, and Firebase Rules.
+- Firestore `(default)`: Standard, Native mode, `us-central1`.
+- Firebase web app `waterline-web`; Anonymous authentication enabled; `localhost` and `waterline-web-2hjaxuzova-uc.a.run.app` authorized.
+- Keyless service accounts `waterline-runtime` and `waterline-web`.
+- `waterline-web` has `roles/datastore.user`; both service accounts can access `waterline-handoff-secret`.
+- No service-account key is created.
 
-## 1. Cloud SQL (PostGIS)
+Only `waterline-handoff-secret` is added for the follower-room feature. Firebase web configuration is passed as public Cloud Run environment values.
+
+## Deploy the committed tree
+
+The deployment script refuses dirty runtime paths and tags both images with the current 12-character commit.
+
 ```bash
-gcloud sql instances create waterline-pg \
-  --database-version=POSTGRES_16 --tier=db-f1-micro --region=us-central1
-gcloud sql databases create waterline --instance=waterline-pg
-gcloud sql users set-password postgres --instance=waterline-pg --password=<PW>
-# enable PostGIS once, via the connection:
-#   CREATE EXTENSION IF NOT EXISTS postgis;
-# then load db/schema.sql (including the dispatch_receipts idempotency ledger)
+WL_FIREBASE_API_KEY='public Firebase web API key' \
+WL_FIREBASE_MESSAGING_SENDER_ID='Firebase sender id' \
+WL_FIREBASE_APP_ID='Firebase web app id' \
+  ./deploy/deploy_preview.sh
 ```
-PostGIS ships with Cloud SQL for PostgreSQL — no build needed. Apply `db/schema.sql` through the Cloud SQL connection.
 
-## 2. Agent on Cloud Run
+The script:
+
+1. builds and deploys the private agent with Cloud SQL and the handoff secret;
+2. grants only `waterline-web` Cloud Run invocation;
+3. builds the public web image;
+4. releases the tracked Firestore Rules;
+5. enables `expiresAt` TTL for threads, members, and messages;
+6. deploys the web service with Firebase public configuration and Application Default Credentials.
+
+`WATERLINE_AGENT_URL` and `WATERLINE_AGENT_AUDIENCE` remain separate. The browser never receives either relay secret or a Google service credential.
+
+## Schema
+
+Run `deploy/provision_cloud_sql.sh` when creating or migrating the database. `db/schema.sql` adds `handoff_expires_at` and `handoff_token_sha256` to the compatibility receipt table. It does not store the raw capability.
+
+## Verification
+
 ```bash
-# from waterline/ (build context = project root; .gcloudignore includes the
-# tracked public-domain airport reference and synthetic condition-card evidence,
-# but excludes local NAV CANADA captures and env files)
-export WATERLINE_PROJECT="<PROJECT>"
-export WATERLINE_REGION="us-central1"
-export WATERLINE_SQL_CONNECTION="${WATERLINE_PROJECT}:${WATERLINE_REGION}:waterline-pg"
-export WATERLINE_RUNTIME_SA="waterline-runtime@${WATERLINE_PROJECT}.iam.gserviceaccount.com"
-export WATERLINE_WEB_SA="waterline-web@${WATERLINE_PROJECT}.iam.gserviceaccount.com"
-
-test "$(gcloud config get-value project)" = "${WATERLINE_PROJECT}"
 ./deploy/verify_cloud_foundation.sh
 
-gcloud run deploy waterline-agent \
-  --source . \
-  --region="${WATERLINE_REGION}" \
-  --service-account="${WATERLINE_RUNTIME_SA}" \
-  --no-allow-unauthenticated \
-  --add-cloudsql-instances="${WATERLINE_SQL_CONNECTION}" \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WATERLINE_PROJECT},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini,WATERLINE_OUTBOUND_MODE=outbox" \
-  --set-secrets="DATABASE_URL=waterline-database-url:latest,WATERLINE_SESSION_DB=waterline-session-db:latest,WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
-  --port=8080 \
-  --min-instances=0 \
-  --max-instances=2
-```
-- Run `deploy/provision_cloud_sql.sh` and `deploy/provision_relay_identity.sh` first. Never put database passwords or the relay HMAC secret in a command or repository.
-- `min-instances 0` and a small `--max-instances` cap per the hackathon cost guidance.
-- `WATERLINE_SESSION_DB` (SQLAlchemy URL) enables `DatabaseSessionService` = durable sessions = the crash-resume beat.
-- Preview deployment sets `WATERLINE_OUTBOUND_MODE=outbox` explicitly. This wins even if provider-looking variables are present and prevents accidental external delivery.
-- The camera path uses `sms`; SMTP remains the deadline fallback. Both select one recipient from server configuration—never from browser input.
-- `dispatch_receipts` claims the handoff before any provider request. This is intentionally **at-most-once**: a completed replay returns the original receipt, while an ambiguous transport failure remains claimed for operator reconciliation.
-- `mission_events` is the append-only lifecycle proof. Each deterministic edge carries an event ID, trace ID, reason code, and bounded JSON evidence; raw contact PII and model reasoning are excluded.
-- `WATERLINE_EVIDENCE_MODE=gemini` makes the deployed agent use Vertex AI for the allowlisted condition-card image. Local development defaults to deterministic, digest-bound fixture extraction. Neither mode exposes a public upload surface; both keep model authority false and store hostile content as a hash-only quarantine receipt.
-- `WATERLINE_MODEL_LOCATION=global` is intentionally separate from the `us-central1` infrastructure region. Both the ADK fallback chain and typed visual extractor pass the global publisher location explicitly; this avoids the verified regional Gemini 3.5 `404 NOT_FOUND` failure without moving Cloud Run or Cloud SQL.
-- The deployed service fetches NAV CANADA data live. Local frozen captures are intentionally excluded from its image; an unavailable live source therefore fails visibly instead of silently redistributing copied payloads.
-
-## 3. Frontend relay
-
-The agent URL is a server-only runtime variable. The browser calls same-origin `/api/waterline/*`; the relay permits only mission creation, owner-bound timeline restore, bounded same-session recovery, and the owner-attestation command. For a remote agent, `google-auth-library` obtains a service-identity ID token and sends it as `X-Serverless-Authorization`. The HMAC additionally binds the injected pilot actor to the exact method, path, normalized body, and timestamp.
-
-```bash
-export WATERLINE_AGENT_URL="https://<agent>.run.app"
-export WATERLINE_AGENT_AUDIENCE="https://<canonical-agent>.run.app"
-export WATERLINE_WEB_IMAGE="us-central1-docker.pkg.dev/<PROJECT>/waterline/waterline-web:latest"
-
 cd web
-gcloud builds submit \
-  --config cloudbuild.yaml \
-  --substitutions="_IMAGE=${WATERLINE_WEB_IMAGE}" \
-  .
-gcloud run deploy waterline-web \
-  --image="${WATERLINE_WEB_IMAGE}" \
-  --region="${WATERLINE_REGION}" \
-  --service-account="${WATERLINE_WEB_SA}" \
-  --allow-unauthenticated \
-  --set-env-vars="WATERLINE_AGENT_URL=${WATERLINE_AGENT_URL},WATERLINE_AGENT_AUDIENCE=${WATERLINE_AGENT_AUDIENCE}" \
-  --set-secrets="WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
-  --port=8080
-
-gcloud run services add-iam-policy-binding waterline-agent \
-  --region="${WATERLINE_REGION}" \
-  --member="serviceAccount:${WATERLINE_WEB_SA}" \
-  --role="roles/run.invoker"
+WATERLINE_FIRESTORE_PROOF_APPROVED=I_APPROVE_FIRESTORE_FLIGHT_FOLLOWING_PROOF \
+  pnpm verify:deployed-firestore
 ```
 
-The standalone container listens on `0.0.0.0:$PORT` as required by Cloud Run. For a local production check:
+The live verifier creates one synthetic mission and attestation, uses separate pilot/follower browser contexts, asserts sub-two-second acknowledgement and messages, reloads history, replays the handoff, and directly checks one Firestore thread with two roles and one acknowledgement. Query Cloud SQL separately for the matching one-row receipt without printing the database credential.
 
-```bash
-docker build -t waterline-web ./web
-docker run --rm -p 8080:8080 -e PORT=8080 waterline-web
-```
+## Failure and rollback
 
-For local development, the relay and agent share a clearly local-only default signing secret when the agent URL is localhost. The relay still issues an HttpOnly owner session. A Cloud Run environment (`K_SERVICE`) has no secret fallback and fails closed unless `WATERLINE_RELAY_SECRET` is mounted.
+- Rules are released before the web revision receives traffic.
+- If the chat bridge or Firestore is unavailable, the UI shows `FOLLOWER ROOM UNAVAILABLE`; the SQL mission and attestation remain durable.
+- Revert Cloud Run traffic to the prior immutable web/agent revisions if a rollout fails. Firestore access remains fail-closed under the released rules.
+- Never delete or rotate shared SQL/session/relay secrets as part of a routine rollback.
 
-Keep `WATERLINE_AGENT_URL` (the routable request endpoint) and `WATERLINE_AGENT_AUDIENCE` (the exact canonical audience accepted by Cloud Run) separate even when they happen to be identical. Do not normalize away a required trailing slash. Verify the audience through a successful signed relay request and the private agent's Cloud Run request logs; never log the token itself.
-
-## 4. SMS handoff promotion (separate approval)
-
-Do not place Twilio values or the operator-owned phone number in repository files, shell history, build substitutions, logs, or screenshots. Create five Secret Manager secrets through the Cloud Console or a non-recorded operator shell:
-
-- `waterline-twilio-account-sid`
-- `waterline-twilio-auth-token`
-- `waterline-twilio-from-number`
-- `waterline-demo-sms-to`
-- `waterline-handoff-secret` (independent random value, at least 32 bytes)
-
-Grant the runtime identity access to all five. Grant the web identity access only to the Twilio auth token and handoff secret; it needs those to validate callbacks and render the expiring read-only summary, but it never receives the recipient or sender. The promotion script also pins `WATERLINE_PUBLIC_WEB_URL` on both services so webhook validation uses Twilio's exact public callback URL even behind Cloud Run's proxy. Apply the additive `db/schema.sql` migration before enabling the adapter.
-
-After creating the five secret resources, enabled versions, and scoped IAM bindings, run the read-only preflight:
-
-```bash
-./deploy/verify_sms_promotion_readiness.sh
-```
-
-It checks the active project, enabled secret versions, exact runtime/web secret access, private-agent/public-web invocation boundaries, current `outbox` safety mode, and the ready callback origin. It reads metadata and IAM only—never secret payloads—and changes nothing. The promotion script runs this same gate again before creating a revision.
-
-After the new committed images pass the guarded outbox deployment, authorize and run:
-
-```bash
-WATERLINE_SMS_PROMOTION_APPROVED=I_APPROVE_SMS_HANDOFF_CONFIGURATION \
-  ./deploy/promote_sms_handoff.sh
-```
-
-The script verifies the active project and required secret resources, updates the public web callback verifier first, then switches the private agent to `WATERLINE_OUTBOUND_MODE=sms`. It does not send a message. The one external SMS still requires a separate authenticated pilot attestation in the app.
-
-Twilio's create response may be `accepted` or `queued`; Waterline labels this **PROVIDER ACCEPTED**, not delivered. Only a request with a valid `X-Twilio-Signature` can advance the durable receipt to **DELIVERED**. Callback status can arrive out of order, so the database updater is monotonic and terminal states do not regress. These contracts follow Twilio's [Message resource](https://www.twilio.com/docs/messaging/api/message-resource), [status callback](https://www.twilio.com/docs/messaging/guides/track-outbound-message-status), and [webhook security](https://www.twilio.com/docs/usage/webhooks/webhooks-security) guidance.
-
-### Record the real SMS consequence
-
-Use `web/scripts/record-continuous-demo.mjs` as the only SMS attempt. Start the browser and phone capture before clicking the attestation control, then preserve this causal sequence in one continuous timeline:
-
-1. The browser is held at **Human authority required** and the operator-owned phone is visibly idle.
-2. One authenticated pilot action invokes **Attest & send one demo handoff**.
-3. Waterline shows **PROVIDER ACCEPTED** with a redacted recipient and provider reference.
-4. The real phone receives the marked `WATERLINE DEMO — NO ACTIVE FLIGHT` SMS. Show the notification or message body briefly without exposing either phone number.
-5. The signed Twilio callback advances the same browser receipt to **DELIVERED**.
-6. Replay the identical command; the browser must return the original receipt and show **REPLAY SUPPRESSED**, while the phone receives nothing else.
-
-A camera view of the physical phone is the strongest proof. For an Android phone, a continuous `scrcpy --record` capture is an acceptable cleaner inset; UI automation may wake the device or open the real received notification, but it must not fabricate or inject the message. If browser and phone are recorded separately, synchronize them as a disclosed picture-in-picture without changing event order. Never replace the real provider delivery with a simulated Messages UI.
-
-The recorder's JSON report labels the take `transport: sms` and passes only after the signed callback reaches `delivered`, replay suppression is visible, the browser has no errors, and the continuous browser source remains under four minutes. Keep the existing outbox film until the SMS take and phone evidence both pass; SMS is an upgrade, not a reason to lose the already-submittable proof.
-
-If SMS provisioning or operator-owned delivery fails twice in rehearsal, stop debugging the provider and configure `WATERLINE_OUTBOUND_MODE=smtp` with `WATERLINE_DEMO_EMAIL_TO` plus the existing SMTP variables. Re-run all delivery, replay, persistence, capture, and recording gates after changing transport.
-
-## 5. Post-deploy verification
-
-Run the preview-deployment acceptance section in `TESTING.md`. Use `/health` for a deployed health proof and corroborate it in Cloud Run request logs; do not assume a generic edge 404 came from application routing. Confirm the agent has no `allUsers` invoker binding, the web identity has only service-level `roles/run.invoker`, and both revisions point to immutable image digests.
-
-The project-resolved Console pages are maintained in `/home/zin-kg/code/hackathons/allthingsagentic-2026/submission/waterline/google-cloud-setup-checklist.md`. That file, not this generic command template, records the actual revision names, URLs, image digests, live receipts, and verification timestamps.
-
-## 6. On-camera proof (a scored requirement)
-The demo video must show the backend running on Google Cloud. Film the public Waterline URL exercising the signed relay, then show the private `waterline-agent` revision and its request logs plus the Cloud SQL instance in Cloud Console. The agent URL intentionally rejects an anonymous browser request, so do not present direct browser access to `/health` as the proof path. After recording, **turn services off** (`min-instances 0` already helps) per the cost guidance.
-
-Do not deploy the frontend to Vercel without replacing the Cloud Run service-identity relay; the current boundary intentionally relies on the `waterline-web` Google service account.
+Current verified deployment: commit `0852d4f`, agent `waterline-agent-00008-62n`, web `waterline-web-00008-ckb`.
