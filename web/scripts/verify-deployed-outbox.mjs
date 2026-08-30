@@ -22,6 +22,7 @@ const region = process.env.WATERLINE_REGION ?? "us-central1";
 const agentService = process.env.WATERLINE_AGENT_SERVICE ?? "waterline-agent";
 const outputDirectory = path.resolve(process.env.OUTBOX_PROOF_OUTPUT ?? "../.playwright-mcp/deployed-outbox");
 const reportPath = path.join(outputDirectory, "deployed-outbox-proof.json");
+const awaitingScreenshotPath = path.join(outputDirectory, "deployed-outbox-awaiting.png");
 const screenshotPath = path.join(outputDirectory, "deployed-outbox-replay.png");
 const browserErrors = [];
 
@@ -70,6 +71,8 @@ try {
       "mission failed closed before pilot attestation";
     throw new Error(`Mission reached ${boundary} boundary: ${detail}`);
   }
+  await page.locator(".markdown-brief").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: awaitingScreenshotPath, fullPage: false });
 
   await page.getByRole("button", { name: "Attest & send one demo handoff" }).click();
   await page.getByText("HANDOFF COMPLETED", { exact: true }).waitFor({ timeout: 90_000 });
@@ -104,6 +107,7 @@ const report = {
   browser_errors: browserErrors,
   error: proofError instanceof Error ? proofError.message : proofError ? String(proofError) : null,
   verified_at: new Date().toISOString(),
+  awaiting_screenshot: awaitingScreenshotPath,
   screenshot: screenshotPath,
 };
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
