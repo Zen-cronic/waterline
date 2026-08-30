@@ -154,4 +154,10 @@ test("fixed acknowledgement succeeds and arbitrary acknowledgement fails", async
     senderUid: "follower-a", senderRole: "follower", kind: "ack",
     body: "Sure",
   })));
+
+  const pilot = environment.authenticatedContext("pilot-a").firestore();
+  await assertFails(setDoc(
+    doc(collection(pilot, "handoff_threads", missionA, "messages"), "pilot-ack"),
+    message({ kind: "ack", body: "Following acknowledged" }),
+  ));
 });

@@ -59,7 +59,10 @@ service cloud.firestore {
           && request.resource.data.expiresAt == membership(missionId).data.expiresAt
           && (
             request.resource.data.kind == "text"
-            || request.resource.data.body == "Following acknowledged"
+            || (
+              request.resource.data.senderRole == "follower"
+              && request.resource.data.body == "Following acknowledged"
+            )
           );
         allow update, delete: if false;
       }
