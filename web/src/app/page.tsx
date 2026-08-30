@@ -282,7 +282,10 @@ export default function Page() {
   }
 
   const stateTimeline = timeline.filter((event) =>
-    event.from_status !== event.to_status || event.event_type === "recovery_started"
+    event.from_status !== event.to_status ||
+    event.event_type === "recovery_started" ||
+    event.event_type === "flight_memory_written" ||
+    event.event_type === "flight_memory_failed"
   );
   const canAttest = mission?.status === "awaiting_attestation" &&
     conditionCard?.validation_result === "accepted" &&
@@ -315,7 +318,7 @@ export default function Page() {
         </div>
         <div className="feed">
           <div className="section-h">Agent roster</div>
-          {steps.length === 0 && !running && <div className="prov">Seven agents brief in sequence.</div>}
+          {steps.length === 0 && !running && <div className="prov">Eight agents brief in sequence.</div>}
           {mission && (
             <div className="mission-chip">
               <span>{mission.mission_id}</span>
@@ -331,7 +334,11 @@ export default function Page() {
                 <div className={`state-event state-${event.to_status}`} key={event.event_id}>
                   <i aria-hidden="true" />
                   <div>
-                    <strong>{event.to_status.replaceAll("_", " ")}</strong>
+                    <strong>{event.event_type === "flight_memory_written"
+                      ? "MEMORY WRITTEN"
+                      : event.event_type === "flight_memory_failed"
+                        ? "MEMORY DEGRADED"
+                        : event.to_status.replaceAll("_", " ")}</strong>
                     <span>{event.reason_code.replaceAll("_", " ")}</span>
                     <small>{event.event_id}</small>
                   </div>
@@ -395,6 +402,7 @@ export default function Page() {
           <div className="k"><span className="dot" style={{ background: "#35d0d6" }} />corridor ±10 NM</div>
           <div className="k"><span className="dot" style={{ background: "#e6eef7" }} />NOTAM on route</div>
           <div className="k"><span className="dot" style={{ background: "#ef6b6b" }} />FIR-wide NOTAM</div>
+          <div className="k"><span className="dot" style={{ background: "#ff4f91" }} />changed source resurfaced</div>
           <div className="k"><span className="dot" style={{ background: "#57c98a" }} />source station</div>
         </div>
         <div className="footer">HACKATHON DEMO · PILOT REVIEW REQUIRED</div>

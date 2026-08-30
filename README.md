@@ -16,7 +16,7 @@ A bush pilot flying a float plane to a remote lake may have no identifier-keyed 
 2. For Lady Evelyn Lake, the authenticated service attaches one prepared synthetic condition-card photograph. Gemini proposes a typed extraction; a deterministic validator binds it to the tracked digest, accepts the east-cove obstruction, and quarantines the embedded hostile instruction without copying that text into trusted state.
 3. Waterline pulls the **live NAV CANADA** NOTAM feed for the Flight Information Region — hundreds of NOTAMs — and reduces it in PostGIS to only the ones whose geometry intersects the route corridor and whose altitude/validity bands overlap the flight. The measured **471 → 79 NOTAM** reduction on a Toronto-FIR route — **83% dropped as off-route** — is an architecture result: `ST_Intersects` runs against GiST-indexed NOTAM areas and the buffered route, while the remaining predicates stay in the same database query.
 4. For the station-less destination, it ranks the nearest real METAR stations and synthesizes a read with an **explicit confidence** that falls with distance and rises with agreement. The raw METAR travels with every inference.
-5. Seven agents brief in sequence; a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate rejects east-cove plan v1 and proposes west-cove plan v2 pending pilot review, and DispatchAgent creates one marked synthetic, human-gated flight-following handoff.
+5. Eight agents brief in sequence; a **RecallAgent** removes only unchanged owner-acknowledged noise, a **Verifier** refuses any claim that doesn't trace to a source, a deterministic gate rejects east-cove plan v1 and proposes west-cove plan v2 pending pilot review, and DispatchAgent creates one marked synthetic, human-gated flight-following handoff.
 
 Normal runs fetch current, reproducible government data. A local-only frozen capture may be used when developing offline, and its provenance is labelled explicitly. The exact live source request is one line and needs no key:
 
@@ -31,6 +31,7 @@ curl "https://plan.navcanada.ca/weather/api/alpha/?site=CZYZ&alpha=notam"
 | **RouteAgent** | resolve the request to coordinates | `resolve_route` |
 | **IngestAgent** | fetch and load current FIR NOTAM + METAR inputs | `fetch_and_load_sources` |
 | **CorridorAgent** | reduce the FIR set to the route | `filter_route_corridor` (PostGIS) |
+| **RecallAgent** | suppress only unchanged, owner-acknowledged route noise; pre-rank the surfaced set | `recall_destination_memory` (Gemini embedding + Cloud SQL vector + advisory Gemma) |
 | **WeatherAgent** | infer the station-less read | `infer_destination_weather` (PostGIS) |
 | **BriefingComposer** | rank hazards for a low float flight, write the briefing | — |
 | **Verifier** | refuse any claim not traceable to a source | — |
@@ -45,6 +46,7 @@ The geometry is entirely in the tools; the agents orchestrate, rank, compose, an
 The [full architecture guide](ARCHITECTURE.md) names the reader, deterministic writer, sole human authorizer, public/private security boundary, and verified consequence. It also distinguishes implemented controls from deferred Google-managed capabilities, so the diagram never implies Model Armor, Agent Registry, or deployed observability that does not yet exist.
 
 - **Failure-tolerant routing:** the model layer tries `gemini-3.7-flash → 3.6 → 3.5`; a fresh model under launch load throws 503s, and the demo never stalls on one. Every model in the chain clears the required "Gemini 3.5 or newer" floor. Vertex publisher calls use the proven `global` endpoint independently of the `us-central1` runtime/database region.
+- **Load-bearing memory + cost routing:** `gemini-embedding-001` maps the owner-bound destination to a 768-dimensional Cloud SQL vector. Exact NOTAM digest and validity matches may suppress acknowledged noise, while any changed source resurfaces. Vertex MaaS Gemma 4 advisory-ranks the complete surfaced set so Gemini reads the top 14; Gemma can demote but cannot delete a source or change the raw map layer.
 - **Crash recovery:** in the deployed configuration, `WATERLINE_SESSION_DB` points ADK's `DatabaseSessionService` at Cloud SQL; a briefing killed mid-run resumes under the same session id. Local sessions are durable only when that variable points to a persistent database.
 - **Fail-closed dispatch:** a free-form Verifier rejection cannot fall through to DispatchAgent. A deterministic ADK callback independently checks required provenance, inference labelling, source station/distance, NOTAM indices, the pilot-review statement, and an authenticated owner-bound attestation before unlocking dispatch.
 - **Authenticated mission ownership:** the browser can call only the Next.js relay's exact command allowlist. The relay issues a tamper-evident HttpOnly pilot session, signs its opaque actor plus the method/path/body/timestamp, and authenticates to the private agent with its Google service identity. The agent derives opaque owner/user references and generates mission/session ids; another browser cannot resume that mission.
@@ -56,16 +58,16 @@ The [full architecture guide](ARCHITECTURE.md) names the reader, deterministic w
 
 ## Stack
 
-- **Gemini 3.5+ Flash** (via the Google GenAI SDK), primary `gemini-3.7-flash`.
-- **Google Agent Development Kit (ADK)** — `SequentialAgent` roster of seven `LlmAgent`s plus a deterministic pre-dispatch callback.
+- **Gemini 3.5+ Flash** (via the Google GenAI SDK), `gemini-embedding-001`, and advisory Vertex MaaS `google/gemma-4-26b-a4b-it-maas`.
+- **Google Agent Development Kit (ADK)** — `SequentialAgent` roster of eight `LlmAgent`s plus a deterministic pre-dispatch callback.
 - **Google Cloud Run** — public Next.js service and private FastAPI agent service, joined by keyless service identity.
-- **Cloud SQL for PostgreSQL / PostGIS** — database-native corridor filtering with `ST_Intersects`, GiST-indexed NOTAM areas, and altitude/time predicates. It also persists missions, events, dispatch claims, and — when `WATERLINE_SESSION_DB` is configured — ADK sessions.
+- **Cloud SQL for PostgreSQL / PostGIS / pgvector** — database-native corridor filtering with `ST_Intersects`, owner-scoped semantic destination recall, exact acknowledgement checks, durable mission events, dispatch claims, and — when `WATERLINE_SESSION_DB` is configured — ADK sessions.
 - **Next.js 16 / React 19 / MapLibre GL** frontend, streaming Server-Sent Events.
 
 ## Run it locally
 
 ```bash
-# 1. Postgres + PostGIS
+# 1. PostgreSQL + PostGIS + pgvector
 docker compose up -d
 
 # 2. Agent service (Python 3.12)

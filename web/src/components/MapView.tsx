@@ -23,8 +23,9 @@ const PAINT: Record<string, () => maplibregl.LayerSpecification[]> = {
     paint: { "line-color": "#f2b45a", "line-width": 2.5, "line-dasharray": [2, 1] } }],
   notams: () => [{ id: "notams", type: "circle", source: "notams",
     paint: {
-      "circle-radius": 5,
-      "circle-color": ["case", ["get", "fir_wide"], "#ef6b6b", "#e6eef7"],
+      "circle-radius": ["case", ["get", "memory_changed"], 8, 5],
+      "circle-color": ["case", ["get", "memory_changed"], "#ff4f91",
+        ["get", "fir_wide"], "#ef6b6b", "#e6eef7"],
       "circle-opacity": 0.85, "circle-stroke-color": "#0a0f16", "circle-stroke-width": 1 } }],
   stations: () => [{ id: "stations", type: "circle", source: "stations",
     paint: { "circle-radius": 7, "circle-color": "#57c98a",

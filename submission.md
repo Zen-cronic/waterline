@@ -16,7 +16,7 @@ does not update Devpost.
 
 Primary (145 characters):
 
-> Seven agents brief station-less water destinations, reject a poisoned route, and let only an authenticated pilot trigger one replay-safe handoff.
+> Eight agents brief station-less water destinations, reject a poisoned route, and let only an authenticated pilot trigger one replay-safe handoff.
 
 Alternates:
 
@@ -50,9 +50,9 @@ receipt without creating another handoff.
 
 ### How we built it
 
-Seven named agents run on Google's Agent Development Kit with Gemini 3.5-or-newer Flash models:
+Eight named agents run on Google's Agent Development Kit with Gemini 3.5-or-newer Flash models:
 
-`RouteAgent → IngestAgent → CorridorAgent → WeatherAgent → BriefingComposer → Verifier → DispatchAgent`
+`RouteAgent → IngestAgent → CorridorAgent → RecallAgent → WeatherAgent → BriefingComposer → Verifier → DispatchAgent`
 
 The private FastAPI agent runs on Cloud Run. Next.js exposes only a same-origin, exact-path relay
 that authenticates to the agent with a keyless Cloud Run service identity and binds each command to
@@ -200,7 +200,7 @@ All people, phone contacts, route plans, and condition-card contents in this flo
 ## Which Google SDK did you use?
 
 This is a **single-select** dropdown. Select **Agent Development Kit (ADK)** because it coordinates
-the seven scoped agents. The description and Built with fields separately identify the Google Gen AI
+the eight scoped agents. The description and Built with fields separately identify the Google Gen AI
 SDK used for Vertex Gemini model turns and typed visual extraction.
 
 ## Which Google Cloud service(s) did you use?

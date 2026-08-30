@@ -59,6 +59,33 @@ At desktop 1440×1000 and mobile 390×844, inspect these states:
 
 Every viewport must have no horizontal overflow. Clean awaiting/dispatched flows must have zero console errors. MapLibre may emit WebGL performance warnings in headless rendering; record them as renderer warnings rather than application failures. The completed replay intentionally returns `200` with the original receipt and `duplicate_suppressed=true`; an ambiguous claimed-but-incomplete provider attempt remains a `409` reconciliation case.
 
+### Repeat-flight memory and model-routing proof
+
+Use the same authenticated browser owner for both flights. Flight 1 must show the
+PostGIS reduction and then reach `dispatched`; its durable timeline must include
+`terminal attested notam ack` with the number of acknowledgement rows written.
+Immediately before starting flight 2, run the guarded mutation helper in a second
+terminal so it changes a real database row after the new ingest and before the
+corridor tool reads it:
+
+```bash
+DATABASE_URL="$DATABASE_URL" poetry -C agent run python \
+  ../scripts/mutate_notam_for_memory_demo.py --owner-ref '<redacted owner_ref>'
+```
+
+Flight 2 must visibly produce both reductions (`471 → 79` geometry, then
+`79 → 23` owner memory), a `changed` RecallAgent step naming the one digest or
+validity mismatch that resurfaced, and `Gemini reads 14 of 23; Gemma triaged the
+rest`. The raw map layer must contain all 23 surfaced records including the
+changed marker. A fresh live ingest restores the synthetic mutation.
+
+Failure checks:
+
+- Disable or break Vertex embeddings: recall must return zero memories and show all 79.
+- Use a different authenticated owner: no acknowledgements may match.
+- Return an incomplete or duplicate Gemma order: the adapter must append every omitted NOTAM; map cardinality cannot fall.
+- Change either `raw` or `end_valid`: the NOTAM must resurface at full weight.
+
 ## 4. Cloud foundation gate
 
 These commands are read-only except for the verifier's API calls to inspect resources:

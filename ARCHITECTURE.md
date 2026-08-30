@@ -22,11 +22,13 @@ The public/private security boundary is between the same-origin Next.js relay an
 | Identity | Implemented locally; cloud identities provisioned | Separate keyless `waterline-web` and `waterline-runtime` service accounts; signed HttpOnly pilot session; owner-bound API tests |
 | Gateway | Implemented as the application boundary | Exact-path same-origin relay, Cloud Run IAM ID token, and HMAC request binding. This is not a claim that Google Cloud Agent Gateway is deployed. |
 | Model Armor | Deferred | Not enabled and not claimed. Hash-only hostile-text quarantine and deterministic validation are application controls, not Model Armor. |
-| Registry | Deferred | No Agent Registry resource exists and none is claimed. The seven-agent roster is code-defined. |
-| Memory | Implemented | With `WATERLINE_SESSION_DB` configured, ADK `DatabaseSessionService`, missions, append-only events, attestations, and dispatch receipts persist in Cloud SQL/PostgreSQL. PostGIS is load-bearing for a separate reason: exact corridor reduction remains a database query rather than Python row paging. |
+| Registry | Deferred | No Agent Registry resource exists and none is claimed. The eight-agent roster is code-defined. |
+| Memory | Implemented | With `WATERLINE_SESSION_DB` configured, ADK `DatabaseSessionService`, missions, append-only events, attestations, dispatch receipts, and owner-scoped NOTAM acknowledgements persist in Cloud SQL/PostgreSQL. `gemini-embedding-001` resolves the semantic destination and pgvector retrieves nearby prior flights; exact source digest and validity checks alone permit suppression. PostGIS remains load-bearing for exact corridor reduction. |
 | Observability | Implemented and deployed | Trace IDs, event IDs, reason codes, source/model/gate receipts, durable recovery, Cloud Run revision/request logs, and the accepted continuous outbox proof. |
 
 This status split is deliberate. Model Armor and Registry appear in the trust plane so a judge can see where they would sit, while dashed styling and explicit “deferred” labels prevent an architecture aspiration from becoming a false deployed-service claim.
+
+The memory ladder deliberately stops at Cloud SQL vector search: one briefing needs owner-scoped semantic destination recall plus exact NOTAM digest checks, not a new managed Memory Bank control plane, IAM surface, or autonomous long-term-memory authority.
 
 ## Exception paths
 
