@@ -114,8 +114,8 @@ BEGIN
     END IF;
 END $$;
 
--- One authenticated human attestation per mission. Contact PII is hashed; the
--- actual address exists only for the bounded send attempt and dispatch ledger.
+-- One authenticated human attestation per mission. The retained hash binds the
+-- attestation to its mission-scoped follower-room capability, never to contact PII.
 CREATE TABLE IF NOT EXISTS pilot_attestations (
     attestation_id text PRIMARY KEY,
     mission_id     text NOT NULL UNIQUE REFERENCES missions(mission_id),
@@ -147,9 +147,8 @@ ALTER TABLE ingests ADD COLUMN IF NOT EXISTS source_mode text NOT NULL DEFAULT '
 ALTER TABLE ingests ADD COLUMN IF NOT EXISTS source_ref text;
 ALTER TABLE ingests ADD COLUMN IF NOT EXISTS payload_sha256 text;
 
--- At-most-once external dispatch ledger. The INSERT claim is committed before
--- SMTP is attempted, so retry/resume cannot send a second notice. Recipient PII
--- is represented only as a hash; the actual address remains in session state.
+-- Duplicate-safe follower-room ledger. The existing table name and terminal
+-- mission status remain for migration compatibility. No raw capability is stored.
 CREATE TABLE IF NOT EXISTS dispatch_receipts (
     idempotency_key text PRIMARY KEY,
     session_id      text NOT NULL,
@@ -163,10 +162,12 @@ CREATE TABLE IF NOT EXISTS dispatch_receipts (
 ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS provider_reference text;
 ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS provider_status text;
 ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS recipient_redacted text;
+ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS handoff_expires_at timestamptz;
+ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS handoff_token_sha256 char(64);
 CREATE UNIQUE INDEX IF NOT EXISTS dispatch_receipts_provider_reference_idx
     ON dispatch_receipts (provider_reference) WHERE provider_reference IS NOT NULL;
 
--- Owner-scoped, post-dispatch acknowledgement memory. The destination embedding
+-- Owner-scoped, post-attestation acknowledgement memory. The destination embedding
 -- is deliberately load-bearing: recall starts by resolving the current
 -- destination in this vector space, then exact source digests decide whether a
 -- NOTAM is unchanged. Model output never writes or mutates source text.

@@ -120,11 +120,11 @@ def test_condition_card_receipt_and_plan_are_part_of_dispatch_authority() -> Non
 
 class _MustNotRunAgent(BaseAgent):
     async def _run_async_impl(self, ctx: InvocationContext):
-        raise AssertionError("DispatchAgent body ran after the gate rejected")
+        raise AssertionError("FollowingAgent body ran after the gate rejected")
         yield  # pragma: no cover
 
 
-def test_real_adk_before_agent_callback_skips_dispatch_body() -> None:
+def test_real_adk_before_agent_callback_skips_following_body() -> None:
     async def exercise() -> None:
         service = InMemorySessionService()
         state = _approved_state()
@@ -133,7 +133,7 @@ def test_real_adk_before_agent_callback_skips_dispatch_body() -> None:
             app_name="gate-test", user_id="pilot", session_id="resume-1", state=state,
         )
         agent = _MustNotRunAgent(
-            name="DispatchAgent", before_agent_callback=guard_dispatch,
+            name="FollowingAgent", before_agent_callback=guard_dispatch,
         )
         runner = Runner(
             app_name="gate-test", agent=agent, session_service=service,
@@ -152,7 +152,7 @@ def test_real_adk_before_agent_callback_skips_dispatch_body() -> None:
 
         assert any(
             event.content
-            and any("DISPATCH HALTED" in (part.text or "") for part in event.content.parts)
+            and any("HANDOFF HALTED" in (part.text or "") for part in event.content.parts)
             for event in events
         )
         assert updated is not None

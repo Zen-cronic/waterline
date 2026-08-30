@@ -12,9 +12,7 @@ node_modules/
 # Frozen live-data captures used for the demo (regenerated on demand)
 .playwright-mcp/
 # generated data — ignored wherever it appears
-data/outbox/
 data/captures/
-outbox/
 
 .agents
 .claude

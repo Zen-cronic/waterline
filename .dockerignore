@@ -20,7 +20,6 @@ ARCHITECTURE.md
 TESTING.md
 web/
 agent/data/
-data/outbox/
 data/*
 !data/reference/
 !data/reference/**

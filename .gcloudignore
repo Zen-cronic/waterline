@@ -22,7 +22,6 @@ ARCHITECTURE.md
 TESTING.md
 web/
 agent/data/
-data/outbox/
 
 # Only tracked runtime references cross the Cloud Build boundary: the
 # public-domain airport dataset and Waterline's synthetic condition-card asset.

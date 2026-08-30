@@ -11,6 +11,7 @@ import os
 import hashlib
 import json
 import math
+from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 
@@ -374,12 +375,10 @@ def mission_timeline(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
 
 
 def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str,
-                            responsible_contact: str, eta: str,
+                            capability_ref: str, eta: str,
                             grace_min: int) -> dict[str, Any] | None:
     """Atomically claim the one human attestation allowed for a mission."""
-    contact_hash = hashlib.sha256(
-        responsible_contact.strip().lower().encode("utf-8"),
-    ).hexdigest()
+    contact_hash = hashlib.sha256(capability_ref.encode("utf-8")).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -437,12 +436,10 @@ def claim_pilot_attestation(attestation_id: str, mission_id: str, actor_ref: str
 
 
 def matching_pilot_attestation(mission_id: str, actor_ref: str,
-                               responsible_contact: str, eta: str,
+                               capability_ref: str, eta: str,
                                grace_min: int) -> dict[str, Any] | None:
-    """Validate a recovery attestation without storing or returning contact PII."""
-    contact_hash = hashlib.sha256(
-        responsible_contact.strip().lower().encode("utf-8"),
-    ).hexdigest()
+    """Validate a replay against the same mission-scoped room capability."""
+    contact_hash = hashlib.sha256(capability_ref.encode("utf-8")).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -460,122 +457,72 @@ def matching_pilot_attestation(mission_id: str, actor_ref: str,
 
 
 def mark_mission_dispatched(mission_id: str, owner_ref: str) -> bool:
-    """Compatibility wrapper for the final accepted -> dispatched edge."""
+    """Compatibility wrapper for the internal terminal state."""
     return transition_mission(
         mission_id, owner_ref, "accepted", "dispatched",
-        "dispatch_completed", "verified_notice_receipt",
+        "following_room_ready", "verified_room_receipt",
     ) is not None
 
 
-def claim_dispatch(idempotency_key: str, session_id: str, recipient: str) -> bool:
-    """Atomically claim one external dispatch before any provider is called.
-
-    The primary-key insert is the cross-process recovery guard: retries and
-    concurrent Cloud Run requests using the same itinerary key cannot both win.
-    We intentionally prefer at-most-once delivery over a possible duplicate.
-    """
-    recipient_hash = hashlib.sha256(recipient.strip().lower().encode("utf-8")).hexdigest()
+def claim_handoff_room(idempotency_key: str, session_id: str, mission_id: str,
+                       expires_at: datetime, capability_sha256: str) -> dict[str, Any] | None:
+    """Atomically commit one room receipt and return the winning claim."""
+    capability_ref_hash = hashlib.sha256(
+        f"flight-follower-room:{mission_id}".encode("utf-8"),
+    ).hexdigest()
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO dispatch_receipts (idempotency_key, session_id, recipient_hash)
-            VALUES (%s, %s, %s)
+            INSERT INTO dispatch_receipts (
+                idempotency_key, session_id, recipient_hash, status, channel,
+                provider_reference, provider_status, handoff_expires_at,
+                handoff_token_sha256, completed_at
+            ) VALUES (%s, %s, %s, 'sent', 'firestore', %s, 'room_ready', %s, %s, now())
             ON CONFLICT (idempotency_key) DO NOTHING
             RETURNING idempotency_key
             """,
-            (idempotency_key, session_id, recipient_hash),
-        )
-        claimed = cur.fetchone() is not None
-        conn.commit()
-    return claimed
-
-
-def complete_dispatch(idempotency_key: str, channel: str,
-                      provider_reference: str | None = None,
-                      provider_status: str | None = None,
-                      recipient_redacted: str | None = None) -> None:
-    """Mark a claim complete with bounded provider proof and no raw recipient."""
-    with connect() as conn, conn.cursor() as cur:
-        cur.execute(
-            """
-            UPDATE dispatch_receipts
-            SET status = 'sent', channel = %s, provider_reference = %s,
-                provider_status = %s, recipient_redacted = %s, completed_at = now()
-            WHERE idempotency_key = %s
-            """,
             (
-                channel, provider_reference, provider_status,
-                recipient_redacted, idempotency_key,
+                idempotency_key, session_id, capability_ref_hash, mission_id,
+                expires_at, capability_sha256,
             ),
         )
-        conn.commit()
-
-
-def dispatch_receipt(idempotency_key: str) -> dict[str, Any] | None:
-    """Return bounded receipt proof for an idempotent replay."""
-    with connect() as conn, conn.cursor() as cur:
+        inserted = cur.fetchone() is not None
         cur.execute(
             """
             SELECT idempotency_key, status, channel, provider_reference,
-                   provider_status, recipient_redacted, claimed_at, completed_at
-            FROM dispatch_receipts WHERE idempotency_key = %s
+                   provider_status, handoff_expires_at, handoff_token_sha256,
+                   claimed_at, completed_at
+            FROM dispatch_receipts
+            WHERE idempotency_key = %s AND session_id = %s
             """,
-            (idempotency_key,),
+            (idempotency_key, session_id),
         )
         row = cur.fetchone()
-    return dict(row) if row else None
+        conn.commit()
+    if row is None:
+        return None
+    return {**dict(row), "duplicate_suppressed": not inserted}
 
 
-_PROVIDER_STATUS_RANK = {
-    "accepted": 10, "scheduled": 10, "queued": 20, "sending": 30,
-    "sent": 40, "delivered": 50, "read": 60,
-    "failed": 50, "undelivered": 50, "canceled": 50,
-}
-_PROVIDER_TERMINAL = {"delivered", "read", "failed", "undelivered", "canceled"}
-
-
-def update_dispatch_provider_status(provider_reference: str, provider_status: str,
-                                    error_code: str | None = None) -> dict[str, Any] | None:
-    """Apply a signed provider callback without allowing out-of-order regression."""
-    if provider_status not in _PROVIDER_STATUS_RANK:
-        raise ValueError("unsupported provider status")
+def handoff_receipt_for_mission(mission_id: str, owner_ref: str) -> dict[str, Any] | None:
+    """Return non-secret room metadata for owner-bound invitation restoration."""
     with connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT dr.idempotency_key, dr.provider_status, dr.recipient_redacted,
-                   m.mission_id, m.owner_ref, m.trace_id, m.status AS mission_status
+            SELECT dr.idempotency_key, dr.channel, dr.provider_reference,
+                   dr.provider_status, dr.handoff_expires_at,
+                   dr.handoff_token_sha256, dr.claimed_at, dr.completed_at,
+                   pa.eta, pa.grace_min
             FROM dispatch_receipts dr
             JOIN missions m ON m.session_id = dr.session_id
-            WHERE dr.provider_reference = %s
-            FOR UPDATE OF dr
+            JOIN pilot_attestations pa ON pa.mission_id = m.mission_id
+            WHERE m.mission_id = %s AND m.owner_ref = %s
+              AND dr.channel = 'firestore' AND dr.provider_reference = m.mission_id
             """,
-            (provider_reference,),
+            (mission_id, owner_ref),
         )
         row = cur.fetchone()
-        if row is None:
-            conn.rollback()
-            return None
-        current = row.get("provider_status")
-        should_update = (
-            current not in _PROVIDER_TERMINAL
-            and _PROVIDER_STATUS_RANK[provider_status] >= _PROVIDER_STATUS_RANK.get(current, -1)
-        )
-        if should_update:
-            cur.execute(
-                """
-                UPDATE dispatch_receipts SET provider_status = %s
-                WHERE provider_reference = %s
-                """,
-                (provider_status, provider_reference),
-            )
-        conn.commit()
-    return {
-        **dict(row),
-        "provider_reference": provider_reference,
-        "provider_status": provider_status if should_update else current,
-        "error_code": error_code,
-        "updated": should_update,
-    }
+    return dict(row) if row else None
 
 
 def corridor_filter(

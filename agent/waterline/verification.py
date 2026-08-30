@@ -1,4 +1,4 @@
-"""Deterministic safety gate between the semantic Verifier and DispatchAgent.
+"""Deterministic safety gate between the semantic Verifier and FollowingAgent.
 
 The LLM verifier is useful for semantic review, but an irreversible action must
 not depend on a free-form sentence alone.  This module fail-closes unless both
@@ -149,19 +149,19 @@ def assess_briefing_readiness(state: Mapping[str, Any]) -> VerificationDecision:
 
 
 def guard_dispatch(callback_context: CallbackContext) -> types.Content | None:
-    """ADK before-agent callback that skips DispatchAgent on any rejection."""
+    """ADK before-agent callback that skips FollowingAgent on any rejection."""
     decision = assess_dispatch_readiness(callback_context.state)
     callback_context.state["dispatch_authorized"] = decision.approved
     callback_context.state["verification_gate"] = decision.as_dict()
     emit_panel("verification_gate", decision.as_dict())
 
     if decision.approved:
-        emit_step("VerifierGate", "approved", "Deterministic provenance checks passed; dispatch unlocked.")
+        emit_step("VerifierGate", "approved", "Deterministic provenance checks passed; handoff unlocked.")
         return None
 
     detail = "; ".join(decision.reasons)
-    emit_step("VerifierGate", "halted", f"Dispatch blocked: {detail}.")
+    emit_step("VerifierGate", "halted", f"Follower-room handoff blocked: {detail}.")
     return types.Content(
         role="model",
-        parts=[types.Part(text=f"DISPATCH HALTED — {detail}.")],
+        parts=[types.Part(text=f"HANDOFF HALTED — {detail}.")],
     )

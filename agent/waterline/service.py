@@ -32,10 +32,10 @@ from .condition_card import (
     failed_evidence_decision,
 )
 from .config import APP_NAME
-from .dispatch import configured_delivery_target, outbound_mode
 from .embed import EMBEDDING_MODEL, embed_destination
+from .handoff import signed_handoff_token, token_sha256
 from .run import make_session_service, run_briefing
-from .tools.dispatch_tools import dispatch_from_state
+from .tools.following_tools import open_follower_room_from_state
 from .verification import assess_briefing_readiness, assess_dispatch_readiness
 
 
@@ -56,19 +56,9 @@ class MissionRequest(BaseModel):
 
 class AttestationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    confirm_dispatch: Literal[True]
+    confirm_handoff: Literal[True]
     eta: str = Field(pattern=r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$")
     grace_min: int = Field(ge=15, le=240)
-
-
-class ProviderStatusRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    provider_reference: str = Field(pattern=r"^SM[0-9A-Za-z]{16,64}$")
-    provider_status: Literal[
-        "accepted", "scheduled", "queued", "sending", "sent", "delivered",
-        "undelivered", "failed", "canceled", "read",
-    ]
-    error_code: str | None = Field(default=None, max_length=32)
 
 
 class ResumeRequest(BaseModel):
@@ -188,7 +178,7 @@ def _bounded_briefing_evidence(
 async def _write_terminal_notam_memory(
     mission: dict[str, Any], identity: PilotIdentity, state: dict[str, Any],
 ) -> dict[str, Any]:
-    """Write acknowledgement memory only after terminal dispatch is committed."""
+    """Write acknowledgement memory only after the terminal room claim commits."""
     route = state.get("route")
     on_route = state.get("_route_notams")
     if not isinstance(route, dict) or not isinstance(route.get("dst_name"), str):
@@ -267,6 +257,49 @@ async def _prepare_visual_evidence(
             },
         )
     return decision, initial_state
+
+
+async def _restored_handoff(
+    mission: dict[str, Any], identity: PilotIdentity, sessions: BaseSessionService,
+) -> dict[str, Any] | None:
+    """Reconstruct the raw capability from owner state and its persisted expiry."""
+    receipt = await asyncio.to_thread(
+        db.handoff_receipt_for_mission, mission["mission_id"], identity.owner_ref,
+    )
+    if receipt is None:
+        return None
+    session = await sessions.get_session(
+        app_name=APP_NAME,
+        user_id=identity.user_id,
+        session_id=mission["session_id"],
+    )
+    state = session.state if session else {}
+    route = state.get("route") if isinstance(state.get("route"), dict) else {
+        "dep_id": mission["request"].get("departure", "?"),
+        "dst_name": mission["request"].get("destination", "?"),
+    }
+    flight_plan = state.get("flight_plan") if isinstance(state.get("flight_plan"), dict) else None
+    expiry_value = receipt["handoff_expires_at"]
+    expires_at = int(
+        expiry_value.timestamp()
+        if isinstance(expiry_value, datetime)
+        else datetime.fromisoformat(str(expiry_value).replace("Z", "+00:00")).timestamp()
+    )
+    token = signed_handoff_token(
+        mission_id=mission["mission_id"],
+        route=route,
+        flight_plan=flight_plan,
+        eta=str(receipt["eta"]),
+        expires_at=expires_at,
+    )
+    if token_sha256(token) != receipt["handoff_token_sha256"]:
+        raise HTTPException(status_code=409, detail="follower-room restoration is inconsistent")
+    return {
+        "room_id": mission["mission_id"],
+        "token": token,
+        "expires_at": expires_at,
+        "duplicate_suppressed": False,
+    }
 
 
 async def _briefing_stream(*, mission: dict[str, Any], identity: PilotIdentity,
@@ -453,7 +486,7 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
             "status": "ok",
             "service": "waterline",
             "boundary": "private-relay",
-            "outbound_mode": outbound_mode(),
+            "handoff_mode": "firestore",
         }
 
     @app.post("/v1/missions")
@@ -506,6 +539,9 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
         timeline = db.mission_timeline(mission_id, identity.owner_ref)
         if timeline is None:
             raise HTTPException(status_code=404, detail="mission not found")
+        timeline["handoff"] = await _restored_handoff(
+            timeline["mission"], identity, sessions,
+        )
         return timeline
 
     @app.post("/v1/missions/{mission_id}/resume")
@@ -565,35 +601,34 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 detail={"message": "briefing is not ready to attest", "reasons": readiness.reasons},
             )
 
-        target = configured_delivery_target()
+        capability_ref = f"flight-follower-room:{mission_id}"
         corrected: dict[str, Any] | None = None
         accepted: dict[str, Any] | None = None
         if mission["status"] == "awaiting_attestation":
             attestation_id = f"attestation-{uuid4().hex[:20]}"
             corrected = db.claim_pilot_attestation(
                 attestation_id, mission_id, identity.owner_ref,
-                target.address, req.eta, req.grace_min,
+                capability_ref, req.eta, req.grace_min,
             )
             if corrected is None:
                 raise HTTPException(status_code=409, detail="attestation already claimed")
         else:
             prior = db.matching_pilot_attestation(
-                mission_id, identity.owner_ref, target.address, req.eta, req.grace_min,
+                mission_id, identity.owner_ref, capability_ref, req.eta, req.grace_min,
             )
             if prior is None:
                 raise HTTPException(status_code=409, detail="recovery attestation does not match")
             attestation_id = prior["attestation_id"]
             db.record_mission_event(
                 mission_id, identity.owner_ref,
-                "dispatch_recovery_started", "owner_reconfirmed_attestation",
+                "handoff_recovery_started", "owner_reconfirmed_attestation",
                 {"attestation_id": attestation_id, "dispatch_authority": False},
             )
 
         state = dict(session.state)
         state.update({
             "eta": req.eta, "grace_min": req.grace_min,
-            "delivery_channel": target.channel,
-            "recipient_redacted": target.redacted,
+            "delivery_channel": "firestore",
             "pilot_attestation": {
                 "attestation_id": attestation_id, "mission_id": mission_id,
                 "actor_ref": identity.owner_ref, "confirmed": True,
@@ -617,10 +652,10 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
             if accepted is None:
                 raise HTTPException(status_code=409, detail="mission acceptance already claimed")
 
-        result = await dispatch_from_state(mission["session_id"], state)
-        if result.get("sent") is not True:
+        result = await open_follower_room_from_state(mission["session_id"], state)
+        if result.get("room_ready") is not True:
             db.record_mission_event(
-                mission_id, identity.owner_ref, "dispatch_failed", "notice_not_completed",
+                mission_id, identity.owner_ref, "handoff_failed", "room_not_ready",
                 {
                     "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
                     "receipt_id": result.get("receipt_id"),
@@ -631,7 +666,7 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                 raise HTTPException(
                     status_code=409,
                     detail={
-                        "message": "duplicate notice suppressed; operator reconciliation required",
+                        "message": "duplicate room claim could not be reconstructed",
                         "duplicate_suppressed": True,
                         "receipt_id": result.get("receipt_id"),
                         "mission_id": mission_id,
@@ -639,7 +674,7 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                         "at_most_once": True,
                     },
                 )
-            raise HTTPException(status_code=409, detail="dispatch was not completed")
+            raise HTTPException(status_code=409, detail="follower room was not created")
 
         receipt_id = result.get("receipt_id") or state.get("dispatch_receipt", {}).get("idempotency_key")
         receipt_evidence = {
@@ -648,8 +683,8 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
             "channel": result.get("channel"),
             "provider_reference": result.get("provider_reference"),
             "provider_status": result.get("provider_status"),
-            "recipient_redacted": result.get("recipient_redacted", target.redacted),
-            "status": result.get("status", "completed"),
+            "handoff_expires_at": result.get("handoff", {}).get("expires_at"),
+            "status": "room_ready",
             "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
             "at_most_once": True,
             "dispatch_authority": False,
@@ -657,12 +692,12 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
         if mission["status"] == "dispatched":
             dispatched = db.record_mission_event(
                 mission_id, identity.owner_ref,
-                "dispatch_replayed", "duplicate_suppressed", receipt_evidence,
+                "handoff_replayed", "duplicate_suppressed", receipt_evidence,
             )
         else:
             dispatched = db.transition_mission(
                 mission_id, identity.owner_ref, "accepted", "dispatched",
-                "dispatch_completed", "verified_notice_receipt", receipt_evidence,
+                "following_room_ready", "verified_room_receipt", receipt_evidence,
             )
         if dispatched is None:
             raise HTTPException(status_code=409, detail="dispatch state could not be committed")
@@ -684,7 +719,7 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
                     },
                 )
             except Exception:
-                # Dispatch is already committed. Advisory memory must fail toward
+                # The room receipt is already committed. Advisory memory must fail toward
                 # showing more hazards on the next flight, never undo or mask the
                 # verified consequence.
                 memory_event = db.record_mission_event(
@@ -704,51 +739,20 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
             "attestation_id": attestation_id, "receipt_id": receipt_id,
             "events": [event for event in (corrected, accepted, dispatched, memory_event) if event],
             "authority": authority.as_dict(),
+            "handoff": result["handoff"],
             "dispatch": {
                 "receipt_id": receipt_id,
                 "attestation_id": attestation_id,
                 "mission_id": mission_id,
                 "trace_id": mission["trace_id"],
-                "sent": True,
+                "room_ready": True,
                 "channel": result.get("channel"),
                 "provider_reference": result.get("provider_reference"),
                 "provider_status": result.get("provider_status"),
-                "recipient_redacted": result.get("recipient_redacted", target.redacted),
                 "duplicate_suppressed": bool(result.get("duplicate_suppressed")),
-                "status": result.get("status", "completed"),
+                "status": "room_ready",
                 "at_most_once": True,
             },
-        }
-
-    @app.post("/v1/providers/twilio/status")
-    async def record_twilio_status(req: ProviderStatusRequest, relay: Relay) -> dict[str, Any]:
-        path = "/v1/providers/twilio/status"
-        identity = _authenticated_identity("POST", path, req.model_dump_json().encode(), relay)
-        if identity.actor != "provider:twilio-status":
-            raise HTTPException(status_code=403, detail="provider callback identity is invalid")
-        receipt = db.update_dispatch_provider_status(
-            req.provider_reference, req.provider_status, req.error_code,
-        )
-        if receipt is None:
-            raise HTTPException(status_code=404, detail="provider receipt not found")
-        if receipt["updated"]:
-            db.record_mission_event(
-                receipt["mission_id"], receipt["owner_ref"],
-                "delivery_status_updated", f"provider_{receipt['provider_status']}",
-                {
-                    "receipt_id": receipt["idempotency_key"],
-                    "provider_reference": receipt["provider_reference"],
-                    "provider_status": receipt["provider_status"],
-                    "recipient_redacted": receipt["recipient_redacted"],
-                    "error_code": receipt["error_code"],
-                    "dispatch_authority": False,
-                },
-            )
-        return {
-            "receipt_id": receipt["idempotency_key"],
-            "provider_reference": receipt["provider_reference"],
-            "provider_status": receipt["provider_status"],
-            "updated": receipt["updated"],
         }
 
     return app

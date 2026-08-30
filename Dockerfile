@@ -30,7 +30,6 @@ COPY --chown=waterline:waterline agent/waterline ./waterline
 # tracked synthetic evidence. Local NAV CANADA captures are deliberately
 # excluded from deployment by both ignore contracts.
 COPY --chown=waterline:waterline data /app/data
-RUN mkdir -p /app/agent/data/outbox && chown -R waterline:waterline /app/agent/data
 
 USER waterline
 EXPOSE 8080

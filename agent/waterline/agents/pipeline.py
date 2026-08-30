@@ -7,7 +7,7 @@
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
     Verifier        refuses any claim not traceable to a source (the failure-tolerant gate)
-    DispatchAgent   creates one human-gated flight-following handoff after deterministic approval
+    FollowingAgent  opens one human-gated flight-follower room after deterministic approval
 
 The deterministic geometry lives entirely in the tools; the agents orchestrate,
 rank, compose, and — crucially — verify. The Verifier is the agent whose only job
@@ -24,7 +24,7 @@ from ..tools.geo_tools import (
     fetch_and_load_sources, filter_route_corridor, infer_destination_weather,
     recall_destination_memory,
 )
-from ..tools.dispatch_tools import file_and_notify
+from ..tools.following_tools import open_follower_room
 from ..verification import guard_dispatch
 
 
@@ -120,19 +120,19 @@ def build_pipeline() -> SequentialAgent:
         output_key="verification",
     )
 
-    dispatch = LlmAgent(
-        name="DispatchAgent", model=ranker, tools=[file_and_notify],
+    following = LlmAgent(
+        name="FollowingAgent", model=ranker, tools=[open_follower_room],
         before_agent_callback=guard_dispatch,
         instruction=(
             "The deterministic VerifierGate has authorized this step. You close the real-world loop. "
-            "Call file_and_notify to create exactly one marked synthetic flight-following handoff "
-            "to the server-configured responsible person. Never call it a flight-plan filing, SAR "
-            "notification, or operational dispatch. Report the bounded outcome in one sentence."),
-        output_key="dispatch_note",
+            "Call open_follower_room to create exactly one signed, one-hour Firestore room for a "
+            "responsible flight follower. Never call it a flight-plan filing, SAR notification, or "
+            "operational dispatch. Report the bounded outcome in one sentence."),
+        output_key="following_note",
     )
 
     return SequentialAgent(
         name="WaterlineBriefing",
         sub_agents=[route_agent, ingest_agent, corridor_agent, recall_agent, weather_agent,
-                    composer, verifier, dispatch],
+                    composer, verifier, following],
     )

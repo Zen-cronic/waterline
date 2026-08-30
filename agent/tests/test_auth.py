@@ -19,11 +19,11 @@ SECRET = "test-waterline-relay-secret-with-more-than-32-bytes"
 
 def test_attestation_eta_is_bounded_to_a_utc_time() -> None:
     assert service.AttestationRequest(
-        confirm_dispatch=True, eta="16:00Z", grace_min=60,
+        confirm_handoff=True, eta="16:00Z", grace_min=60,
     ).eta == "16:00Z"
     with pytest.raises(ValueError):
         service.AttestationRequest(
-            confirm_dispatch=True, eta="16:00Z\nINJECTED SMS TEXT", grace_min=60,
+            confirm_handoff=True, eta="16:00Z\nINVALID", grace_min=60,
         )
 
 
@@ -116,7 +116,7 @@ class _MissionStore:
         )
 
     def claim_pilot_attestation(self, attestation_id, mission_id, owner_ref,
-                                email, eta, grace_min):
+                                capability_ref, eta, grace_min):
         event = self.transition_mission(
             mission_id, owner_ref, "awaiting_attestation", "corrected",
             "pilot_attestation_recorded", "owner_attested",
@@ -125,18 +125,18 @@ class _MissionStore:
         if event:
             self.attestations[mission_id] = {
                 "attestation_id": attestation_id, "actor_ref": owner_ref,
-                "email": email.lower(), "eta": eta, "grace_min": grace_min,
+                "capability_ref": capability_ref, "eta": eta, "grace_min": grace_min,
             }
         return event
 
-    def matching_pilot_attestation(self, mission_id, owner_ref, email, eta, grace_min):
+    def matching_pilot_attestation(self, mission_id, owner_ref, capability_ref, eta, grace_min):
         attestation = self.attestations.get(mission_id)
         mission = self.missions.get(mission_id)
         if not attestation or not mission or mission["status"] not in {"accepted", "dispatched"}:
             return None
         if (
             attestation["actor_ref"] != owner_ref or
-            attestation["email"] != email.lower() or
+            attestation["capability_ref"] != capability_ref or
             attestation["eta"] != eta or
             attestation["grace_min"] != grace_min
         ):
@@ -151,6 +151,9 @@ class _MissionStore:
             "mission": mission,
             "events": [event for event in self.events if event["mission_id"] == mission_id],
         }
+
+    def handoff_receipt_for_mission(self, mission_id, owner_ref):
+        return None
 
     def write_notam_acknowledgements(
         self, owner_ref, mission_id, destination, destination_embedding, on_route,
@@ -175,7 +178,7 @@ def _install_store(monkeypatch: pytest.MonkeyPatch, store: _MissionStore) -> Non
         "create_mission", "owned_mission", "transition_mission",
         "record_mission_event", "claim_pilot_attestation",
         "matching_pilot_attestation", "mission_timeline",
-        "write_notam_acknowledgements",
+        "handoff_receipt_for_mission", "write_notam_acknowledgements",
     ):
         monkeypatch.setattr(service.db, name, getattr(store, name))
 
@@ -283,23 +286,24 @@ def test_transition_claim_is_atomic_with_its_event(monkeypatch) -> None:
     assert losing.rolled_back and len(losing.executions) == 1
 
 
-def test_attestation_claim_is_atomic_and_never_persists_contact_pii(monkeypatch) -> None:
+def test_attestation_claim_is_atomic_and_stores_only_a_capability_hash(monkeypatch) -> None:
     connection = _FakeConnection([{"mission_id": "mission-1", "trace_id": "trace-1"}])
     monkeypatch.setattr(db, "connect", lambda: connection)
+    capability_ref = "flight-follower-room:mission-1"
     event = db.claim_pilot_attestation(
-        "attestation-1", "mission-1", "pilot-owner", "OPS@Example.com", "16:00Z", 60,
+        "attestation-1", "mission-1", "pilot-owner", capability_ref, "16:00Z", 60,
     )
     assert event and event["to_status"] == "corrected"
     assert connection.committed and len(connection.executions) == 3
     insert_params = connection.executions[1][1]
-    assert "OPS@Example.com" not in insert_params
+    assert capability_ref not in insert_params
     assert len(insert_params[3]) == 64
-    assert "OPS@Example.com" not in str(connection.executions)
+    assert capability_ref not in str(connection.executions)
 
     replay = _FakeConnection([None])
     monkeypatch.setattr(db, "connect", lambda: replay)
     assert db.claim_pilot_attestation(
-        "attestation-2", "mission-1", "pilot-owner", "ops@example.com", "16:00Z", 60,
+        "attestation-2", "mission-1", "pilot-owner", capability_ref, "16:00Z", 60,
     ) is None
     assert replay.rolled_back and len(replay.executions) == 1
 
@@ -309,82 +313,11 @@ def test_attestation_claim_is_atomic_and_never_persists_contact_pii(monkeypatch)
     }])
     monkeypatch.setattr(db, "connect", lambda: lookup)
     match = db.matching_pilot_attestation(
-        "mission-1", "pilot-owner", "OPS@Example.com", "16:00Z", 60,
+        "mission-1", "pilot-owner", capability_ref, "16:00Z", 60,
     )
     assert match and match["attestation_id"] == "attestation-1"
-    assert "OPS@Example.com" not in str(lookup.executions)
+    assert capability_ref not in str(lookup.executions)
     assert len(lookup.executions[0][1][3]) == 64
-
-
-def test_provider_status_update_is_monotonic_and_contains_no_contact_pii(monkeypatch) -> None:
-    connection = _FakeConnection([{
-        "idempotency_key": "receipt-1", "provider_status": "sent",
-        "recipient_redacted": "+1••••••1234", "mission_id": "mission-1",
-        "owner_ref": "owner-1", "trace_id": "trace-1", "mission_status": "dispatched",
-    }])
-    monkeypatch.setattr(db, "connect", lambda: connection)
-    result = db.update_dispatch_provider_status("SM" + "a" * 32, "delivered")
-    assert result and result["provider_status"] == "delivered"
-    assert result["updated"] is True
-    assert connection.committed and len(connection.executions) == 2
-    assert "+15551231234" not in str(connection.executions)
-
-
-def test_provider_callback_requires_relay_bound_provider_identity(monkeypatch) -> None:
-    monkeypatch.setenv("WATERLINE_RELAY_SECRET", SECRET)
-    updates: list[tuple[str, str, str | None]] = []
-    events: list[dict] = []
-
-    def update(reference, status, error_code=None):
-        updates.append((reference, status, error_code))
-        return {
-            "idempotency_key": "receipt-provider-1",
-            "provider_reference": reference,
-            "provider_status": status,
-            "recipient_redacted": "+1••••••1234",
-            "mission_id": "mission-0123456789abcdefabcd",
-            "owner_ref": "pilot-owner",
-            "trace_id": "trace-provider-1",
-            "error_code": error_code,
-            "updated": True,
-        }
-
-    monkeypatch.setattr(service.db, "update_dispatch_provider_status", update)
-    monkeypatch.setattr(
-        service.db, "record_mission_event",
-        lambda mission_id, owner_ref, event_type, reason_code, evidence=None:
-            events.append({
-                "mission_id": mission_id, "owner_ref": owner_ref,
-                "event_type": event_type, "reason_code": reason_code,
-                "evidence": evidence,
-            }),
-    )
-    path = "/v1/providers/twilio/status"
-    payload = {
-        "provider_reference": "SM" + "a" * 32,
-        "provider_status": "delivered",
-        "error_code": None,
-    }
-    body = _body(payload)
-
-    async def exercise() -> None:
-        transport = httpx.ASGITransport(app=service.create_app(InMemorySessionService()))
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            denied = await client.post(
-                path, content=body, headers=_headers(path, body, actor="pilot:owner"),
-            )
-            assert denied.status_code == 403
-            accepted = await client.post(
-                path, content=body,
-                headers=_headers(path, body, actor="provider:twilio-status"),
-            )
-            assert accepted.status_code == 200
-            assert accepted.json()["provider_status"] == "delivered"
-
-    asyncio.run(exercise())
-    assert updates == [("SM" + "a" * 32, "delivered", None)]
-    assert events[0]["reason_code"] == "provider_delivered"
-    assert events[0]["evidence"]["dispatch_authority"] is False
 
 
 def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> None:
@@ -460,7 +393,7 @@ def test_api_owns_identity_and_emits_proposed_rejected_waiting(monkeypatch) -> N
             )
             assert attacker.status_code == 404
 
-            forged = {**payload, "session_id": "browser-choice", "responsible_email": "x@y.test"}
+            forged = {**payload, "session_id": "browser-choice", "recipient": "browser-choice"}
             forged_body = _body(forged)
             rejected = await client.post(
                 "/v1/missions", content=forged_body,
@@ -521,13 +454,13 @@ def test_visual_evidence_review_fails_closed_without_agent_or_dispatch_mutation(
 
     dispatches: list[dict] = []
 
-    async def must_not_dispatch(*args, **kwargs):
+    async def must_not_open_room(*args, **kwargs):
         dispatches.append({"args": args, "kwargs": kwargs})
-        raise AssertionError("review-required evidence must not dispatch")
+        raise AssertionError("review-required evidence must not open a room")
 
     monkeypatch.setattr(service, "evaluate_prepared_card", review_required)
     monkeypatch.setattr(service, "run_briefing", must_not_run)
-    monkeypatch.setattr(service, "dispatch_from_state", must_not_dispatch)
+    monkeypatch.setattr(service, "open_follower_room_from_state", must_not_open_room)
 
     async def exercise() -> None:
         transport = httpx.ASGITransport(app=service.create_app(sessions))
@@ -556,7 +489,7 @@ def test_visual_evidence_review_fails_closed_without_agent_or_dispatch_mutation(
 
             path = f"/v1/missions/{mission_id}/attest"
             attest_payload = {
-                "confirm_dispatch": True, "eta": "16:00Z", "grace_min": 60,
+                "confirm_handoff": True, "eta": "16:00Z", "grace_min": 60,
             }
             attest_body = _body(attest_payload)
             refused = await client.post(
@@ -715,19 +648,24 @@ def test_attestation_is_owner_bound_and_full_state_path_is_replay_safe(monkeypat
     )
     dispatches: list[dict] = []
 
-    async def dispatch(_session_id, state):
+    async def open_room(_session_id, state):
         state["dispatch_receipt"] = {"idempotency_key": "receipt-test-1"}
         dispatches.append(state)
         return {
-            "sent": True, "channel": "test", "status": "completed",
-            "receipt_id": "receipt-test-1", "recipient_redacted": "operator-owned email",
+            "room_ready": True, "channel": "firestore", "status": "room_ready",
+            "provider_reference": mission_id, "provider_status": "room_ready",
+            "receipt_id": "receipt-test-1",
             "duplicate_suppressed": len(dispatches) > 1,
+            "handoff": {
+                "room_id": mission_id, "token": "signed.token",
+                "expires_at": 1788100000, "duplicate_suppressed": len(dispatches) > 1,
+            },
         }
 
-    monkeypatch.setattr(service, "dispatch_from_state", dispatch)
+    monkeypatch.setattr(service, "open_follower_room_from_state", open_room)
     path = f"/v1/missions/{mission_id}/attest"
     payload = {
-        "confirm_dispatch": True, "eta": "16:00Z", "grace_min": 60,
+        "confirm_handoff": True, "eta": "16:00Z", "grace_min": 60,
     }
     body = _body(payload)
 
@@ -755,17 +693,17 @@ def test_attestation_is_owner_bound_and_full_state_path_is_replay_safe(monkeypat
                 "attestation_id": result["attestation_id"],
                 "mission_id": mission_id,
                 "trace_id": trace_id,
-                "sent": True,
-                "channel": "test",
-                "provider_reference": None,
-                "provider_status": None,
-                "recipient_redacted": "operator-owned email",
+                "room_ready": True,
+                "channel": "firestore",
+                "provider_reference": mission_id,
+                "provider_status": "room_ready",
                 "duplicate_suppressed": False,
-                "status": "completed",
+                "status": "room_ready",
                 "at_most_once": True,
             }
+            assert result["handoff"]["token"] == "signed.token"
             assert [event["event_type"] for event in result["events"]] == [
-                "pilot_attestation_recorded", "proposal_accepted", "dispatch_completed",
+                "pilot_attestation_recorded", "proposal_accepted", "following_room_ready",
                 "flight_memory_written",
             ]
             assert store.memories[0]["written"] == 1
@@ -818,7 +756,7 @@ def test_accepted_crash_recovery_reconfirms_attestation_without_duplicate_send(
     )
     store.claim_pilot_attestation(
         "attestation-recovery", mission_id, owner.owner_ref,
-        "operator-owned@example.test", "16:00Z", 60,
+        f"flight-follower-room:{mission_id}", "16:00Z", 60,
     )
     store.transition_mission(
         mission_id, owner.owner_ref, "corrected", "accepted",
@@ -829,12 +767,12 @@ def test_accepted_crash_recovery_reconfirms_attestation_without_duplicate_send(
     async def duplicate_claim(_session_id, _state):
         nonlocal dispatch_attempts
         dispatch_attempts += 1
-        return {"sent": False, "duplicate_suppressed": True}
+        return {"room_ready": False, "duplicate_suppressed": True}
 
-    monkeypatch.setattr(service, "dispatch_from_state", duplicate_claim)
+    monkeypatch.setattr(service, "open_follower_room_from_state", duplicate_claim)
     path = f"/v1/missions/{mission_id}/attest"
     payload = {
-        "confirm_dispatch": True, "eta": "16:00Z", "grace_min": 60,
+        "confirm_handoff": True, "eta": "16:00Z", "grace_min": 60,
     }
     body = _body(payload)
 
@@ -848,7 +786,7 @@ def test_accepted_crash_recovery_reconfirms_attestation_without_duplicate_send(
             response = await client.post(path, content=body, headers=_headers(path, body))
             assert response.status_code == 409
             assert response.json()["detail"] == {
-                "message": "duplicate notice suppressed; operator reconciliation required",
+                "message": "duplicate room claim could not be reconstructed",
                 "duplicate_suppressed": True,
                 "receipt_id": None,
                 "mission_id": mission_id,
@@ -857,8 +795,8 @@ def test_accepted_crash_recovery_reconfirms_attestation_without_duplicate_send(
             }
             assert dispatch_attempts == 1
             assert store.missions[mission_id]["status"] == "accepted"
-            assert any(event["event_type"] == "dispatch_recovery_started" for event in store.events)
-            assert any(event["event_type"] == "dispatch_failed" for event in store.events)
+            assert any(event["event_type"] == "handoff_recovery_started" for event in store.events)
+            assert any(event["event_type"] == "handoff_failed" for event in store.events)
 
             mismatch = {**payload, "eta": "17:00Z"}
             mismatch_body = _body(mismatch)
