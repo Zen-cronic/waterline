@@ -160,7 +160,8 @@ def test_recall_reduces_79_to_23_and_changed_source_resurfaces(monkeypatch):
         "idx": 0, "pk": "notam-0", "reason": "digest_or_end_valid_mismatch",
     }]
     assert state["corridor"]["gemini_reads"] == 14
-    assert len(state["corridor"]["surfaced_hazards"]) == 23
+    assert "surfaced_hazards" not in state["corridor"]
+    assert len(state["corridor"]["hazards"]) == 14
     assert state["corridor"]["hazards"][0]["idx"] == 0
 
 

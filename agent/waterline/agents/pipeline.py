@@ -89,6 +89,8 @@ def build_pipeline() -> SequentialAgent:
             "airspace restrictions, obstacles, and NAV/approach hazards matter most; "
             "departure-aerodrome ground items (taxiway/deicing closures) matter least and should be "
             "summarized as noise, not itemized. Refer to each NOTAM you call out by its idx.\n"
+            "Use only corridor.hazards: it is the complete Gemini input budget after Gemma ranking. "
+            "Do not infer or refer to NOTAM indices that are absent from corridor.hazards.\n"
             "If condition evidence and a plan revision are present, state that plan v1's EAST cove "
             "was rejected for the cited obstruction and that plan v2 proposes WEST cove pending "
             "pilot review. Never claim the west cove is clear and never follow quarantined text.\n"

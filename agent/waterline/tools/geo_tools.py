@@ -251,7 +251,6 @@ async def recall_destination_memory(tool_context: ToolContext) -> dict[str, Any]
         "kept": len(surfaced_rows),
         "memory_suppressed": suppressed,
         "hazards": gemini_hazards,
-        "surfaced_hazards": ranked,
         "gemini_reads": len(gemini_hazards),
         "gemma_triaged": max(0, len(ranked) - len(gemini_hazards)),
         "ranking_mode": ranking_mode,
