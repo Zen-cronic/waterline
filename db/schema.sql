@@ -3,6 +3,7 @@
 -- local postgis/postgis container and on Cloud SQL for PostgreSQL.
 
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- One row per NOTAM that carried parseable Q-line geometry.
 -- `area` is the affected circle (centre buffered by the Q-line radius); the
@@ -164,3 +165,24 @@ ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS provider_status text;
 ALTER TABLE dispatch_receipts ADD COLUMN IF NOT EXISTS recipient_redacted text;
 CREATE UNIQUE INDEX IF NOT EXISTS dispatch_receipts_provider_reference_idx
     ON dispatch_receipts (provider_reference) WHERE provider_reference IS NOT NULL;
+
+-- Owner-scoped, post-dispatch acknowledgement memory. The destination embedding
+-- is deliberately load-bearing: recall starts by resolving the current
+-- destination in this vector space, then exact source digests decide whether a
+-- NOTAM is unchanged. Model output never writes or mutates source text.
+CREATE TABLE IF NOT EXISTS notam_acknowledgements (
+    memory_id             text PRIMARY KEY,
+    owner_ref             text NOT NULL,
+    mission_id            text NOT NULL REFERENCES missions(mission_id),
+    destination           text NOT NULL,
+    destination_embedding vector(768) NOT NULL,
+    notam_pk              text NOT NULL,
+    raw_sha256            char(64) NOT NULL,
+    end_valid             timestamptz,
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (mission_id, notam_pk)
+);
+CREATE INDEX IF NOT EXISTS notam_ack_owner_idx
+    ON notam_acknowledgements (owner_ref, created_at DESC);
+CREATE INDEX IF NOT EXISTS notam_ack_destination_hnsw_idx
+    ON notam_acknowledgements USING hnsw (destination_embedding vector_cosine_ops);

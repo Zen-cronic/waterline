@@ -73,6 +73,9 @@ def test_preview_deploy_contract_is_commit_bound_private_and_outbox_only() -> No
     assert "serviceAccount:${WL_WEB_SA}" in script
     assert "--role=roles/run.invoker" in script
     assert "WATERLINE_MODEL_LOCATION=global" in script
+    assert "WATERLINE_EMBEDDING_MODEL=gemini-embedding-001" in script
+    assert "WATERLINE_GEMMA_RANKER_ENABLED=true" in script
+    assert "google/gemma-4-26b-a4b-it-maas" in script
     assert "WATERLINE_OUTBOUND_MODE=outbox" in script
     assert "WATERLINE_SMTP_" not in script
 
@@ -126,6 +129,9 @@ def test_database_packages_the_durable_mission_state_machine() -> None:
     assert "ON ALL TABLES IN SCHEMA public" not in cloud_setup
     assert "ON ALL SEQUENCES IN SCHEMA public" not in cloud_setup
     assert "dispatch_receipts" in cloud_setup
+    assert "CREATE EXTENSION IF NOT EXISTS vector" in schema
+    assert "destination_embedding vector(768)" in schema
+    assert "notam_acknowledgements" in cloud_setup
     assert "--set=ON_ERROR_STOP=on" in script
 
 

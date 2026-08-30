@@ -17,7 +17,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLE
   mission_events,
   pilot_attestations,
   ingests,
-  dispatch_receipts
+  dispatch_receipts,
+  notam_acknowledgements
 TO :"app_user";
 GRANT USAGE, SELECT, UPDATE ON SEQUENCE
   mission_events_sequence_seq,
@@ -29,11 +30,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO :"app_user";
 
 SELECT postgis_full_version();
+SELECT extname, extversion
+FROM pg_extension
+WHERE extname IN ('postgis', 'vector')
+ORDER BY extname;
 SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_name IN (
     'notams', 'stations', 'missions', 'mission_events', 'pilot_attestations',
-    'ingests', 'dispatch_receipts'
+    'ingests', 'dispatch_receipts', 'notam_acknowledgements'
   )
 ORDER BY table_name;

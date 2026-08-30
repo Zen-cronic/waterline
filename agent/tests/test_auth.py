@@ -61,6 +61,7 @@ class _MissionStore:
         self.missions: dict[str, dict[str, Any]] = {}
         self.events: list[dict[str, Any]] = []
         self.attestations: dict[str, dict[str, Any]] = {}
+        self.memories: list[dict[str, Any]] = []
         self._counter = 0
 
     def _event(self, mission: dict[str, Any], current: str | None, target: str,
@@ -151,12 +152,30 @@ class _MissionStore:
             "events": [event for event in self.events if event["mission_id"] == mission_id],
         }
 
+    def write_notam_acknowledgements(
+        self, owner_ref, mission_id, destination, destination_embedding, on_route,
+    ):
+        mission = self.missions.get(mission_id)
+        if (
+            not mission or mission["owner_ref"] != owner_ref
+            or mission["status"] != "dispatched" or mission_id not in self.attestations
+        ):
+            return None
+        receipt = {
+            "mission_id": mission_id, "owner_ref": owner_ref, "kind": "notam_ack",
+            "written": len(on_route), "considered": len(on_route),
+            "destination": destination, "dimensions": len(destination_embedding),
+        }
+        self.memories.append(receipt)
+        return receipt
+
 
 def _install_store(monkeypatch: pytest.MonkeyPatch, store: _MissionStore) -> None:
     for name in (
         "create_mission", "owned_mission", "transition_mission",
         "record_mission_event", "claim_pilot_attestation",
         "matching_pilot_attestation", "mission_timeline",
+        "write_notam_acknowledgements",
     ):
         monkeypatch.setattr(service.db, name, getattr(store, name))
 
@@ -180,6 +199,8 @@ def _approved_state(initial: dict) -> dict:
             "sources": [{"station_id": "CYXR", "metar_raw": "CYXR ..."}],
         },
         "corridor": {"hazards": [{"idx": 0}]},
+        "route": {"dst_name": "Lady Evelyn Lake"},
+        "_route_notams": [{"idx": 0, "pk": "notam-0", "raw": "RAW 0", "end_valid": None}],
     }
 
 
@@ -668,6 +689,7 @@ def test_attestation_is_owner_bound_and_full_state_path_is_replay_safe(monkeypat
     sessions = InMemorySessionService()
     store = _MissionStore()
     _install_store(monkeypatch, store)
+    monkeypatch.setattr(service, "embed_destination", lambda *_args, **_kwargs: [0.1] * 768)
     owner = verify_relay_request(
         secret=SECRET, method="POST", path="/v1/missions", body=b"{}",
         actor="pilot:owner", timestamp="1787774400",
@@ -742,9 +764,11 @@ def test_attestation_is_owner_bound_and_full_state_path_is_replay_safe(monkeypat
                 "status": "completed",
                 "at_most_once": True,
             }
-            assert [event["to_status"] for event in result["events"]] == [
-                "corrected", "accepted", "dispatched",
+            assert [event["event_type"] for event in result["events"]] == [
+                "pilot_attestation_recorded", "proposal_accepted", "dispatch_completed",
+                "flight_memory_written",
             ]
+            assert store.memories[0]["written"] == 1
             assert dispatches[0]["pilot_attestation"]["actor_ref"] == owner.owner_ref
             assert store.missions[mission_id]["status"] == "dispatched"
 

@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgis/postgis:16-3.4
+    build:
+      context: ./db
     environment:
       POSTGRES_USER: waterline
       POSTGRES_PASSWORD: waterline

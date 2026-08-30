@@ -6,6 +6,7 @@ an owner-bound, append-only mission lifecycle in Cloud SQL.
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 import json
 import re
@@ -32,6 +33,7 @@ from .condition_card import (
 )
 from .config import APP_NAME
 from .dispatch import configured_delivery_target, outbound_mode
+from .embed import EMBEDDING_MODEL, embed_destination
 from .run import make_session_service, run_briefing
 from .tools.dispatch_tools import dispatch_from_state
 from .verification import assess_briefing_readiness, assess_dispatch_readiness
@@ -181,6 +183,32 @@ def _bounded_briefing_evidence(
         "dispatch_gate": dispatch_gate,
         "dispatch_authority": False,
     }
+
+
+async def _write_terminal_notam_memory(
+    mission: dict[str, Any], identity: PilotIdentity, state: dict[str, Any],
+) -> dict[str, Any]:
+    """Write acknowledgement memory only after terminal dispatch is committed."""
+    route = state.get("route")
+    on_route = state.get("_route_notams")
+    if not isinstance(route, dict) or not isinstance(route.get("dst_name"), str):
+        raise ValueError("resolved destination is unavailable for memory write")
+    if not isinstance(on_route, list):
+        raise ValueError("on-route source rows are unavailable for memory write")
+    embedding = await asyncio.to_thread(
+        embed_destination, route["dst_name"], task_type="RETRIEVAL_DOCUMENT",
+    )
+    result = await asyncio.to_thread(
+        db.write_notam_acknowledgements,
+        identity.owner_ref,
+        mission["mission_id"],
+        route["dst_name"],
+        embedding,
+        on_route,
+    )
+    if result is None:
+        raise ValueError("terminal owner-bound memory precondition failed")
+    return result
 
 
 async def _prepare_visual_evidence(
@@ -639,11 +667,42 @@ def create_app(session_service: BaseSessionService | None = None) -> FastAPI:
         if dispatched is None:
             raise HTTPException(status_code=409, detail="dispatch state could not be committed")
 
+        memory_event: dict[str, Any] | None = None
+        if mission["status"] != "dispatched":
+            try:
+                memory = await _write_terminal_notam_memory(mission, identity, state)
+                memory_event = db.record_mission_event(
+                    mission_id, identity.owner_ref,
+                    "flight_memory_written", "terminal_attested_notam_ack",
+                    {
+                        "kind": "notam_ack",
+                        "written": memory["written"],
+                        "considered": memory["considered"],
+                        "embedding_model": EMBEDDING_MODEL,
+                        "owner_scoped": True,
+                        "dispatch_authority": False,
+                    },
+                )
+            except Exception:
+                # Dispatch is already committed. Advisory memory must fail toward
+                # showing more hazards on the next flight, never undo or mask the
+                # verified consequence.
+                memory_event = db.record_mission_event(
+                    mission_id, identity.owner_ref,
+                    "flight_memory_failed", "memory_unavailable_show_all_next_time",
+                    {
+                        "kind": "notam_ack",
+                        "written": 0,
+                        "owner_scoped": True,
+                        "dispatch_authority": False,
+                    },
+                )
+
         return {
             "mission_id": mission_id, "owner_ref": identity.owner_ref,
             "trace_id": mission["trace_id"], "status": "dispatched",
             "attestation_id": attestation_id, "receipt_id": receipt_id,
-            "events": [event for event in (corrected, accepted, dispatched) if event],
+            "events": [event for event in (corrected, accepted, dispatched, memory_event) if event],
             "authority": authority.as_dict(),
             "dispatch": {
                 "receipt_id": receipt_id,

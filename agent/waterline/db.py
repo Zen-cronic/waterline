@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import hashlib
 import json
+import math
 from typing import Any, Optional
 from uuid import uuid4
 
@@ -21,6 +22,7 @@ from .state_machine import require_transition
 
 DEFAULT_URL = "postgresql://waterline:waterline@localhost:5455/waterline"
 NM_TO_M = 1852.0
+EMBEDDING_DIMENSIONS = 768
 
 
 def dsn() -> str:
@@ -29,6 +31,103 @@ def dsn() -> str:
 
 def connect() -> psycopg.Connection:
     return psycopg.connect(dsn(), row_factory=dict_row)
+
+
+def _vector_literal(values: list[float]) -> str:
+    """Return a pgvector literal only after enforcing the schema contract."""
+    if len(values) != EMBEDDING_DIMENSIONS:
+        raise ValueError(
+            f"destination embedding must have {EMBEDDING_DIMENSIONS} dimensions"
+        )
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("destination embedding contains a non-finite value")
+    return "[" + ",".join(format(value, ".12g") for value in values) + "]"
+
+
+def write_notam_acknowledgements(
+    owner_ref: str,
+    mission_id: str,
+    destination: str,
+    destination_embedding: list[float],
+    on_route: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Persist one exact-source acknowledgement per NOTAM after dispatch.
+
+    The owner and terminal mission state are checked in the same transaction as
+    the writes. Replays are idempotent through the mission/NOTAM unique key.
+    """
+    vector = _vector_literal(destination_embedding)
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT m.mission_id
+            FROM missions m
+            JOIN pilot_attestations p ON p.mission_id = m.mission_id
+            WHERE m.mission_id = %s AND m.owner_ref = %s AND m.status = 'dispatched'
+            FOR UPDATE OF m
+            """,
+            (mission_id, owner_ref),
+        )
+        if cur.fetchone() is None:
+            conn.rollback()
+            return None
+        written = 0
+        for item in on_route:
+            raw = item.get("raw")
+            notam_pk = item.get("pk")
+            if not isinstance(raw, str) or not isinstance(notam_pk, str):
+                continue
+            cur.execute(
+                """
+                INSERT INTO notam_acknowledgements (
+                    memory_id, owner_ref, mission_id, destination,
+                    destination_embedding, notam_pk, raw_sha256, end_valid
+                ) VALUES (%s, %s, %s, %s, %s::vector, %s, %s, %s)
+                ON CONFLICT (mission_id, notam_pk) DO NOTHING
+                RETURNING memory_id
+                """,
+                (
+                    f"memory-{uuid4().hex[:20]}", owner_ref, mission_id, destination,
+                    vector, notam_pk, hashlib.sha256(raw.encode()).hexdigest(),
+                    item.get("end_valid"),
+                ),
+            )
+            if cur.fetchone() is not None:
+                written += 1
+        conn.commit()
+    return {
+        "mission_id": mission_id,
+        "owner_ref": owner_ref,
+        "kind": "notam_ack",
+        "written": written,
+        "considered": len(on_route),
+    }
+
+
+def recall_notam_acknowledgements(
+    owner_ref: str,
+    destination_embedding: list[float],
+    *,
+    similarity_floor: float = 0.82,
+) -> list[dict[str, Any]]:
+    """Return semantically nearby acknowledgements for exactly one owner."""
+    vector = _vector_literal(destination_embedding)
+    with connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT memory_id, mission_id, destination, notam_pk, raw_sha256,
+                   end_valid, created_at,
+                   1 - (destination_embedding <=> %s::vector) AS similarity
+            FROM notam_acknowledgements
+            WHERE owner_ref = %s
+              AND 1 - (destination_embedding <=> %s::vector) >= %s
+            ORDER BY destination_embedding <=> %s::vector, created_at DESC
+            LIMIT 4000
+            """,
+            (vector, owner_ref, vector, similarity_floor, vector),
+        )
+        rows = cur.fetchall()
+    return [dict(row) for row in rows]
 
 
 def _record_ingest(cur: Any, site: str, product: str, records: int, parsed: int,

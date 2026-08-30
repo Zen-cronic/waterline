@@ -1,8 +1,9 @@
-"""The Waterline briefing roster — seven named agents, strict separation of concerns.
+"""The Waterline briefing roster — eight named agents, strict separation of concerns.
 
     RouteAgent      resolves the request to coordinates (tool: resolve_route)
     IngestAgent     loads current NOTAM + METAR inputs (tool: fetch_and_load_sources)
     CorridorAgent   filters the FIR set to the route   (tool: filter_route_corridor)
+    RecallAgent     recalls owner-scoped destination memory and pre-ranks hazards
     WeatherAgent    infers the station-less read       (tool: infer_destination_weather)
     BriefingComposer writes the briefing, ranking hazards for a low float flight
     Verifier        refuses any claim not traceable to a source (the failure-tolerant gate)
@@ -21,6 +22,7 @@ from ..config import MODEL_CHAIN, RANKER_MODEL_CHAIN
 from ..tools.route_tools import resolve_route
 from ..tools.geo_tools import (
     fetch_and_load_sources, filter_route_corridor, infer_destination_weather,
+    recall_destination_memory,
 )
 from ..tools.dispatch_tools import file_and_notify
 from ..verification import guard_dispatch
@@ -54,6 +56,17 @@ def build_pipeline() -> SequentialAgent:
             "the route corridor. Report the reduction as 'N total -> K on route (P% dropped)' in one "
             "sentence. Do not interpret the NOTAMs yet."),
         output_key="corridor_note",
+    )
+    recall_agent = LlmAgent(
+        name="RecallAgent", model=ranker, tools=[recall_destination_memory],
+        instruction=(
+            "Call recall_destination_memory exactly once. It performs owner-scoped semantic "
+            "destination recall, suppresses only unchanged acknowledged NOTAMs, resurfaces every "
+            "changed source, and advisory-ranks the visible set with Gemma before Gemini. Report "
+            "the on_route -> surfaced reduction and the Gemini-read count in two short sentences. "
+            "Do not invent, decode, or restate a suppressed hazard."
+        ),
+        output_key="recall_note",
     )
     weather_agent = LlmAgent(
         name="WeatherAgent", model=main, tools=[infer_destination_weather],
@@ -118,6 +131,6 @@ def build_pipeline() -> SequentialAgent:
 
     return SequentialAgent(
         name="WaterlineBriefing",
-        sub_agents=[route_agent, ingest_agent, corridor_agent, weather_agent,
+        sub_agents=[route_agent, ingest_agent, corridor_agent, recall_agent, weather_agent,
                     composer, verifier, dispatch],
     )

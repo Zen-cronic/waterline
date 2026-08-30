@@ -56,7 +56,7 @@ gcloud run deploy waterline-agent \
   --ingress=all \
   --no-allow-unauthenticated \
   --set-cloudsql-instances="$sql_connection" \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WL_PROJECT_ID},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini,WATERLINE_OUTBOUND_MODE=outbox" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${WL_PROJECT_ID},WATERLINE_MODEL_LOCATION=global,WATERLINE_EVIDENCE_MODE=gemini,WATERLINE_EMBEDDING_MODEL=gemini-embedding-001,WATERLINE_GEMMA_RANKER_ENABLED=true,WATERLINE_GEMMA_MODEL=google/gemma-4-26b-a4b-it-maas,WATERLINE_GEMMA_LOCATION=global,WATERLINE_OUTBOUND_MODE=outbox" \
   --set-secrets="DATABASE_URL=waterline-database-url:latest,WATERLINE_SESSION_DB=waterline-session-db:latest,WATERLINE_RELAY_SECRET=waterline-relay-secret:latest" \
   --port=8080 \
   --cpu=1 \
