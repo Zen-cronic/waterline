@@ -170,6 +170,9 @@ test("judge-facing surface names every required proof state", () => {
   assert.match(page, /briefingGate\?\.approved === true/);
   assert.match(page, /Interrupted run retained/);
   assert.match(page, /DETERMINISTIC CONSEQUENCE/);
+  assert.match(page, /MarkdownBrief/);
+  assert.match(page, /Switch to.*theme/);
+  assert.doesNotMatch(page, /HACKATHON DEMO · PILOT REVIEW REQUIRED/);
   assert.match(page, /window\.setInterval\(poll, 2000\)/);
   assert.match(proofRail, /Replay same command · prove no second SMS/);
 });

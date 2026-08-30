@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { MapView, type MapHandle } from "@/components/MapView";
+import { MarkdownBrief } from "@/components/MarkdownBrief";
 import { ProofRail } from "@/components/ProofRail";
 import {
   deriveRestoredMissionView,
@@ -47,6 +48,21 @@ export default function Page() {
   const [quarantine, setQuarantine] = useState<QuarantineReceipt | null>(null);
   const [planRevision, setPlanRevision] = useState<PlanRevision | null>(null);
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("waterline:theme");
+    const next = saved === "light" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("waterline:theme", next);
+  }
 
   function appendEvent(event?: StateEvent) {
     if (!event?.event_id) return;
@@ -296,7 +312,14 @@ export default function Page() {
     <div className="app">
       <div className="left">
         <div className="brand">
-          <h1><span>Waterline</span></h1>
+          <div className="brand-row">
+            <h1><span>Waterline</span></h1>
+            <button className="theme-toggle" type="button" onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+              aria-pressed={theme === "light"}>
+              {theme === "dark" ? "LIGHT" : "DARK"}
+            </button>
+          </div>
           <p>A live, provenance-first briefing for curated water destinations with no station.</p>
         </div>
         <div className="form">
@@ -361,7 +384,7 @@ export default function Page() {
               <span>{s.detail}<span className="badge">{s.kind}</span></span>
             </div>
           ))}
-          {brief && <><div className="section-h">Briefing</div><div className="brief">{brief}</div></>}
+          {brief && <><div className="section-h">Briefing</div><MarkdownBrief>{brief}</MarkdownBrief></>}
           {verdict && <div className={`verdict ${verdict.ok ? "ok" : "no"}`}>{verdict.text}</div>}
           {canAttest && (
             <div className="attestation">
@@ -390,7 +413,7 @@ export default function Page() {
         </div>
       </div>
       <div className="right">
-        <MapView ref={mapRef} />
+        <MapView ref={mapRef} theme={theme} />
         {planRevision && (
           <div className={`map-consequence ${mission?.status === "dispatched" || mission?.status === "accepted" ? "accepted" : ""}`} aria-label="Current landing plan consequence">
             <small>DETERMINISTIC CONSEQUENCE</small>
@@ -405,7 +428,6 @@ export default function Page() {
           <div className="k"><span className="dot" style={{ background: "#ff4f91" }} />changed source resurfaced</div>
           <div className="k"><span className="dot" style={{ background: "#57c98a" }} />source station</div>
         </div>
-        <div className="footer">HACKATHON DEMO · PILOT REVIEW REQUIRED</div>
       </div>
       <ProofRail
         mission={mission}

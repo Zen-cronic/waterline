@@ -6,6 +6,8 @@ const mapView = readFileSync(new URL("../src/components/MapView.tsx", import.met
 
 test("map uses the keyless OpenFreeMap style and never requests CARTO tiles", () => {
   assert.match(mapView, /https:\/\/tiles\.openfreemap\.org\/styles\/dark/);
+  assert.match(mapView, /https:\/\/tiles\.openfreemap\.org\/styles\/positron/);
+  assert.match(mapView, /retained\.current\.values/);
   assert.doesNotMatch(mapView, /carto(?:cdn)?\.com/i);
   assert.doesNotMatch(mapView, /CARTO_API_KEY/);
   assert.match(mapView, /styleimagemissing/);
