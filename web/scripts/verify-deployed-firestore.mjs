@@ -37,6 +37,11 @@ function capabilitySummary(inviteUrl) {
   return { token, payload: JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) };
 }
 
+function safeError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/\/handoff\/[^\s"']+/g, "/handoff/[redacted]");
+}
+
 async function firestoreJson(accessToken, suffix) {
   const response = await fetch(
     `https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/${suffix}`,
@@ -112,7 +117,7 @@ try {
   assert.equal(firstCapability.payload.mission_id, missionId);
   assert.ok(firstCapability.payload.expires_at > Math.floor(Date.now() / 1000));
 
-  await follower.goto(invitation, { waitUntil: "networkidle", timeout: 60_000 });
+  await follower.goto(invitation, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await follower.getByText("LIVE VIA FIRESTORE", { exact: true }).waitFor({ timeout: 30_000 });
   acknowledgementMs = await waitUnderTwoSeconds(
     () => follower.getByRole("button", { name: "Acknowledge flight following" }).click(),
@@ -140,7 +145,7 @@ try {
     "Pilot-to-follower message propagation",
   );
 
-  await follower.reload({ waitUntil: "networkidle", timeout: 60_000 });
+  await follower.reload({ waitUntil: "domcontentloaded", timeout: 60_000 });
   await follower.getByText("LIVE VIA FIRESTORE", { exact: true }).waitFor({ timeout: 30_000 });
   await follower.getByText(followerMessage, { exact: true }).waitFor();
   await follower.getByText(pilotMessage, { exact: true }).waitFor();
@@ -193,17 +198,17 @@ const report = {
   region,
   mission_id: missionId,
   receipt_id: receiptId,
-  invitation_sha256_not_recorded: true,
+  invitation_recorded: false,
   acknowledgement_ms: acknowledgementMs,
   follower_to_pilot_ms: followerToPilotMs,
   pilot_to_follower_ms: pilotToFollowerMs,
   replay_identical: proofError ? false : true,
   firestore: firestoreEvidence,
   browser_errors: browserErrors,
-  error: proofError instanceof Error ? proofError.message : proofError ? String(proofError) : null,
+  error: proofError ? safeError(proofError) : null,
   verified_at: new Date().toISOString(),
 };
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 console.log(JSON.stringify(report, null, 2));
-if (proofError) throw proofError;
+if (proofError) throw new Error(safeError(proofError));
 assert.deepEqual(browserErrors, [], `Browser errors: ${browserErrors.join(" | ")}`);
