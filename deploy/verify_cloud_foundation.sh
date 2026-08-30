@@ -14,12 +14,15 @@ required_apis=(
   sqladmin.googleapis.com
   secretmanager.googleapis.com
   iam.googleapis.com
+  firestore.googleapis.com
+  identitytoolkit.googleapis.com
+  firebaserules.googleapis.com
 )
 enabled_apis="$(gcloud services list --enabled --project="$WL_PROJECT_ID" --format='value(config.name)')"
 for api in "${required_apis[@]}"; do
   grep -qx "$api" <<< "$enabled_apis"
 done
-printf 'Required APIs: %s/7 enabled\n' "${#required_apis[@]}"
+printf 'Required APIs: %s/%s enabled\n' "${#required_apis[@]}" "${#required_apis[@]}"
 
 gcloud artifacts repositories describe waterline \
   --project="$WL_PROJECT_ID" \
@@ -61,6 +64,19 @@ for secret_name in waterline-database-url waterline-session-db; do
     --filter="bindings.members:${WL_RUNTIME_SA}" \
     --format='table(bindings.role)'
 done
+
+for service_account in "$WL_RUNTIME_SA" "waterline-web@${WL_PROJECT_ID}.iam.gserviceaccount.com"; do
+  gcloud secrets get-iam-policy waterline-handoff-secret \
+    --project="$WL_PROJECT_ID" \
+    --flatten='bindings[].members' \
+    --filter="bindings.members:${service_account}" \
+    --format='table(bindings.role,bindings.members)'
+done
+
+gcloud projects get-iam-policy "$WL_PROJECT_ID" \
+  --flatten='bindings[].members' \
+  --filter="bindings.role:roles/datastore.user AND bindings.members:waterline-web@${WL_PROJECT_ID}.iam.gserviceaccount.com" \
+  --format='table(bindings.role,bindings.members)'
 
 gcloud secrets versions list waterline-relay-secret \
   --project="$WL_PROJECT_ID" \

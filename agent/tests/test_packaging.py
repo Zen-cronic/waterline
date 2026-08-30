@@ -61,7 +61,7 @@ def test_architecture_proof_is_truthful_and_submission_ready() -> None:
     assert "## 5. Preview deployment acceptance" in testing
 
 
-def test_preview_deploy_contract_is_commit_bound_private_and_outbox_only() -> None:
+def test_preview_deploy_contract_is_commit_bound_private_and_firestore_only() -> None:
     script = (ROOT / "deploy" / "deploy_preview.sh").read_text()
 
     assert "git rev-parse --short=12 HEAD" in script
@@ -76,8 +76,10 @@ def test_preview_deploy_contract_is_commit_bound_private_and_outbox_only() -> No
     assert "WATERLINE_EMBEDDING_MODEL=gemini-embedding-001" in script
     assert "WATERLINE_GEMMA_RANKER_ENABLED=true" in script
     assert "google/gemma-4-26b-a4b-it-maas" in script
-    assert "WATERLINE_OUTBOUND_MODE=outbox" in script
-    assert "WATERLINE_SMTP_" not in script
+    assert "FIREBASE_PROJECT_ID" in script
+    assert "WATERLINE_HANDOFF_SECRET=waterline-handoff-secret:latest" in script
+    assert "deploy_firestore_rules.mjs" in script
+    assert "fields ttls update expiresAt" in script
 
 
 def test_cloud_sql_session_secret_uses_an_async_adk_driver() -> None:
