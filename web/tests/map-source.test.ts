@@ -12,4 +12,5 @@ test("map uses the keyless OpenFreeMap style and never requests CARTO tiles", ()
   assert.doesNotMatch(mapView, /CARTO_API_KEY/);
   assert.match(mapView, /styleimagemissing/);
   assert.match(mapView, /new Uint8Array\(\[0, 0, 0, 0\]\)/);
+  assert.match(mapView, /new ResizeObserver\(\(\) => m\.resize\(\)\)/);
 });

@@ -21,17 +21,26 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
   font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.app { display: grid; grid-template-columns: 330px minmax(460px, 1fr) 440px; height: 100vh; overflow:hidden; }
+.app { --mission-panel-width:330px; --proof-panel-width:440px; position:relative; display:grid;
+  grid-template-columns:var(--mission-panel-width) minmax(460px,1fr) var(--proof-panel-width);
+  height:100vh; overflow:hidden; transition:grid-template-columns 180ms ease; }
+.app.mission-panel-collapsed { --mission-panel-width:0px; }
+.app.proof-panel-collapsed { --proof-panel-width:0px; }
 .left { display: flex; flex-direction: column; border-right: 1px solid var(--edge);
-  background: var(--panel-2); overflow: hidden; }
+  background: var(--panel-2); overflow: hidden; min-width:0; opacity:1; transition:opacity 130ms ease,transform 180ms ease; }
+.app.mission-panel-collapsed .left { border-right:0; opacity:0; pointer-events:none; transform:translateX(-18px); }
 .brand { padding: 16px 18px 10px; border-bottom: 1px solid var(--edge); }
 .brand-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.brand-actions,.proof-header-actions { display:flex; align-items:center; gap:7px; }
 .brand h1 { margin: 0; font-size: 18px; letter-spacing: .3px; }
 .brand h1 span { color: var(--cyan); }
 .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
 .theme-toggle { padding:4px 7px; border:1px solid var(--edge); border-radius:999px; background:var(--panel);
   color:var(--muted); font:700 8px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.7px; cursor:pointer; }
 .theme-toggle:hover { color:var(--cyan); border-color:var(--cyan); }
+.panel-close { display:grid; place-items:center; width:25px; height:25px; flex:none; padding:0; border:1px solid var(--edge);
+  border-radius:7px; background:var(--panel); color:var(--muted); cursor:pointer; font:700 17px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+.panel-close:hover,.panel-close:focus-visible { color:var(--cyan); border-color:var(--cyan); outline:none; }
 .form { padding: 14px 18px; display: grid; gap: 8px; border-bottom: 1px solid var(--edge); }
 .form label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
 .form input, .form select { background: var(--bg); border: 1px solid var(--edge); color: var(--ink);
@@ -64,6 +73,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .verdict.no { background: rgba(239,107,107,.12); color: var(--red); border: 1px solid rgba(239,107,107,.3); }
 .right { position: relative; min-width:0; }
 #map { position: absolute; inset: 0; }
+.panel-reveal { position:absolute; top:50%; z-index:5; display:flex; flex-direction:column; align-items:center; gap:7px;
+  width:31px; padding:10px 5px; border:1px solid rgba(53,208,214,.5); background:var(--map-card-bg); color:var(--cyan);
+  box-shadow:0 8px 28px var(--shadow); backdrop-filter:blur(10px); cursor:pointer; transform:translateY(-50%); }
+.panel-reveal:hover,.panel-reveal:focus-visible { background:var(--panel); border-color:var(--cyan); outline:none; }
+.panel-reveal span { writing-mode:vertical-rl; transform:rotate(180deg); font:800 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:1.1px; }
+.panel-reveal b { font:800 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+.panel-reveal-left { left:0; border-left:0; border-radius:0 8px 8px 0; }
+.panel-reveal-right { right:0; border-right:0; border-radius:8px 0 0 8px; }
 .legend { position: absolute; top: 12px; right: 12px; background: var(--legend-bg); border: 1px solid var(--edge);
   border-radius: 8px; padding: 10px 12px; font-size: 12px; }
 .legend .k { display:flex; align-items:center; gap:8px; margin:3px 0; }
@@ -88,7 +105,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .recovery-card { display:grid; gap:7px; margin:10px 0; padding:11px; border:1px solid rgba(239,107,107,.42); border-radius:9px; background:rgba(239,107,107,.08); }
 .recovery-card strong { color:var(--red); font-size:12px; }
 .recovery-card span { color:var(--muted); font-size:11px; }
-.proof-rail { border-left:1px solid var(--edge); background:var(--proof-bg); overflow-y:auto; min-width:0; }
+.proof-rail { border-left:1px solid var(--edge); background:var(--proof-bg); overflow-y:auto; min-width:0;
+  opacity:1; transition:opacity 130ms ease,transform 180ms ease; }
+.app.proof-panel-collapsed .proof-rail { border-left:0; opacity:0; pointer-events:none; transform:translateX(18px); }
 .proof-header { position:sticky; top:0; z-index:4; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:15px 16px 13px; border-bottom:1px solid var(--edge); background:var(--proof-header); backdrop-filter:blur(12px); }
 .proof-header div>span { color:var(--cyan); font-size:9px; font-weight:800; letter-spacing:1.4px; }
 .proof-header h2 { margin:2px 0 0; max-width:250px; font-size:14px; line-height:1.25; letter-spacing:.1px; }
@@ -221,7 +240,10 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .handoff-card > strong { color:var(--amber); }
 
 @media (max-width: 1180px) {
-  .app { grid-template-columns:320px minmax(0,1fr); grid-template-rows:720px auto; height:auto; min-height:100vh; overflow:visible; }
+  .app { --mission-panel-width:320px; grid-template-columns:var(--mission-panel-width) minmax(0,1fr);
+    grid-template-rows:720px auto; height:auto; min-height:100vh; overflow:visible; }
+  .app.mission-panel-collapsed { --mission-panel-width:0px; }
+  .app.proof-panel-collapsed .proof-rail { display:none; }
   .proof-rail { grid-column:1/-1; max-height:none; border-top:1px solid var(--edge); border-left:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
   .proof-header,.authority-map { grid-column:1/-1; }
   .proof-header { position:static; }
@@ -229,6 +251,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 
 @media (max-width: 760px) {
   .app { display:block; height:auto; min-height:100vh; }
+  .app.mission-panel-collapsed .left,.app.proof-panel-collapsed .proof-rail { display:none; }
   .left { height:auto; border-right:0; border-bottom:1px solid var(--edge); overflow:visible; }
   .feed { max-height:540px; }
   .right { height:480px; min-height:480px; }

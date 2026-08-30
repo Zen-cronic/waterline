@@ -69,8 +69,15 @@ export const MapView = forwardRef<MapHandle, { theme: "dark" | "light" }>(functi
       layers.forEach(apply);
       pending.current = [];
     });
+    const resizeObserver = new ResizeObserver(() => m.resize());
+    resizeObserver.observe(holder.current);
     map.current = m;
-    return () => { m.remove(); map.current = null; ready.current = false; };
+    return () => {
+      resizeObserver.disconnect();
+      m.remove();
+      map.current = null;
+      ready.current = false;
+    };
   }, [theme]);
 
   function apply(e: LayerEvent) {

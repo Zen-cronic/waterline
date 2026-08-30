@@ -24,6 +24,7 @@ type ProofRailProps = {
   dispatchGate: VerificationGate | null;
   degraded: DegradedState | null;
   dispatch: DispatchReceipt | null;
+  onClose?: () => void;
   onReplayDispatch?: () => void;
   replayingDispatch?: boolean;
 };
@@ -92,7 +93,7 @@ function AuthorityMap({
 export function ProofRail(props: ProofRailProps) {
   const {
     mission, conditionCard, quarantine, planRevision, inference, provenance,
-    briefingGate, dispatchGate, degraded, dispatch, onReplayDispatch, replayingDispatch,
+    briefingGate, dispatchGate, degraded, dispatch, onClose, onReplayDispatch, replayingDispatch,
   } = props;
   const trusted = conditionCard?.trusted_evidence;
   const primary = inference?.sources?.[0];
@@ -101,12 +102,20 @@ export function ProofRail(props: ProofRailProps) {
   const planAccepted = mission?.status === "accepted" || mission?.status === "dispatched";
 
   return (
-    <aside className="proof-rail" aria-label="Mission proof and authority">
+    <aside className="proof-rail" id="proof-panel" aria-label="Mission proof and authority">
       <header className="proof-header">
         <div><span>LIVE PROOF STACK</span><h2>Evidence → authority → consequence</h2></div>
-        <strong className={`proof-status status-${mission?.status ?? "idle"}`}>
-          {mission?.status.replaceAll("_", " ") ?? "ready"}
-        </strong>
+        <div className="proof-header-actions">
+          <strong className={`proof-status status-${mission?.status ?? "idle"}`}>
+            {mission?.status.replaceAll("_", " ") ?? "ready"}
+          </strong>
+          {onClose && (
+            <button className="panel-close" type="button" aria-label="Hide proof panel"
+              aria-controls="proof-panel" aria-expanded="true" onClick={onClose}>
+              <span aria-hidden="true">›</span>
+            </button>
+          )}
+        </div>
       </header>
 
       <AuthorityMap

@@ -172,6 +172,11 @@ test("judge-facing surface names every required proof state", () => {
   assert.match(page, /DETERMINISTIC CONSEQUENCE/);
   assert.match(page, /MarkdownBrief/);
   assert.match(page, /Switch to.*theme/);
+  assert.match(page, /useState\(true\).*missionPanelOpen|missionPanelOpen.*useState\(true\)/s);
+  assert.match(page, /Hide mission panel/);
+  assert.match(page, /Show mission panel/);
+  assert.match(proofRail, /Hide proof panel/);
+  assert.match(page, /Show proof panel/);
   assert.doesNotMatch(page, /HACKATHON DEMO · PILOT REVIEW REQUIRED/);
   assert.match(page, /window\.setInterval\(poll, 2000\)/);
   assert.match(proofRail, /Replay same command · prove no second SMS/);

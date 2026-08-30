@@ -49,6 +49,8 @@ export default function Page() {
   const [planRevision, setPlanRevision] = useState<PlanRevision | null>(null);
   const [error, setError] = useState("");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [missionPanelOpen, setMissionPanelOpen] = useState(true);
+  const [proofPanelOpen, setProofPanelOpen] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("waterline:theme");
@@ -309,16 +311,23 @@ export default function Page() {
   const etaValid = /^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$/.test(eta);
 
   return (
-    <div className="app">
-      <div className="left">
+    <div className={`app ${missionPanelOpen ? "" : "mission-panel-collapsed"} ${proofPanelOpen ? "" : "proof-panel-collapsed"}`}>
+      <div className="left" id="mission-panel">
         <div className="brand">
           <div className="brand-row">
             <h1><span>Waterline</span></h1>
-            <button className="theme-toggle" type="button" onClick={toggleTheme}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-              aria-pressed={theme === "light"}>
-              {theme === "dark" ? "LIGHT" : "DARK"}
-            </button>
+            <div className="brand-actions">
+              <button className="theme-toggle" type="button" onClick={toggleTheme}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+                aria-pressed={theme === "light"}>
+                {theme === "dark" ? "LIGHT" : "DARK"}
+              </button>
+              <button className="panel-close" type="button"
+                aria-label="Hide mission panel" aria-controls="mission-panel" aria-expanded={missionPanelOpen}
+                onClick={() => setMissionPanelOpen(false)}>
+                <span aria-hidden="true">‹</span>
+              </button>
+            </div>
           </div>
           <p>A live, provenance-first briefing for curated water destinations with no station.</p>
         </div>
@@ -414,6 +423,20 @@ export default function Page() {
       </div>
       <div className="right">
         <MapView ref={mapRef} theme={theme} />
+        {!missionPanelOpen && (
+          <button className="panel-reveal panel-reveal-left" type="button"
+            aria-label="Show mission panel" aria-controls="mission-panel" aria-expanded={missionPanelOpen}
+            onClick={() => setMissionPanelOpen(true)}>
+            <b aria-hidden="true">›</b><span>MISSION</span>
+          </button>
+        )}
+        {!proofPanelOpen && (
+          <button className="panel-reveal panel-reveal-right" type="button"
+            aria-label="Show proof panel" aria-controls="proof-panel" aria-expanded={proofPanelOpen}
+            onClick={() => setProofPanelOpen(true)}>
+            <b aria-hidden="true">‹</b><span>PROOF</span>
+          </button>
+        )}
         {planRevision && (
           <div className={`map-consequence ${mission?.status === "dispatched" || mission?.status === "accepted" ? "accepted" : ""}`} aria-label="Current landing plan consequence">
             <small>DETERMINISTIC CONSEQUENCE</small>
@@ -440,6 +463,7 @@ export default function Page() {
         dispatchGate={dispatchGate}
         degraded={degraded}
         dispatch={dispatch}
+        onClose={() => setProofPanelOpen(false)}
         onReplayDispatch={mission?.status === "dispatched" ? replayDispatch : undefined}
         replayingDispatch={attesting}
       />
