@@ -2,7 +2,7 @@
 
 ![Waterline bounded-authority architecture](architecture/waterline-system.svg)
 
-The diagram is a 1920×1080, submission-ready view of the deployed architecture. A component-type legend, one explicit Google Cloud boundary, and four large left-to-right stages make five roles visible without relying on model prose: the reader, writer, authorizer, security boundary, and physical/digital consequence. The consequence panel is deliberately current-state-aware: the Twilio adapter is implemented, SMS configuration is pending, and the accepted proof remains the outbox plus replay-suppression take until a signed delivery callback is recorded.
+The diagram is a 1920×1080, submission-ready view of the deployed architecture. A component-type legend, one explicit Google Cloud boundary, and four large left-to-right stages make five roles visible without relying on model prose: the reader, writer, authorizer, security boundary, and physical/digital consequence. It also shows the two-stage reduction (`PostGIS corridor → owner memory`), the eight-agent roster, and the `Gemma ranks → Gemini reads 14` boundary. The consequence panel is deliberately current-state-aware: the Twilio adapter is implemented, SMS configuration is pending, and the accepted proof remains the outbox plus replay-suppression take until a signed delivery callback is recorded.
 
 ## Four lanes
 
@@ -17,7 +17,7 @@ The public/private security boundary is between the same-origin Next.js relay an
 
 ## Trust plane: implemented versus deferred
 
-| Capability | Iteration 6 status | Truthful proof |
+| Capability | Current status | Truthful proof |
 |---|---|---|
 | Identity | Implemented locally; cloud identities provisioned | Separate keyless `waterline-web` and `waterline-runtime` service accounts; signed HttpOnly pilot session; owner-bound API tests |
 | Gateway | Implemented as the application boundary | Exact-path same-origin relay, Cloud Run IAM ID token, and HMAC request binding. This is not a claim that Google Cloud Agent Gateway is deployed. |
@@ -28,7 +28,9 @@ The public/private security boundary is between the same-origin Next.js relay an
 
 This status split is deliberate. Model Armor and Registry appear in the trust plane so a judge can see where they would sit, while dashed styling and explicit “deferred” labels prevent an architecture aspiration from becoming a false deployed-service claim.
 
-The memory ladder deliberately stops at Cloud SQL vector search: one briefing needs owner-scoped semantic destination recall plus exact NOTAM digest checks, not a new managed Memory Bank control plane, IAM surface, or autonomous long-term-memory authority.
+The memory ladder deliberately stops at Cloud SQL vector search: one briefing needs owner-scoped semantic destination recall plus exact NOTAM digest checks, not a new managed Memory Bank control plane, IAM surface, or autonomous long-term-memory authority. Memory is written only after an attested mission commits `dispatched`; retrieval failures show every hazard, owner mismatch retrieves nothing, and a digest or `end_valid` mismatch always resurfaces.
+
+Gemma is a cost-shaped advisory boundary, not a safety gate. It returns an ordering over the surfaced set; omitted IDs are deterministically appended, the complete raw layer remains on the map, and only the first 14 ranked hazards enter `corridor.hazards` for Gemini composition. The deterministic verifier rejects any briefing that references an index outside that bounded list.
 
 ## Exception paths
 

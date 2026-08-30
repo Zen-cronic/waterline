@@ -41,6 +41,13 @@ destination read from nearby real stations with explicit confidence and raw-sour
 the deployed proof, the database-native corridor query reduced 471 FIR NOTAMs to 79 — an 83%
 off-route reduction before the bounded result reached the agents.
 
+After an attested flight reaches its terminal state, Waterline writes owner-scoped NOTAM
+acknowledgements with a 768-dimensional `gemini-embedding-001` destination vector and exact source
+digest/validity. A repeat flight suppresses only unchanged acknowledgements to a 23-item safety
+floor; any changed source resurfaces at full weight. Advisory Gemma on Vertex MaaS ranks the
+surfaced set so Gemini reads only 14. The latest guarded deployed proof measured `103 → 23`,
+suppressed 80 unchanged items, and resurfaced one real database-mutated digest.
+
 A prepared synthetic condition-card photograph contains a checked east-cove obstruction and a
 hostile embedded instruction. Gemini extracts a typed, zero-authority proposal. Deterministic code
 accepts the digest-bound obstruction, quarantines hostile text by hash, rejects east-cove plan v1,
@@ -96,10 +103,10 @@ versioned water-aerodrome data while preserving the existing pilot and policy au
 
 `Gemini 3.7 Flash` · `Gemini 3.6 Flash` · `Gemini 3.5 Flash` · `Google ADK` ·
 `Google Gen AI SDK` · `Vertex AI` · `Cloud Run` · `Cloud SQL` · `Secret Manager` ·
-`Artifact Registry` · `PostgreSQL/PostGIS` · `Next.js` · `FastAPI` · `MapLibre` ·
+`Artifact Registry` · `PostgreSQL/PostGIS/pgvector` · `Gemma 4 on Vertex MaaS` · `Next.js` · `FastAPI` · `MapLibre` ·
 `Python` · `TypeScript`
 
-Do not select or claim Agent Registry, Model Armor, Memory Bank, Agent Gateway, Gemma, Veo, Lyria,
+Do not select or claim Agent Registry, Model Armor, Memory Bank, Agent Gateway, Veo, Lyria,
 Pub/Sub, Eventarc, Firestore, or GKE; those are not deployed Waterline dependencies.
 
 ## Try it out links
@@ -115,6 +122,7 @@ Upload in this order:
 1. `../submission/waterline/gallery/architecture.png` — four authority lanes, trust plane, and exception arcs.
 2. `../submission/waterline/gallery/01-live-evidence-awaiting-attestation.png` — live evidence, wrong path, and pilot boundary.
 3. `../submission/waterline/gallery/02-replay-suppressed.png` — one original receipt and no duplicate handoff.
+4. `../submission/waterline/gallery/03-light-theme.png` — optional alternate-theme overview; use only if Devpost allows a fourth image.
 
 These are the visually inspected submission-package copies. Never replace them with contact PII or
 secret-bearing screenshots.
@@ -212,7 +220,7 @@ select undeployed managed-agent products.
 
 ## Architecture diagram
 
-Upload `architecture/waterline-system.png` (1920×1080, 666,438 bytes). Editable source:
+Upload `architecture/waterline-system.png` (1920×1080, 670,652 bytes). Editable source:
 `architecture/waterline-system.svg`.
 
 ## Which Google AI models did you use?
@@ -220,8 +228,11 @@ Upload `architecture/waterline-system.png` (1920×1080, 666,438 bytes). Editable
 - **Gemini 3.7 Flash:** accepted live visual-extraction and agent-path model in the deployed proof.
 - **Gemini 3.6 Flash / Gemini 3.5 Flash:** failure-tolerant fallback chain; every option clears the
   event's Gemini 3.5-or-newer requirement.
+- **Gemini Embedding (`gemini-embedding-001`):** load-bearing 768-dimensional destination recall.
+- **Gemma 4 (`google/gemma-4-26b-a4b-it-maas`):** deployed advisory NOTAM pre-ranker; it can reorder
+  but never delete source evidence, and caps the Gemini briefing input at 14 hazards.
 
-Do not claim optional bonus models; none is integrated.
+Do not claim Veo, Lyria, or a managed Memory Bank; none is integrated.
 
 ## Data sources
 

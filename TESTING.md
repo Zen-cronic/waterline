@@ -73,11 +73,28 @@ DATABASE_URL="$DATABASE_URL" poetry -C agent run python \
   ../scripts/mutate_notam_for_memory_demo.py --owner-ref '<redacted owner_ref>'
 ```
 
-Flight 2 must visibly produce both reductions (`471 → 79` geometry, then
-`79 → 23` owner memory), a `changed` RecallAgent step naming the one digest or
-validity mismatch that resurfaced, and `Gemini reads 14 of 23; Gemma triaged the
-rest`. The raw map layer must contain all 23 surfaced records including the
-changed marker. A fresh live ingest restores the synthetic mutation.
+The frozen reference beat is `471 → 79` geometry and then `79 → 23` owner
+memory. Live FIR cardinality changes over time, so a deployed run must assert
+the invariant rather than falsify the current feed: flight 2 ends at the
+23-item safety floor, reports the exact number suppressed, names the changed
+source, and says `Gemini reads 14 of 23; Gemma triaged the rest`. The latest
+deployed proof on 2026-08-30 measured `103 → 23` with 80 unchanged
+acknowledgements suppressed. The raw map layer must contain all 23 surfaced
+records including the changed marker. A fresh live ingest restores the
+synthetic mutation.
+
+The guarded automation verifies outbox mode before it creates two missions and
+one pilot attestation, starts Cloud SQL Auth Proxy without printing the database
+secret, performs the real digest mutation, and retains a report/screenshot:
+
+```bash
+WATERLINE_MEMORY_PROOF_APPROVED=I_APPROVE_OUTBOX_MEMORY_PROOF \
+  node web/scripts/verify-deployed-memory.mjs
+```
+
+Expected report invariants: `status=PASSED`, no browser errors, different first
+and second mission IDs under the same owner, `→ 23`, one `resurfaced at full
+weight` step, and `Gemini reads 14 of 23`.
 
 Failure checks:
 
@@ -85,6 +102,23 @@ Failure checks:
 - Use a different authenticated owner: no acknowledgements may match.
 - Return an incomplete or duplicate Gemma order: the adapter must append every omitted NOTAM; map cardinality cannot fall.
 - Change either `raw` or `end_valid`: the NOTAM must resurface at full weight.
+
+### Theme and gallery proof
+
+`pnpm dev` serves the local UI at `http://localhost:3010`. Use the header toggle
+to inspect the paired dark and light themes; changing themes must preserve any
+streamed route/evidence layers. Generate safe no-mission theme frames and the
+deterministic judge gallery with:
+
+```bash
+cd web
+APP_URL=http://localhost:3010 node scripts/capture-theme-preview.mjs
+APP_URL=http://localhost:3010 node scripts/capture-demo-gallery.mjs
+```
+
+The briefing must show rendered headings, emphasis, and lists—never literal
+`##` or `**` markers—and no screenshot may contain the removed `HACKATHON DEMO
+· PILOT REVIEW REQUIRED` footer.
 
 ## 4. Cloud foundation gate
 
