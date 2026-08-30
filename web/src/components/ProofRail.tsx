@@ -24,6 +24,7 @@ type ProofRailProps = {
   dispatchGate: VerificationGate | null;
   degraded: DegradedState | null;
   dispatch: DispatchReceipt | null;
+  followingActive?: boolean;
   onClose?: () => void;
   onReplayDispatch?: () => void;
   replayingDispatch?: boolean;
@@ -79,12 +80,12 @@ function AuthorityMap({
         </div>
         <b aria-hidden="true">→</b>
         <div className={`authority-node ${deliveryState}`}>
-          <small>DISPATCH CLAIM</small><strong>AT-MOST-ONCE</strong><span>{deliveryState}</span>
+          <small>ROOM CLAIM</small><strong>AT-MOST-ONCE</strong><span>{deliveryState}</span>
         </div>
       </div>
       <div className={`authority-decision ${dispatchGate?.approved ? "passed" : "held"}`}>
-        <span>dispatch gate</span>
-        <strong>{dispatchGate?.approved ? "AUTHORIZED BY POLICY + PILOT" : "HELD — AGENTS CANNOT SEND"}</strong>
+        <span>handoff gate</span>
+        <strong>{dispatchGate?.approved ? "AUTHORIZED BY POLICY + PILOT" : "HELD — AGENTS CANNOT OPEN A ROOM"}</strong>
       </div>
     </section>
   );
@@ -93,7 +94,8 @@ function AuthorityMap({
 export function ProofRail(props: ProofRailProps) {
   const {
     mission, conditionCard, quarantine, planRevision, inference, provenance,
-    briefingGate, dispatchGate, degraded, dispatch, onClose, onReplayDispatch, replayingDispatch,
+    briefingGate, dispatchGate, degraded, dispatch, followingActive,
+    onClose, onReplayDispatch, replayingDispatch,
   } = props;
   const trusted = conditionCard?.trusted_evidence;
   const primary = inference?.sources?.[0];
@@ -107,7 +109,10 @@ export function ProofRail(props: ProofRailProps) {
         <div><span>LIVE PROOF STACK</span><h2>Evidence → authority → consequence</h2></div>
         <div className="proof-header-actions">
           <strong className={`proof-status status-${mission?.status ?? "idle"}`}>
-            {mission?.status.replaceAll("_", " ") ?? "ready"}
+            {followingActive ? "FOLLOWING ACTIVE"
+              : dispatch?.status === "room_ready" ? "HANDOFF READY"
+              : mission?.status === "awaiting_attestation" ? "ATTESTATION REQUIRED"
+              : mission?.status.replaceAll("_", " ") ?? "ready"}
           </strong>
           {onClose && (
             <button className="panel-close" type="button" aria-label="Hide proof panel"
@@ -130,7 +135,7 @@ export function ProofRail(props: ProofRailProps) {
         <section className="degraded-card" role="alert">
           <div className="proof-section-title"><span>{degraded.title}</span><small>{degraded.recoverable ? "same-session recovery" : "fail closed"}</small></div>
           {degraded.reasons.map((reason) => <p key={reason}>{reason}</p>)}
-          <strong>No mutation · no dispatch</strong>
+          <strong>No mutation · no handoff</strong>
         </section>
       )}
 
@@ -230,30 +235,30 @@ export function ProofRail(props: ProofRailProps) {
         <section className="proof-card gate-stack" aria-label="Deterministic gate decisions">
           <div className="proof-section-title"><span>05 · Deterministic gates</span><small>model prose is insufficient</small></div>
           <GateCard label="Briefing integrity" gate={briefingGate} />
-          <GateCard label="Dispatch authority" gate={dispatchGate} />
+          <GateCard label="Handoff authority" gate={dispatchGate} />
         </section>
       )}
 
       {dispatch && (
-        <section className={`dispatch-receipt ${dispatch.status !== "reconciliation_required" ? "sent" : "held"}`} aria-label="Verified dispatch receipt">
+        <section className={`dispatch-receipt ${dispatch.status !== "reconciliation_required" ? "sent" : "held"}`} aria-label="Verified handoff receipt">
           <div className="proof-section-title"><span>{dispatch.status !== "reconciliation_required" ? "06 · Verified consequence" : "06 · Replay suppressed"}</span><small>at-most-once</small></div>
-          <strong>{dispatch.status === "delivered"
-            ? "DELIVERED"
-            : dispatch.status === "provider_accepted" ? "PROVIDER ACCEPTED"
-            : dispatch.status === "completed" ? "HANDOFF COMPLETED"
-            : "NO DUPLICATE SENT"}</strong>
+          <strong>{followingActive ? "FOLLOWING ACTIVE · LIVE VIA FIRESTORE"
+            : dispatch.status === "room_ready" ? "HANDOFF READY · WAITING FOR FOLLOWER"
+            : dispatch.status === "completed" ? "LEGACY HANDOFF COMPLETED"
+            : "ORIGINAL RECEIPT RETURNED"}</strong>
           <p>{dispatch.status !== "reconciliation_required"
-            ? `Marked synthetic flight-following handoff via ${dispatch.channel}; ${dispatch.provider_status || "transport completed"}.`
-            : "An existing claim stopped the retry. Operator reconciliation is required."}</p>
-          {dispatch.recipient_redacted && <code>recipient {dispatch.recipient_redacted}</code>}
-          {dispatch.provider_reference && <code>provider ref {dispatch.provider_reference}</code>}
+            ? dispatch.status === "room_ready"
+              ? "One ephemeral coordination room is bound to the durable Cloud SQL receipt."
+              : "Historical handoff restored from the original receipt."
+            : "The durable claim could not be reconstructed; mission authority did not change."}</p>
+          {dispatch.provider_reference && <code>room {dispatch.provider_reference}</code>}
           <code>receipt {dispatch.receipt_id || "pending reconciliation"}</code>
           {dispatch.attestation_id && <code>attestation {dispatch.attestation_id}</code>}
           <code>trace {dispatch.trace_id}</code>
           {dispatch.duplicate_suppressed && <strong>REPLAY SUPPRESSED · ORIGINAL RECEIPT RETURNED</strong>}
           {onReplayDispatch && !dispatch.duplicate_suppressed && dispatch.status !== "reconciliation_required" && (
             <button className="receipt-replay" onClick={onReplayDispatch} disabled={replayingDispatch}>
-              {replayingDispatch ? "Verifying replay safety…" : "Replay same command · prove no second SMS"}
+              {replayingDispatch ? "Verifying replay safety…" : "Replay handoff · prove one room"}
             </button>
           )}
         </section>

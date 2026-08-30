@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membership(missionId) {
+      return get(/databases/$(database)/documents/handoff_threads/$(missionId)/members/$(request.auth.uid));
+    }
+
+    function activeMember(missionId) {
+      return signedIn()
+        && membership(missionId).data.expiresAt > request.time;
+    }
+
+    function activeThread(missionId) {
+      let thread = get(/databases/$(database)/documents/handoff_threads/$(missionId));
+      return thread.data.missionId == missionId
+        && thread.data.status == "open"
+        && thread.data.expiresAt > request.time;
+    }
+
+    function canReadRoom(missionId) {
+      return activeMember(missionId) && activeThread(missionId);
+    }
+
+    match /handoff_threads/{missionId} {
+      allow get: if canReadRoom(missionId);
+      allow list, create, update, delete: if false;
+
+      match /members/{uid} {
+        allow get: if signedIn() && request.auth.uid == uid
+          && resource.data.expiresAt > request.time
+          && activeThread(missionId);
+        allow list, create, update, delete: if false;
+      }
+
+      match /messages/{messageId} {
+        allow get: if canReadRoom(missionId);
+        allow list: if canReadRoom(missionId)
+          && request.query.limit != null
+          && request.query.limit <= 50;
+        allow create: if canReadRoom(missionId)
+          && request.resource.data.keys().hasOnly([
+            "senderUid", "senderRole", "kind", "body",
+            "clientMessageId", "createdAt", "expiresAt"
+          ])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.senderRole == membership(missionId).data.role
+          && request.resource.data.kind in ["text", "ack"]
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 500
+          && request.resource.data.clientMessageId is string
+          && request.resource.data.clientMessageId.size() > 0
+          && request.resource.data.clientMessageId.size() <= 100
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.expiresAt == membership(missionId).data.expiresAt
+          && (
+            request.resource.data.kind == "text"
+            || request.resource.data.body == "Following acknowledged"
+          );
+        allow update, delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

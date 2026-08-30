@@ -225,10 +225,43 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .attestation label { color:var(--muted); font-size:11px; text-transform:uppercase; }
 .attestation input { min-width:0; width:100%; padding:8px 10px; border:1px solid var(--edge); border-radius:8px; background:var(--bg); color:var(--ink); }
 .attestation .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.configured-recipient { padding:9px 10px; border:1px solid var(--edge); border-radius:8px; background:var(--bg); color:var(--cyan); font-size:12px; }
+.flight-follower-panel { margin-top:12px; border:1px solid rgba(53,208,214,.45); border-radius:12px; overflow:hidden; background:var(--panel); }
+.follower-panel-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:0; border-bottom:1px solid var(--edge); background:rgba(53,208,214,.08); color:var(--ink); cursor:pointer; text-align:left; }
+.follower-panel-toggle span { font-size:11px; font-weight:750; text-transform:uppercase; letter-spacing:.1em; }
+.follower-panel-toggle strong { color:var(--cyan); font-size:9px; letter-spacing:.08em; }
+.follower-room { display:grid; gap:10px; min-width:0; padding:12px; }
+.follower-room-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.follower-room-head>div { display:grid; gap:3px; }
+.follower-room-head small { color:var(--muted); font-size:8px; letter-spacing:.12em; }
+.follower-room-head strong { color:var(--cyan); font-size:13px; letter-spacing:.06em; }
+.connection { padding:3px 7px; border:1px solid var(--edge); border-radius:999px; color:var(--muted); font-size:7px; letter-spacing:.08em; white-space:nowrap; }
+.connection-live { border-color:rgba(87,201,138,.5); color:var(--green); background:rgba(87,201,138,.08); }
+.connection-unavailable,.connection-expired { border-color:rgba(239,107,107,.5); color:var(--red); }
+.connection-reconnecting { border-color:rgba(242,180,90,.5); color:var(--amber); }
+.invitation { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center; padding:10px; border:1px solid var(--edge); border-radius:10px; background:var(--bg); }
+.qr-shell { display:grid; place-items:center; padding:8px; border-radius:8px; background:#fff; }
+.qr-shell svg { width:116px; height:116px; }
+.invitation>div:last-child { display:grid; gap:6px; }
+.invitation strong { color:var(--cyan); font-size:10px; letter-spacing:.06em; }
+.invitation p { margin:0; color:var(--muted); font-size:9px; line-height:1.45; }
+.invitation button,.acknowledge-button,.message-composer button { padding:8px 10px; border:1px solid var(--cyan); border-radius:8px; background:rgba(53,208,214,.1); color:var(--cyan); font-size:9px; font-weight:750; cursor:pointer; }
+.room-meta { display:flex; flex-wrap:wrap; gap:5px; }
+.room-meta span { padding:3px 6px; border-radius:999px; background:var(--bg); color:var(--muted); font-size:7.5px; }
+.room-meta span:last-child { color:var(--amber); }
+.message-history { display:grid; gap:7px; max-height:220px; overflow:auto; padding:8px; border:1px solid var(--edge); border-radius:9px; background:var(--bg); }
+.message-history>p { margin:0; color:var(--dim); font-size:9px; }
+.message { display:grid; gap:3px; max-width:90%; padding:7px 9px; border-radius:9px; background:var(--panel); color:var(--ink); font-size:10px; }
+.message-pilot { justify-self:start; border:1px solid var(--edge); }
+.message-follower { justify-self:end; border:1px solid rgba(53,208,214,.3); background:rgba(53,208,214,.08); }
+.message small { color:var(--dim); font-size:7px; text-transform:uppercase; letter-spacing:.08em; }
+.message-composer { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px; }
+.message-composer input { min-width:0; padding:9px; border:1px solid var(--edge); border-radius:8px; background:var(--bg); color:var(--ink); font-size:10px; }
+.message-composer button:disabled,.acknowledge-button:disabled { opacity:.45; cursor:not-allowed; }
+.acknowledge-button { width:100%; padding:12px; font-size:11px; }
+.room-error { margin:0; color:var(--red)!important; font-size:9px; }
 
 .handoff-page { min-height:100vh; display:grid; place-items:center; padding:28px; background:radial-gradient(circle at 80% 10%,rgba(53,208,214,.13),transparent 35%),var(--bg); color:var(--ink); }
-.handoff-card { width:min(680px,100%); display:grid; gap:18px; padding:36px; border:1px solid var(--cyan); border-radius:18px; background:var(--panel); box-shadow:0 24px 80px var(--shadow); }
+.handoff-card { width:min(720px,100%); display:grid; gap:18px; padding:36px; border:1px solid var(--cyan); border-radius:18px; background:var(--panel); box-shadow:0 24px 80px var(--shadow); }
 .handoff-card small { color:var(--cyan); letter-spacing:.14em; }
 .handoff-card h1,.handoff-card p { margin:0; }
 .handoff-card p { color:var(--muted); }
@@ -236,8 +269,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
 .handoff-card dl div { padding:12px; border:1px solid var(--edge); border-radius:9px; }
 .handoff-card dt { color:var(--muted); font-size:11px; text-transform:uppercase; }
 .handoff-card dd { margin:5px 0 0; font-weight:700; }
-.handoff-card code { overflow-wrap:anywhere; color:var(--muted); }
-.handoff-card > strong { color:var(--amber); }
+.handoff-card .follower-room { padding:16px; border:1px solid rgba(53,208,214,.35); border-radius:12px; background:var(--bg); }
+.handoff-card .message-history { min-height:180px; background:var(--panel); }
 
 @media (max-width: 1180px) {
   .app { --mission-panel-width:320px; grid-template-columns:var(--mission-panel-width) minmax(0,1fr);
@@ -262,4 +295,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
   .authority-node small { font-size:7.5px; }
   .authority-node strong { font-size:9px; }
   .map-consequence>div { grid-template-columns:auto auto auto auto 1fr; }
+  .handoff-page { padding:14px; place-items:start center; }
+  .handoff-card { padding:20px; }
+  .handoff-card dl { grid-template-columns:1fr; }
+  .invitation { grid-template-columns:1fr; }
+  .qr-shell { width:max-content; justify-self:center; }
 }

@@ -42,7 +42,7 @@ export function verifyHandoffToken(
     typeof summary.landing_sector !== "string" ||
     typeof summary.eta !== "string" ||
     typeof summary.expires_at !== "number" || !Number.isSafeInteger(summary.expires_at) ||
-    summary.expires_at < nowSeconds
+    summary.expires_at <= nowSeconds
   ) return null;
   return summary as HandoffSummary;
 }

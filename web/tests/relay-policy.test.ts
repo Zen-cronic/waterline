@@ -19,7 +19,7 @@ test("mission creation strips browser identity and normalizes the exact command"
   });
 });
 
-test("browser-selected actor, session, or recipient on initial intake fails closed", () => {
+test("browser-selected actor, session, or handoff target on initial intake fails closed", () => {
   assert.throws(
     () => authorizeRelayRequest({
       method: "POST",
@@ -31,7 +31,7 @@ test("browser-selected actor, session, or recipient on initial intake fails clos
         cruise_alt_ft: 3500,
         actor: "pilot:attacker",
         session_id: "stolen",
-        responsible_email: "attacker@example.com",
+        recipient: "browser-choice",
       }),
     }),
     (error: unknown) => error instanceof RelayPolicyError && error.code === "UNEXPECTED_FIELDS",
@@ -45,7 +45,7 @@ test("only explicit attestation command reaches the resume endpoint", () => {
     path: ["missions", missionId, "attest"],
     search: "",
     body: JSON.stringify({
-      confirm_dispatch: true,
+      confirm_handoff: true,
       eta: "16:00Z",
       grace_min: 60,
     }),
@@ -53,7 +53,7 @@ test("only explicit attestation command reaches the resume endpoint", () => {
   assert.equal(decision.action, "mission.pilot-attest");
   assert.equal(decision.upstreamPath, `/v1/missions/${missionId}/attest`);
   assert.deepEqual(JSON.parse(decision.upstreamBody), {
-    confirm_dispatch: true,
+    confirm_handoff: true,
     eta: "16:00Z",
     grace_min: 60,
   });
@@ -64,8 +64,8 @@ test("only explicit attestation command reaches the resume endpoint", () => {
       path: ["missions", missionId, "attest"],
       search: "",
       body: JSON.stringify({
-        confirm_dispatch: true,
-        responsible_email: "attacker@example.com",
+        confirm_handoff: true,
+        recipient: "browser-choice",
         eta: "16:00Z",
         grace_min: 60,
       }),
@@ -84,8 +84,8 @@ test("only explicit attestation command reaches the resume endpoint", () => {
       path: ["missions", missionId, "attest"],
       search: "",
       body: JSON.stringify({
-        confirm_dispatch: true,
-        eta: "16:00Z\nINJECTED SMS TEXT",
+        confirm_handoff: true,
+        eta: "16:00Z\nINVALID",
         grace_min: 60,
       }),
     }),

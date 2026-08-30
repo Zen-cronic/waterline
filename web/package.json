@@ -7,25 +7,27 @@
     "dev": "next dev -p 3010",
     "build": "next build",
     "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node .next/standalone/server.js",
-    "test": "tsx --test tests/*.test.ts",
-    "verify:deployed-outbox": "node scripts/verify-deployed-outbox.mjs",
-    "record:demo": "node scripts/record-continuous-demo.mjs",
-    "record:demo-outbox": "node scripts/record-continuous-outbox-demo.mjs",
-    "capture:gallery": "node scripts/capture-demo-gallery.mjs"
+    "test": "tsx --test tests/map-source.test.ts tests/mission-view.test.ts tests/relay-policy.test.ts tests/relay-route.test.ts tests/handoff-token.test.ts tests/chat-session.test.ts",
+    "test:rules": "firebase emulators:exec --project waterline-rules-test --only firestore \"tsx --test tests/firestore.rules.test.ts\"",
+    "verify:deployed-firestore": "node scripts/verify-deployed-firestore.mjs"
   },
   "dependencies": {
+    "firebase": "^12.18.0",
+    "firebase-admin": "^14.3.0",
     "google-auth-library": "^11.0.2",
     "maplibre-gl": "^5.24.0",
     "next": "16.3.0",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "twilio": "^6.1.0"
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "firebase-tools": "^15.28.2",
     "playwright": "^1.62.1",
     "tsx": "^4.23.12",
     "typescript": "^5"

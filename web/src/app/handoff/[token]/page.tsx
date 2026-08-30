@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { FollowerRoom } from "@/components/FollowerRoom";
 import { verifyHandoffToken } from "@/lib/handoff-token";
 
 export default async function HandoffPage({
@@ -15,17 +16,21 @@ export default async function HandoffPage({
   return (
     <main className="handoff-page">
       <section className="handoff-card">
-        <small>WATERLINE · MARKED SYNTHETIC HANDOFF</small>
-        <h1>No active flight</h1>
-        <p>This short-lived summary was generated for a hackathon demonstration.</p>
+        <small>WATERLINE · FLIGHT FOLLOWING</small>
+        <h1>{handoff.departure} → {handoff.destination}</h1>
+        <p>Join the pilot&apos;s short-lived coordination room and acknowledge that you are following this flight.</p>
         <dl>
           <div><dt>Departure</dt><dd>{handoff.departure}</dd></div>
           <div><dt>Destination</dt><dd>{handoff.destination}</dd></div>
           <div><dt>Candidate sector</dt><dd>{handoff.landing_sector.toUpperCase()} COVE</dd></div>
           <div><dt>ETA</dt><dd>{handoff.eta}</dd></div>
         </dl>
-        <code>{handoff.mission_id}</code>
-        <strong>PILOT REVIEW REQUIRED</strong>
+        <FollowerRoom
+          role="follower"
+          missionId={handoff.mission_id}
+          token={token}
+          expiresAt={handoff.expires_at}
+        />
       </section>
     </main>
   );

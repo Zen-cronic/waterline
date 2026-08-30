@@ -109,9 +109,9 @@ export function authorizeRelayRequest(input: {
     MISSION_ID.test(input.path[1]) &&
     input.path[2] === "attest"
   ) {
-    exactKeys(value, ["confirm_dispatch", "eta", "grace_min"]);
-    if (value.confirm_dispatch !== true) {
-      reject(400, "ATTESTATION_REQUIRED", "confirm_dispatch=true is required");
+    exactKeys(value, ["confirm_handoff", "eta", "grace_min"]);
+    if (value.confirm_handoff !== true) {
+      reject(400, "ATTESTATION_REQUIRED", "confirm_handoff=true is required");
     }
     if (typeof value.eta !== "string" || !/^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$/.test(value.eta)) {
       reject(400, "INVALID_ETA", "eta must be a UTC time such as 16:00Z");
@@ -123,7 +123,7 @@ export function authorizeRelayRequest(input: {
       action: "mission.pilot-attest",
       upstreamPath: `/v1/missions/${input.path[1]}/attest`,
       upstreamBody: JSON.stringify({
-        confirm_dispatch: true,
+        confirm_handoff: true,
         eta: value.eta,
         grace_min: value.grace_min,
       }),

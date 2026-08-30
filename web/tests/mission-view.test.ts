@@ -118,33 +118,26 @@ test("restored dispatch and degraded evidence remain explicit", () => {
   const dispatched = deriveRestoredMissionView(
     { ...mission, status: "dispatched" },
     [event("event-send", "dispatch_completed", "verified_notice_receipt", {
-      receipt_id: "receipt-proof", attestation_id: "attestation-proof", channel: "sms",
-      provider_reference: "SM" + "a".repeat(32), provider_status: "queued",
-      recipient_redacted: "+1••••••1234",
+      receipt_id: "receipt-proof", attestation_id: "attestation-proof", channel: "legacy",
     }, "dispatched")],
   );
-  assert.equal(dispatched.dispatch?.status, "provider_accepted");
+  assert.equal(dispatched.dispatch?.status, "completed");
   assert.equal(dispatched.dispatch?.receipt_id, "receipt-proof");
   assert.equal(dispatched.dispatchGate?.approved, true);
 
-  const delivered = deriveRestoredMissionView(
+  const historicalReplay = deriveRestoredMissionView(
     { ...mission, status: "dispatched" },
     [
       event("event-send", "dispatch_completed", "verified_notice_receipt", {
-        receipt_id: "receipt-proof", attestation_id: "attestation-proof", channel: "sms",
-        provider_reference: "SM" + "a".repeat(32), provider_status: "queued",
-        recipient_redacted: "+1••••••1234",
-      }, "dispatched"),
-      event("event-delivered", "delivery_status_updated", "provider_delivered", {
-        receipt_id: "receipt-proof", provider_status: "delivered",
+        receipt_id: "receipt-proof", attestation_id: "attestation-proof", channel: "legacy",
       }, "dispatched"),
       event("event-replay", "dispatch_replayed", "duplicate_suppressed", {
         receipt_id: "receipt-proof", duplicate_suppressed: true,
       }, "dispatched"),
     ],
   );
-  assert.equal(delivered.dispatch?.status, "delivered");
-  assert.equal(delivered.dispatch?.duplicate_suppressed, true);
+  assert.equal(historicalReplay.dispatch?.status, "completed");
+  assert.equal(historicalReplay.dispatch?.duplicate_suppressed, true);
 
   const replay = deriveRestoredMissionView(
     { ...mission, status: "accepted" },
@@ -165,7 +158,7 @@ test("judge-facing surface names every required proof state", () => {
     "SOLE AUTHORIZE", "AT-MOST-ONCE", "Verified consequence", "Replay suppressed",
   ]) assert.match(proofRail, new RegExp(label));
   assert.match(page, /Human authority required/);
-  assert.match(page, /Review required — dispatch held/);
+  assert.match(page, /Review required — handoff held/);
   assert.match(page, /conditionCard\?\.validation_result === "accepted"/);
   assert.match(page, /briefingGate\?\.approved === true/);
   assert.match(page, /Interrupted run retained/);
@@ -178,6 +171,7 @@ test("judge-facing surface names every required proof state", () => {
   assert.match(proofRail, /Hide proof panel/);
   assert.match(page, /Show proof panel/);
   assert.doesNotMatch(page, /HACKATHON DEMO · PILOT REVIEW REQUIRED/);
-  assert.match(page, /window\.setInterval\(poll, 2000\)/);
-  assert.match(proofRail, /Replay same command · prove no second SMS/);
+  assert.match(page, /Attest & open follower room/);
+  assert.match(page, /FOLLOWING ACTIVE/);
+  assert.match(proofRail, /Replay handoff · prove one room/);
 });

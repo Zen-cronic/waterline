@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { MapView, type MapHandle } from "@/components/MapView";
+import { FollowerRoom } from "@/components/FollowerRoom";
 import { MarkdownBrief } from "@/components/MarkdownBrief";
 import { ProofRail } from "@/components/ProofRail";
 import {
@@ -8,6 +9,7 @@ import {
   type ConditionCardPanel,
   type DegradedState,
   type DispatchReceipt,
+  type HandoffInvitation,
   type Inference,
   type Mission,
   type PlanRevision,
@@ -42,6 +44,8 @@ export default function Page() {
   const [dispatchGate, setDispatchGate] = useState<VerificationGate | null>(null);
   const [degraded, setDegraded] = useState<DegradedState | null>(null);
   const [dispatch, setDispatch] = useState<DispatchReceipt | null>(null);
+  const [handoff, setHandoff] = useState<HandoffInvitation | null>(null);
+  const [followingActive, setFollowingActive] = useState(false);
   const [mission, setMission] = useState<Mission | null>(null);
   const [timeline, setTimeline] = useState<StateEvent[]>([]);
   const [conditionCard, setConditionCard] = useState<ConditionCardPanel | null>(null);
@@ -51,12 +55,15 @@ export default function Page() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [missionPanelOpen, setMissionPanelOpen] = useState(true);
   const [proofPanelOpen, setProofPanelOpen] = useState(true);
+  const [followerPanelOpen, setFollowerPanelOpen] = useState(true);
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("waterline:theme");
     const next = saved === "light" ? "light" : "dark";
     setTheme(next);
     document.documentElement.dataset.theme = next;
+    setOrigin(window.location.origin);
   }, []);
 
   function toggleTheme() {
@@ -169,6 +176,12 @@ export default function Page() {
         });
         setDegraded(view.degraded);
         setDispatch(view.dispatch);
+        setHandoff(restored.handoff ?? null);
+        const attestation = (restored.events as StateEvent[]).findLast(
+          (event) => event.event_type === "pilot_attestation_recorded",
+        );
+        if (typeof attestation?.evidence?.eta === "string") setEta(attestation.evidence.eta);
+        if (typeof attestation?.evidence?.grace_min === "number") setGrace(attestation.evidence.grace_min);
         const last = restored.events.at(-1) as StateEvent | undefined;
         setRecoverable(restored.mission.status === "rejected" &&
           last?.reason_code === "briefing_execution_failed");
@@ -177,30 +190,9 @@ export default function Page() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    if (!mission || mission.status !== "dispatched" || dispatch?.status !== "provider_accepted") return;
-    let active = true;
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/waterline/missions/${mission.mission_id}`, { cache: "no-store" });
-        if (!res.ok) return;
-        const restored = await res.json();
-        if (!active) return;
-        setMission(restored.mission as Mission);
-        setTimeline(restored.events as StateEvent[]);
-        setDispatch(deriveRestoredMissionView(restored.mission, restored.events).dispatch);
-      } catch {
-        // Provider status polling is best-effort; the retained receipt remains authoritative.
-      }
-    };
-    void poll();
-    const timer = window.setInterval(poll, 2000);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [mission?.mission_id, mission?.status, dispatch?.status]);
-
   async function run() {
     setRunning(true); setSteps([]); setBrief(""); setVerdict(null); setProv(null);
-    setDispatch(null); setMission(null); setTimeline([]); setRecoverable(false); setError("");
+    setDispatch(null); setHandoff(null); setFollowingActive(false); setMission(null); setTimeline([]); setRecoverable(false); setError("");
     setConditionCard(null); setQuarantine(null); setPlanRevision(null);
     setInference(null); setBriefingGate(null); setDispatchGate(null); setDegraded(null);
     mapRef.current?.reset();
@@ -240,7 +232,7 @@ export default function Page() {
       const res = await fetch(`/api/waterline/missions/${mission.mission_id}/attest`, {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          confirm_dispatch: true,
+          confirm_handoff: true,
           eta,
           grace_min: grace,
         }),
@@ -268,6 +260,7 @@ export default function Page() {
       for (const event of result.events ?? []) appendEvent(event);
       setDispatchGate(result.authority as VerificationGate);
       setDispatch(result.dispatch as DispatchReceipt);
+      setHandoff(result.handoff as HandoffInvitation);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Attestation failed");
     } finally {
@@ -275,13 +268,13 @@ export default function Page() {
     }
   }
 
-  async function replayDispatch() {
+  async function replayHandoff() {
     if (!mission || mission.status !== "dispatched" || !dispatch?.receipt_id) return;
     setAttesting(true); setError("");
     try {
       const res = await fetch(`/api/waterline/missions/${mission.mission_id}/attest`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ confirm_dispatch: true, eta, grace_min: grace }),
+        body: JSON.stringify({ confirm_handoff: true, eta, grace_min: grace }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.detail?.message ?? result.detail ?? "Replay safety check failed");
@@ -292,6 +285,7 @@ export default function Page() {
       for (const event of result.events ?? []) appendEvent(event);
       setDispatchGate(result.authority as VerificationGate);
       setDispatch(result.dispatch as DispatchReceipt);
+      setHandoff(result.handoff as HandoffInvitation);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Replay safety check failed");
     } finally {
@@ -309,6 +303,11 @@ export default function Page() {
     conditionCard?.validation_result === "accepted" &&
     planRevision !== null && briefingGate?.approved === true;
   const etaValid = /^(?:[01][0-9]|2[0-3]):[0-5][0-9]Z$/.test(eta);
+  const terminalLabel = followingActive
+    ? "FOLLOWING ACTIVE"
+    : handoff ? "HANDOFF READY"
+    : mission?.status === "awaiting_attestation" ? "ATTESTATION REQUIRED"
+    : mission?.status.replaceAll("_", " ") ?? "READY";
 
   return (
     <div className={`app ${missionPanelOpen ? "" : "mission-panel-collapsed"} ${proofPanelOpen ? "" : "proof-panel-collapsed"}`}>
@@ -354,7 +353,7 @@ export default function Page() {
           {mission && (
             <div className="mission-chip">
               <span>{mission.mission_id}</span>
-              <strong>{mission.status.replaceAll("_", " ")}</strong>
+              <strong>{terminalLabel}</strong>
               <small>authenticated owner {mission.owner_ref}</small>
               <small>trace {mission.trace_id}</small>
             </div>
@@ -398,9 +397,7 @@ export default function Page() {
           {canAttest && (
             <div className="attestation">
               <div className="section-h">Human authority required</div>
-              <p>The briefing is held. One authenticated pilot attestation may resume this mission and authorize one flight-following notice.</p>
-              <label>Responsible person</label>
-              <div className="configured-recipient">Server-configured · allowlisted · redacted in receipts</div>
+              <p>The briefing is held. One authenticated pilot attestation may open one short-lived follower room.</p>
               <div className="row">
                 <div><label>ETA (UTC)</label><input value={eta} placeholder="16:00Z"
                   onChange={(e) => setEta(e.target.value.toUpperCase())} /></div>
@@ -408,14 +405,31 @@ export default function Page() {
                   onChange={(e) => setGrace(+e.target.value)} /></div>
               </div>
               <button className="btn" onClick={attest} disabled={attesting || !etaValid}>
-                {attesting ? "Attesting…" : "Attest & send one demo handoff"}
+                {attesting ? "Attesting…" : "Attest & open follower room"}
               </button>
             </div>
           )}
           {mission?.status === "awaiting_attestation" && !canAttest && (
             <div className="attestation">
-              <div className="section-h">Review required — dispatch held</div>
-              <p>The evidence gate did not approve this briefing. No attestation or notice is available.</p>
+              <div className="section-h">Review required — handoff held</div>
+              <p>The evidence gate did not approve this briefing. No attestation or follower room is available.</p>
+            </div>
+          )}
+          {handoff && origin && (
+            <div className="flight-follower-panel">
+              <button className="follower-panel-toggle" type="button"
+                aria-expanded={followerPanelOpen}
+                onClick={() => setFollowerPanelOpen((value) => !value)}>
+                <span>Flight follower</span><strong>{terminalLabel}</strong>
+              </button>
+              {followerPanelOpen && <FollowerRoom
+                role="pilot"
+                missionId={handoff.room_id}
+                token={handoff.token}
+                expiresAt={handoff.expires_at}
+                inviteUrl={`${origin}/handoff/${encodeURIComponent(handoff.token)}`}
+                onAcknowledged={setFollowingActive}
+              />}
             </div>
           )}
           {error && <div className="verdict no">{error}</div>}
@@ -463,8 +477,9 @@ export default function Page() {
         dispatchGate={dispatchGate}
         degraded={degraded}
         dispatch={dispatch}
+        followingActive={followingActive}
         onClose={() => setProofPanelOpen(false)}
-        onReplayDispatch={mission?.status === "dispatched" ? replayDispatch : undefined}
+        onReplayDispatch={mission?.status === "dispatched" ? replayHandoff : undefined}
         replayingDispatch={attesting}
       />
     </div>
