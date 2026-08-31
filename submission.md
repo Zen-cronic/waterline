@@ -56,7 +56,7 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 
 - Live app: https://waterline-web-2hjaxuzova-uc.a.run.app
 - Repository: https://github.com/Zen-cronic/waterline
-- Demo video: `DEMO_VIDEO_URL_TBD`
+- Demo video: https://youtu.be/05H46M1ir-o
 - Blog post: `BLOG_POST_URL_TBD`
 - Social post: `SOCIAL_POST_URL_TBD`
 - OSS contribution: [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open

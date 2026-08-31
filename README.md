@@ -107,11 +107,11 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 
 | Artifact | Public URL | Prepared local copy |
 |---|---|---|
-| Demo video | `DEMO_VIDEO_URL_TBD` | `film/out/waterline-matilda-v6.mp4` |
+| Demo video | [Watch the 3:47 Waterline demo](https://youtu.be/05H46M1ir-o) | `film/out/waterline-matilda-v6.mp4` |
 | Blog post | `BLOG_POST_URL_TBD` | `../submission/waterline/blog.md` in the operator portfolio workspace |
 | Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
 | OSS contribution | [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
 
-The remaining media/publication placeholders are intentionally explicit so no draft or local path can be mistaken for a published URL.
+The remaining blog/social publication placeholders are intentionally explicit so no draft or local path can be mistaken for a published URL.
 
 License: [MIT](LICENSE).
