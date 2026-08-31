@@ -2,7 +2,7 @@
 
 **A live flight briefing and flight-following handoff for Canadian water destinations without a weather station.**
 
-**Public preview:** [waterline-web-2hjaxuzova-uc.a.run.app](https://waterline-web-2hjaxuzova-uc.a.run.app) — deployed in `us-central1` from `0852d4f` (`waterline-agent-00008-62n`, `waterline-web-00008-ckb`). The public Next.js service reaches a private ADK agent through Cloud Run IAM and an exact HMAC-signed relay.
+**Public preview:** [waterline-web-2hjaxuzova-uc.a.run.app](https://waterline-web-2hjaxuzova-uc.a.run.app) — deployed in `us-central1` from source now represented by `adaf859`; the running revisions retain build identifier `0852d4f` (`waterline-agent-00008-62n`, `waterline-web-00008-ckb`). The public Next.js service reaches a private ADK agent through Cloud Run IAM and an exact HMAC-signed relay.
 
 Waterline is keyed to geometry instead of a destination aerodrome identifier. It fetches live NAV CANADA inputs, uses PostGIS to reduce the FIR-wide NOTAM set to a route corridor and altitude band, and infers a bounded destination weather read from nearby real METAR observations. Every inference retains its source and confidence.
 

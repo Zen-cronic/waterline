@@ -58,4 +58,4 @@ The live verifier creates one synthetic mission and attestation, uses separate p
 - Revert Cloud Run traffic to the prior immutable web/agent revisions if a rollout fails. Firestore access remains fail-closed under the released rules.
 - Never delete or rotate shared SQL/session/relay secrets as part of a routine rollback.
 
-Current verified deployment: commit `0852d4f`, agent `waterline-agent-00008-62n`, web `waterline-web-00008-ckb`.
+Current verified deployment: repository source `adaf859`, retained runtime build identifier `0852d4f`, agent `waterline-agent-00008-62n`, web `waterline-web-00008-ckb`.
