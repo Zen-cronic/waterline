@@ -58,7 +58,7 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 - Repository: https://github.com/Zen-cronic/waterline
 - Devpost project: https://devpost.com/software/waterline
 - Demo video: https://youtu.be/05H46M1ir-o
-- Blog post: `BLOG_POST_URL_TBD`
+- Blog post: https://dev.to/zin_kg/the-destination-had-no-weather-station-so-i-stopped-asking-for-an-airport-code-3961
 - Social post: `SOCIAL_POST_URL_TBD`
 - OSS contribution: [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open
 

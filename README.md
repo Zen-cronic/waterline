@@ -109,7 +109,7 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 |---|---|---|
 | Devpost project | [Waterline on Devpost](https://devpost.com/software/waterline) | Public project page |
 | Demo video | [Watch the 3:47 Waterline demo](https://youtu.be/05H46M1ir-o) | `film/out/waterline-matilda-v6.mp4` |
-| Blog post | `BLOG_POST_URL_TBD` | `../submission/waterline/blog.md` in the operator portfolio workspace |
+| Blog post | [The Destination Had No Weather Station](https://dev.to/zin_kg/the-destination-had-no-weather-station-so-i-stopped-asking-for-an-airport-code-3961) | `../submission/waterline/blog.md` in the operator portfolio workspace |
 | Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
 | OSS contribution | [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
 
