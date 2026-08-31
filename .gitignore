@@ -1,5 +1,6 @@
 # Internal strategy — never published to the submission repo
 /docs/
+/BUILD_CHECKPOINT.md
 # Python / Node / env
 __pycache__/
 *.pyc
