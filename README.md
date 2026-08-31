@@ -18,6 +18,8 @@ Waterline is keyed to geometry instead of a destination aerodrome identifier. It
 
 The recorded deployed proof on 2026-08-31 measured acknowledgement at **309 ms**, follower→pilot at **224 ms**, and pilot→follower at **854 ms**. It verified one Cloud SQL receipt, one Firestore thread, two scoped members, one acknowledgement, history restoration, identical replay, and zero browser errors for mission `mission-11d9e8bf923c4e76aeb0`.
 
+The verified 3:47 demo also shows that exact mission in Google Cloud Logs Explorer on private service `waterline-agent`, serving revision `waterline-agent-00008-62n`, including the successful Cloud Run attestation request. The product workflow remains one uninterrupted 1× execution; the subsequent Console proof and architecture are disclosed editorial inserts.
+
 ## Agent roster
 
 | Agent | Responsibility | Deterministic tool or boundary |
@@ -101,7 +103,7 @@ Data provenance: deployed NOTAM/METAR data is fetched live and is not bundled. S
 
 | Artifact | Public URL | Prepared local copy |
 |---|---|---|
-| Demo video | `DEMO_VIDEO_URL_TBD` | `film/out/waterline-matilda-v5.mp4` |
+| Demo video | `DEMO_VIDEO_URL_TBD` | `film/out/waterline-matilda-v6.mp4` |
 | Blog post | `BLOG_POST_URL_TBD` | `../submission/waterline/blog.md` in the operator portfolio workspace |
 | Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
 | OSS contribution | `OSS_CONTRIBUTION_URL_TBD` | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
