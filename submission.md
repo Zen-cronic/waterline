@@ -48,6 +48,10 @@ The safest architecture was also the clearest demo: Cloud SQL remains the source
 
 Expand only with cited, versioned water-aerodrome data and operator-reviewed escalation workflows without broadening model authority.
 
+## Upstream contribution
+
+Building Waterline surfaced an import-time Google ADK defect: importing the supported programmatic `LlmAgent` API emits a deprecation warning from ADK's own internal `BaseAgentConfig` subclass. We reported a clean reproduction across ADK 2.7.1, 2.8.0, and current upstream `main`, with a narrow regression-test proposal. The issue is open as of August 31, 2026: [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968).
+
 ## Links
 
 - Live app: https://waterline-web-2hjaxuzova-uc.a.run.app
@@ -55,7 +59,7 @@ Expand only with cited, versioned water-aerodrome data and operator-reviewed esc
 - Demo video: `DEMO_VIDEO_URL_TBD`
 - Blog post: `BLOG_POST_URL_TBD`
 - Social post: `SOCIAL_POST_URL_TBD`
-- OSS contribution: `OSS_CONTRIBUTION_URL_TBD`
+- OSS contribution: [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open
 
 ## Judge testing
 

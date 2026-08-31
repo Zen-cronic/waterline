@@ -99,6 +99,10 @@ Run `pnpm test:rules` from `web/` for the Firestore emulator suite. Firebase pub
 
 Data provenance: deployed NOTAM/METAR data is fetched live and is not bundled. Station coordinates come from the public-domain OurAirports dataset. The Lady Evelyn condition card is a tracked Waterline-created synthetic artifact with a SHA-256 manifest.
 
+## Upstream contribution
+
+Building Waterline surfaced an import-time Google ADK defect: importing the supported programmatic `LlmAgent` API emits a deprecation warning from ADK's own internal `BaseAgentConfig` subclass. The report includes a clean reproduction across ADK 2.7.1, 2.8.0, and current upstream `main`, plus a narrow regression-test proposal. The issue is open as of August 31, 2026: [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968).
+
 ## Submission links
 
 | Artifact | Public URL | Prepared local copy |
@@ -106,8 +110,8 @@ Data provenance: deployed NOTAM/METAR data is fetched live and is not bundled. S
 | Demo video | `DEMO_VIDEO_URL_TBD` | `film/out/waterline-matilda-v6.mp4` |
 | Blog post | `BLOG_POST_URL_TBD` | `../submission/waterline/blog.md` in the operator portfolio workspace |
 | Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
-| OSS contribution | `OSS_CONTRIBUTION_URL_TBD` | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
+| OSS contribution | [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
 
-These placeholders are intentionally explicit so no draft or local path can be mistaken for a published URL.
+The remaining media/publication placeholders are intentionally explicit so no draft or local path can be mistaken for a published URL.
 
 License: [MIT](LICENSE).
