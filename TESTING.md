@@ -64,12 +64,12 @@ WATERLINE_FIRESTORE_PROOF_APPROVED=I_APPROVE_FIRESTORE_FLIGHT_FOLLOWING_PROOF \
   pnpm verify:deployed-firestore
 ```
 
-The successful 2026-08-30 report is retained under ignored `.playwright-mcp/deployed-firestore/` and recorded in [ARCHITECTURE.md](ARCHITECTURE.md). It passed with:
+The recorded 2026-08-31 Matilda v5 report is retained under ignored `.playwright-mcp/waterline-matilda-v5/` and recorded in [ARCHITECTURE.md](ARCHITECTURE.md). It passed with:
 
-- mission `mission-d9fa83f7997a47fe91f1`;
+- mission `mission-11d9e8bf923c4e76aeb0`;
 - one SQL receipt and one Firestore thread;
 - exactly two scoped members and one acknowledgement;
-- propagation at 206 ms / 113 ms / 316 ms;
+- propagation at 309 ms / 224 ms / 854 ms;
 - reconnect history and identical replay;
 - zero browser errors.
 

@@ -19,6 +19,7 @@ Firestore is deliberately not authoritative: its messages cannot change route, a
 ## How we built it
 
 - Google ADK and Vertex AI Gemini for the private briefing fleet
+- `gemini-embedding-001` for owner-scoped destination recall and advisory `google/gemma-4-26b-a4b-it-maas` for cardinality-preserving NOTAM ranking
 - Cloud Run public Next.js edge and private FastAPI agent
 - Cloud SQL PostgreSQL/PostGIS/pgvector for spatial queries, durable missions, owner memory, and duplicate suppression
 - Firebase Anonymous Auth plus a Cloud Run authorization bridge
@@ -37,7 +38,7 @@ The hard part was separating four kinds of power: models may read and propose; d
 - One durable handoff receipt under replay/concurrency
 - One-hour, two-member Firestore room with fixed acknowledgement and bounded direct chat
 - Emulator tests for unauthenticated, cross-room, expired, spoofed, oversized, extra-field, update, and delete denial
-- Live two-browser proof: 206 ms acknowledgement, 113 ms follower→pilot, 316 ms pilot→follower, history restoration, identical replay, zero browser errors
+- Recorded deployed proof: 309 ms acknowledgement, 224 ms follower→pilot, 854 ms pilot→follower, history restoration, identical replay, zero browser errors
 
 ## What we learned
 
@@ -45,12 +46,16 @@ The safest architecture was also the clearest demo: Cloud SQL remains the source
 
 ## What's next
 
-Expand only with cited, versioned water-aerodrome data; add operator-reviewed escalation workflows without broadening model authority; and record the final physical-phone OBS take from the already-verified deployed loop.
+Expand only with cited, versioned water-aerodrome data and operator-reviewed escalation workflows without broadening model authority. The verified Matilda v5 film is ready for human playback approval and public upload.
 
 ## Links
 
 - Live app: https://waterline-web-2hjaxuzova-uc.a.run.app
 - Repository: https://github.com/Zen-cronic/waterline
+- Demo video: `DEMO_VIDEO_URL_TBD`
+- Blog post: `BLOG_POST_URL_TBD`
+- Social post: `SOCIAL_POST_URL_TBD`
+- OSS contribution: `OSS_CONTRIBUTION_URL_TBD`
 
 ## Judge testing
 

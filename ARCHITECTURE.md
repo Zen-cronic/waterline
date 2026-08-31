@@ -49,11 +49,11 @@ TTL performs eventual cleanup, while rules stop access immediately at expiry.
 
 ## Deployed proof
 
-Successful mission `mission-d9fa83f7997a47fe91f1` on 2026-08-30 verified:
+Recorded mission `mission-11d9e8bf923c4e76aeb0` on 2026-08-31 verified:
 
 - one Cloud SQL receipt row and one distinct claim;
 - one Firestore thread, `pilot` and `follower` members, and one acknowledgement;
-- 206 ms acknowledgement, 113 ms follower→pilot, and 316 ms pilot→follower propagation;
+- 309 ms acknowledgement, 224 ms follower→pilot, and 854 ms pilot→follower propagation;
 - reconnect history restoration and identical receipt/link/expiry replay;
 - zero browser errors.
 
