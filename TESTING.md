@@ -64,13 +64,14 @@ WATERLINE_FIRESTORE_PROOF_APPROVED=I_APPROVE_FIRESTORE_FLIGHT_FOLLOWING_PROOF \
   pnpm verify:deployed-firestore
 ```
 
-The recorded 2026-08-31 Matilda v5 report is retained under ignored `.playwright-mcp/waterline-matilda-v5/` and recorded in [ARCHITECTURE.md](ARCHITECTURE.md). It passed with:
+The deployed 2026-08-31 acceptance run verified:
 
 - mission `mission-11d9e8bf923c4e76aeb0`;
 - one SQL receipt and one Firestore thread;
 - exactly two scoped members and one acknowledgement;
 - propagation at 309 ms / 224 ms / 854 ms;
 - reconnect history and identical replay;
+- project `ata-2026-waterline`, private service `waterline-agent`, serving revision `waterline-agent-00008-62n`, and the exact mission in successful Cloud Run request logs;
 - zero browser errors.
 
 Do not record raw capability URLs, secret payloads, service identity tokens, or contact data in reports or screenshots.

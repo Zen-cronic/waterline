@@ -46,7 +46,7 @@ The safest architecture was also the clearest demo: Cloud SQL remains the source
 
 ## What's next
 
-Expand only with cited, versioned water-aerodrome data and operator-reviewed escalation workflows without broadening model authority. The verified Matilda v5 film is ready for human playback approval and public upload.
+Expand only with cited, versioned water-aerodrome data and operator-reviewed escalation workflows without broadening model authority.
 
 ## Links
 
