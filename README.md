@@ -110,9 +110,9 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 | Devpost project | [Waterline on Devpost](https://devpost.com/software/waterline) | Public project page |
 | Demo video | [Watch the 3:47 Waterline demo](https://youtu.be/05H46M1ir-o) | `film/out/waterline-matilda-v6.mp4` |
 | Blog post | [The Destination Had No Weather Station](https://dev.to/zin_kg/the-destination-had-no-weather-station-so-i-stopped-asking-for-an-airport-code-3961) | `../submission/waterline/blog.md` in the operator portfolio workspace |
-| Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
+| Social post | [Waterline on X](https://x.com/zinheinkg/status/2094550709333098833) | `../submission/waterline/social.md` in the operator portfolio workspace |
 | OSS contribution | [`google/adk-python#6968`](https://github.com/google/adk-python/issues/6968) — open | `../submission/waterline/adk-import-warning-upstream-draft.md` in the operator portfolio workspace |
 
-The remaining blog/social publication placeholders are intentionally explicit so no draft or local path can be mistaken for a published URL.
+All public submission links above are resolved. The prepared local copies remain the repairable source for the published article and social copy.
 
 License: [MIT](LICENSE).
