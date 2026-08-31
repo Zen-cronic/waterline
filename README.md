@@ -107,6 +107,7 @@ Building Waterline surfaced an import-time Google ADK defect: importing the supp
 
 | Artifact | Public URL | Prepared local copy |
 |---|---|---|
+| Devpost project | [Waterline on Devpost](https://devpost.com/software/waterline) | Public project page |
 | Demo video | [Watch the 3:47 Waterline demo](https://youtu.be/05H46M1ir-o) | `film/out/waterline-matilda-v6.mp4` |
 | Blog post | `BLOG_POST_URL_TBD` | `../submission/waterline/blog.md` in the operator portfolio workspace |
 | Social post | `SOCIAL_POST_URL_TBD` | `../submission/waterline/social.md` in the operator portfolio workspace |
